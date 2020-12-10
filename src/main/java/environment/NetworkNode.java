@@ -1,8 +1,13 @@
 package environment;
 
+import run.Simulation;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
-public class NetworkNode {
+public class NetworkNode{
     private String pub_ip = "";
     private String priv_ip = "";
     private String hostname = "";
@@ -11,8 +16,21 @@ public class NetworkNode {
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
     private Set<Data> dataSet;
+    //this maps the remote visible software of other nodes, that can be accessed by this node
+    private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
+    //could be hidden
+    private TYPE type;
 
-    public NetworkNode(String pub_ip, String priv_ip, String hostname, String operatingSystem, String osVersion, Set<Software> remoteSoftware, Set<Software> localSoftware, Set<Data> dataSet) {
+    public enum TYPE {
+        ROUTER,
+        WEBSERVER,
+        ADMINPC,
+        DATABASE,
+        ADVERSARY
+    }
+
+    public NetworkNode(NetworkNode.TYPE type, String pub_ip, String priv_ip, String hostname, String operatingSystem, String osVersion, Set<Software> remoteSoftware, Set<Software> localSoftware, Set<Data> dataSet) {
+        this.type = type;
         this.pub_ip = pub_ip;
         this.priv_ip = priv_ip;
         this.hostname = hostname;
@@ -54,4 +72,18 @@ public class NetworkNode {
     public Set<Data> getDataSet() {
         return dataSet;
     }
+
+    public TYPE getType() {
+        return type;
+    }
+
+    public Map<TYPE, List<Software>> getRemotelyVisibleSWInNetwork() {
+        return remotelyVisibleSWInNetwork;
+    }
+
+    //cant put in constructor since it needs overview of all nodes in network
+    public void computeRemoteSWMap(){
+        this.remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(type);
+    }
+
 }

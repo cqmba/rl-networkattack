@@ -1,9 +1,10 @@
 package visualize;
 
-import environment.NetworkNode;
-import environment.NetworkWorld;
-import environment.Software;
-import environment.Vulnerability;
+import environment.*;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 public class SimpleNetworkPrint {
     public static void print(NetworkWorld world){
@@ -21,9 +22,11 @@ public class SimpleNetworkPrint {
             System.out.println("\tOS: "+node.getOperatingSystem());
             System.out.println("\tOS Version: "+node.getOsVersion());
             printNodeDetail(node);
+            printVisibility(node);
             System.out.println("");
             i++;
         }
+        printAdversaryVisibility();
     }
 
     private static void printNodeDetail(NetworkNode node){
@@ -74,6 +77,29 @@ public class SimpleNetworkPrint {
             }
             System.out.println("\t\t\t\tRelated Exploit: "+vuln.getExploitType());
             i++;
+        }
+    }
+
+    private static void printVisibility(NetworkNode node){
+        System.out.println("\tRemote service visibility in network: ");
+        for (NetworkNode.TYPE key:node.getRemotelyVisibleSWInNetwork().keySet()){
+            System.out.println("\t\tOn node "+key.toString());
+            for (Software sw:node.getRemotelyVisibleSWInNetwork().get(key)){
+                System.out.println("\t\t\tService detected: "+sw.getName());
+            }
+        }
+    }
+
+    private static void printAdversaryVisibility(){
+        System.out.println("");
+        System.out.println("Adversary Node:");
+        System.out.println("\tRemote service visibility in network: ");
+        Map<NetworkNode.TYPE, List<Software>> swMap = NetworkTopology.getRemoteSWMapByScanningNode(NetworkNode.TYPE.ADVERSARY);
+        for (NetworkNode.TYPE key:swMap.keySet()){
+            System.out.println("\t\tOn node "+key.toString());
+            for (Software sw:swMap.get(key)){
+                System.out.println("\t\t\tService detected: "+sw.getName());
+            }
         }
     }
 }
