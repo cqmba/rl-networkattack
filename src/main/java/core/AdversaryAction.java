@@ -9,24 +9,143 @@ import java.util.List;
 import java.util.Set;
 
 public enum AdversaryAction implements Action {
-    ACTIVE_SCAN_IP_PORT,
-    ACTIVE_SCAN_VULNERABILITY,
-    EXPLOIT_PUBLIC_FACING_APPLICATION,
-    VALID_ACCOUNTS,
-    EXPLOIT_FOR_CLIENT_EXECUTION,
-    CREATE_ACCOUNT,
-    EXPLOIT_FOR_PRIVILEGE_ESCALATION,
-    MAN_IN_THE_MIDDLE,
-    SOFTWARE_DISCOVERY,
-    EXPLOITATION_OF_REMOTE_SERVICE,
-    REMOTE_SERVICE,
-    DATA_FROM_LOCAL_SYSTEM
-    ;
-    private List<NetworkNode> listOfAvailableNodesToActUpon;
+    ACTIVE_SCAN_IP_PORT{
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    ACTIVE_SCAN_VULNERABILITY {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    EXPLOIT_PUBLIC_FACING_APPLICATION {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    VALID_ACCOUNTS {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    EXPLOIT_FOR_CLIENT_EXECUTION {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    CREATE_ACCOUNT {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    EXPLOIT_FOR_PRIVILEGE_ESCALATION {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    MAN_IN_THE_MIDDLE {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    SOFTWARE_DISCOVERY {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    EXPLOITATION_OF_REMOTE_SERVICE {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    REMOTE_SERVICE {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    },
+    DATA_FROM_LOCAL_SYSTEM {
+        @Override
+        public boolean fullfillsPrecondition() {
+            return false;
+        }
+
+        @Override
+        public void executePostCondition() {
+
+        }
+    };
 
     private static final Set<AdversaryAction> _actions = new LinkedHashSet<>();
 
     public State ipScan(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+
         //TODO implement
         return null;
     }
@@ -140,4 +259,7 @@ public enum AdversaryAction implements Action {
     public boolean isNoOp() {
         return false;
     }
+
+    public abstract boolean fullfillsPrecondition();
+    public abstract void executePostCondition();
 }

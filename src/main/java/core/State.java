@@ -1,24 +1,25 @@
 package core;
 
 
-import environment.NetworkNode;
-import knowledge.NodeKnowledgeImpl;
+import knowledge.NodeKnowledge;
 
 import java.io.Serializable;
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class State implements Serializable {
-    Set<NodeKnowledgeImpl> knowledgeSet = new LinkedHashSet<>();
-    Map<Integer, NetworkNode> nodes = new LinkedHashMap<>();
+    Set<NodeKnowledge> knowledgeSet = new LinkedHashSet<>();
+
+    public static State getStartState(){
+        return new State();
+    }
+
     public static Set<AdversaryAction> computePossibleActions(){
         //TODO
         return null;
     }
 
-    public Set<NodeKnowledgeImpl> getKnowledgeSet() {
+    public Set<NodeKnowledge> getKnowledgeSet() {
         return knowledgeSet;
     }
 }

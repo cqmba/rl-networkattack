@@ -4,6 +4,7 @@ import environment.*;
 import visualize.SimpleNetworkPrint;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 public class Simulation {
     private static final String PUB_IP = "79.1.1.100";
@@ -43,16 +44,16 @@ public class Simulation {
         //add Router, currently no Software
         Set<Data> routerData = new LinkedHashSet<>();
         Set<Software> routerSW = new LinkedHashSet<>();
-        simWorld.addNode(NetworkWorld.ROUTER_ID, new NetworkNode(NetworkNode.TYPE.ROUTER, PUB_IP, ROUTER_PRIV_IP, ROUTER_HOSTNAME,ROUTER_OS, ROUTER_OS_VERSION, routerSW, routerSW, routerData));
+        simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ROUTER, PUB_IP, ROUTER_PRIV_IP, ROUTER_HOSTNAME,ROUTER_OS, ROUTER_OS_VERSION, routerSW, routerSW, routerData));
         //add Webserver
         Set<Software> wsSWLocal = new LinkedHashSet<>();
-        simWorld.addNode(NetworkWorld.WEBSERVER_ID, new NetworkNode(NetworkNode.TYPE.WEBSERVER, PUB_IP, WEBSERVER_PRIV_IP, WEBSERVER_HOSTNAME, NODE_OS, NODE_OS_VERSION, setWebserverRemoteSW(), wsSWLocal, setWebserverData()));
+        simWorld.addNode(new NetworkNode(NetworkNode.TYPE.WEBSERVER, PUB_IP, WEBSERVER_PRIV_IP, WEBSERVER_HOSTNAME, NODE_OS, NODE_OS_VERSION, setWebserverRemoteSW(), wsSWLocal, setWebserverData()));
         //add Admin PC
         Set<Software> adminSWLocal = new LinkedHashSet<>();
-        simWorld.addNode(NetworkWorld.ADMINPC_ID, new NetworkNode(NetworkNode.TYPE.ADMINPC, PUB_IP, ADMINPC_PRIV_IP, ADMINPC_HOSTNAME, NODE_OS, NODE_OS_VERSION, setAdminPCRemoteSW(), adminSWLocal, setAdminPCData()));
+        simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ADMINPC, PUB_IP, ADMINPC_PRIV_IP, ADMINPC_HOSTNAME, NODE_OS, NODE_OS_VERSION, setAdminPCRemoteSW(), adminSWLocal, setAdminPCData()));
         //add Database
         Set<Software> dbSWLocal = new LinkedHashSet<>();
-        simWorld.addNode(NetworkWorld.DB_ID, new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
+        simWorld.addNode(new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
         //should add data here that can be sniffed in the network
         simWorld.initializeNetworkTopology();
     }
@@ -158,5 +159,10 @@ public class Simulation {
 
     public static NetworkWorld getSimWorld() {
         return simWorld;
+    }
+
+    public static Optional<NetworkNode> getNodeByType(NetworkNode.TYPE type){
+        Predicate<NetworkNode> isRealNode = node -> node.getType().equals(type);
+        return simWorld.getNodes().stream().filter(isRealNode).findFirst();
     }
 }

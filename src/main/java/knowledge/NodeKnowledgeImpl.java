@@ -6,7 +6,6 @@ import environment.Software;
 
 import java.util.*;
 
-//implement attacker knowledge here, could also be an interface maybe, we only need checking functions
 public class NodeKnowledgeImpl implements NodeKnowledge {
 
     private String pub_ip;
@@ -36,6 +35,11 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
         this.remotelyVisibleSWInNetwork = new HashMap<>();
         //could also add new unknown type
         this.type = type;
+    }
+
+    @Override
+    public NodeKnowledgeImpl addNode(NetworkNode.TYPE node) {
+        return new NodeKnowledgeImpl(node);
     }
 
     @Override
@@ -79,13 +83,38 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
     }
 
     @Override
-    public boolean hasFoundRemoteNode(NetworkNode.TYPE node) {
-        return false;
+    public void addPubIp(String pubIp) {
+
     }
 
     @Override
-    public boolean hasFoundSoftwareOnRemoteNode(NetworkNode.TYPE node, Software sw) {
-        return false;
+    public void addPrivIp(String privIp) {
+
+    }
+
+    @Override
+    public void addHostname(String hostname) {
+
+    }
+
+    @Override
+    public void addOperationSystem(String os) {
+
+    }
+
+    @Override
+    public void addOSVersion(String osVersion) {
+
+    }
+
+    @Override
+    public void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
+
+    }
+
+    @Override
+    public void addData(Data data) {
+
     }
     //need checks for software, date etc, delegate to Software Knowledge
 }
