@@ -161,8 +161,11 @@ public class Simulation {
         return simWorld;
     }
 
-    public static Optional<NetworkNode> getNodeByType(NetworkNode.TYPE type){
+    public static NetworkNode getNodeByType(NetworkNode.TYPE type){
         Predicate<NetworkNode> isRealNode = node -> node.getType().equals(type);
-        return simWorld.getNodes().stream().filter(isRealNode).findFirst();
+        Optional<NetworkNode> first = simWorld.getNodes().stream().filter(isRealNode).findFirst();
+        if (first.isPresent()) {
+            return first.get();
+        }else throw new RuntimeException("Node doesnt exist in Simulation");
     }
 }

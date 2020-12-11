@@ -3,141 +3,163 @@ package core;
 import aima.core.agent.Action;
 
 import environment.NetworkNode;
+import environment.Software;
+import knowledge.NodeKnowledge;
+import run.Simulation;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public enum AdversaryAction implements Action {
     ACTIVE_SCAN_IP_PORT{
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return currentState.getNetworkKnowledge().getKnownNodes();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            NetworkNode node = Simulation.getNodeByType(target);
+            //check IP or hostname was gained
+            if (!currentState.getNetworkKnowledge().getKnownNodes().contains(target)){
+                currentState.addNodeKnowledge(target);
+                currentState.addNodePubIp(target, node.getPub_ip());
+                //I dont think we see private IP on an IP Scan, only if we get system access
+                currentState.addNodeHostname(target, node.getHostname());
+            }
 
+            NodeKnowledge nodeKnowledge = currentState.getNodeKnowledgeMap().get(target);
+            //Get all the visible remote software FROM the node, where the scan was executed from
+            Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = Simulation.getNodeByType(currentState.getCurrentActor()).getRemotelyVisibleSWInNetwork();
+            //can only see SW running on target
+            if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
+                Set<Software> potentiallyNewSoftware = remotelyVisibleSWInNetwork.get(target);
+                for (Software sw: potentiallyNewSoftware){
+                    if (!nodeKnowledge.isRemoteServiceKnown(sw.getName())){
+                        currentState.addNodeRemoteSoftwareName(target, sw.getName());
+                    }
+                }
+            }
         }
     },
     ACTIVE_SCAN_VULNERABILITY {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            currentState.getNetworkKnowledge().getKnownNodes();
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     EXPLOIT_PUBLIC_FACING_APPLICATION {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     VALID_ACCOUNTS {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     EXPLOIT_FOR_CLIENT_EXECUTION {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     CREATE_ACCOUNT {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     EXPLOIT_FOR_PRIVILEGE_ESCALATION {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     MAN_IN_THE_MIDDLE {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     SOFTWARE_DISCOVERY {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     EXPLOITATION_OF_REMOTE_SERVICE {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     REMOTE_SERVICE {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     },
     DATA_FROM_LOCAL_SYSTEM {
         @Override
-        public boolean fullfillsPrecondition() {
-            return false;
+        public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
 
         @Override
-        public void executePostCondition() {
+        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
 
         }
     };
@@ -260,6 +282,6 @@ public enum AdversaryAction implements Action {
         return false;
     }
 
-    public abstract boolean fullfillsPrecondition();
-    public abstract void executePostCondition();
+    public abstract Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState);
+    public abstract void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState);
 }

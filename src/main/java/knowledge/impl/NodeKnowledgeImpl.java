@@ -1,8 +1,11 @@
-package knowledge;
+package knowledge.impl;
 
 import environment.Data;
 import environment.NetworkNode;
 import environment.Software;
+import knowledge.DataKnowledge;
+import knowledge.NodeKnowledge;
+import knowledge.SoftwareKnowledge;
 
 import java.util.*;
 
@@ -35,11 +38,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
         this.remotelyVisibleSWInNetwork = new HashMap<>();
         //could also add new unknown type
         this.type = type;
-    }
-
-    @Override
-    public NodeKnowledgeImpl addNode(NetworkNode.TYPE node) {
-        return new NodeKnowledgeImpl(node);
     }
 
     @Override
@@ -83,38 +81,67 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
     }
 
     @Override
-    public void addPubIp(String pubIp) {
-
+    public Set<SoftwareKnowledge> getLocalSoftwareKnowledge() {
+        return null;
     }
 
     @Override
-    public void addPrivIp(String privIp) {
-
+    public Set<SoftwareKnowledge> getRemoteSoftwareKnowledge() {
+        return null;
     }
 
     @Override
-    public void addHostname(String hostname) {
-
+    public boolean isRemoteServiceKnown(String software) {
+        return false;
     }
 
     @Override
-    public void addOperationSystem(String os) {
-
+    public Set<DataKnowledge> getDataKnowledge() {
+        return null;
     }
 
     @Override
-    public void addOSVersion(String osVersion) {
-
+    public NodeKnowledge addPubIp(String pubIp) {
+        return null;
     }
 
     @Override
-    public void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
-
+    public NodeKnowledge addPrivIp(String privIp) {
+        return null;
     }
 
     @Override
-    public void addData(Data data) {
-
+    public NodeKnowledge addHostname(String hostname) {
+        return null;
     }
-    //need checks for software, date etc, delegate to Software Knowledge
+
+    @Override
+    public NodeKnowledge addOperationSystem(String os) {
+        return null;
+    }
+
+    @Override
+    public NodeKnowledge addOSVersion(String osVersion) {
+        return null;
+    }
+
+    @Override
+    public NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
+        return null;
+    }
+
+    @Override
+    public NodeKnowledge addData(Data data) {
+        return null;
+    }
+
+    @Override
+    public NodeKnowledge addNewLocalSoftware(String sw) {
+        return null;
+    }
+
+    @Override
+    public NodeKnowledge addNewRemoteSoftware(String sw) {
+        return null;
+    }
 }

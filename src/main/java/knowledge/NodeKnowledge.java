@@ -2,12 +2,16 @@ package knowledge;
 
 import environment.Data;
 import environment.NetworkNode;
-import environment.Software;
+import knowledge.impl.NodeKnowledgeImpl;
+
+import java.util.Set;
 
 public interface NodeKnowledge {
 
     //use this if the Adversary found a new yet unknown node
-    NodeKnowledgeImpl addNode(NetworkNode.TYPE node);
+    static NodeKnowledge addNode(NetworkNode.TYPE node) {
+        return new NodeKnowledgeImpl(node);
+    }
 
     boolean hasPubIp();
 
@@ -25,18 +29,30 @@ public interface NodeKnowledge {
 
     boolean hasFoundData(Data data);
 
-    void addPubIp(String pubIp);
+    Set<SoftwareKnowledge> getLocalSoftwareKnowledge();
 
-    void addPrivIp(String privIp);
+    Set<SoftwareKnowledge> getRemoteSoftwareKnowledge();
 
-    void addHostname(String hostname);
+    boolean isRemoteServiceKnown(String software);
 
-    void addOperationSystem(String os);
+    Set<DataKnowledge> getDataKnowledge();
 
-    void addOSVersion(String osVersion);
+    NodeKnowledge addPubIp(String pubIp);
 
-    void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
+    NodeKnowledge addPrivIp(String privIp);
 
-    void addData(Data data);
+    NodeKnowledge addHostname(String hostname);
+
+    NodeKnowledge addOperationSystem(String os);
+
+    NodeKnowledge addOSVersion(String osVersion);
+
+    NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
+
+    NodeKnowledge addData(Data data);
+
+    NodeKnowledge addNewLocalSoftware(String sw);
+
+    NodeKnowledge addNewRemoteSoftware(String sw);
 
 }

@@ -1,7 +1,6 @@
 package environment;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -16,7 +15,7 @@ public class NetworkNode{
     private Set<Data> dataSet;
     private ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
-    private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
+    private Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
     //could be hidden
     private TYPE type;
 
@@ -82,7 +81,7 @@ public class NetworkNode{
         return type;
     }
 
-    public Map<TYPE, List<Software>> getRemotelyVisibleSWInNetwork() {
+    public Map<TYPE, Set<Software>> getRemotelyVisibleSWInNetwork() {
         return remotelyVisibleSWInNetwork;
     }
 

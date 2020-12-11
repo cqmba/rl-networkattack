@@ -2,7 +2,6 @@ package visualize;
 
 import environment.*;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -94,7 +93,7 @@ public class SimpleNetworkPrint {
         System.out.println("");
         System.out.println("Adversary Node:");
         System.out.println("\tRemote service visibility in network: ");
-        Map<NetworkNode.TYPE, List<Software>> swMap = NetworkTopology.getRemoteSWMapByScanningNode(NetworkNode.TYPE.ADVERSARY);
+        Map<NetworkNode.TYPE, Set<Software>> swMap = NetworkTopology.getRemoteSWMapByScanningNode(NetworkNode.TYPE.ADVERSARY);
         for (NetworkNode.TYPE key:swMap.keySet()){
             System.out.println("\t\tOn node "+key.toString());
             for (Software sw:swMap.get(key)){

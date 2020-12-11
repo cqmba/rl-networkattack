@@ -34,8 +34,8 @@ public class NetworkTopology{
     }
 
     //this implements inner & outer firewall behaviour
-    public static Map<NetworkNode.TYPE, List<Software>> getRemoteSWMapByScanningNode(NetworkNode.TYPE scanning){
-        Map<NetworkNode.TYPE, List<Software>> visibleSoftware = new HashMap<>();
+    public static Map<NetworkNode.TYPE, Set<Software>> getRemoteSWMapByScanningNode(NetworkNode.TYPE scanning){
+        Map<NetworkNode.TYPE, Set<Software>> visibleSoftware = new HashMap<>();
         //from all possible nodes, only check those who are actually connected
         Predicate<NetworkNode> isConnected = node -> getConnectedHosts(scanning).contains(node.getType());
         Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
@@ -54,7 +54,7 @@ public class NetworkTopology{
                     List<String> adminPublicWhitelist = List.of(Simulation.SERVICE_SSH);
                     isVisibleByAdv = sw -> adminPublicWhitelist.contains(sw.getName());
                 }
-                visibleSoftware.put(node.getType(), node.getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toList()));
+                visibleSoftware.put(node.getType(), node.getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toSet()));
             }
         }else if (scanning.equals(NetworkNode.TYPE.ROUTER)){
             //TODO define behaviour
@@ -63,19 +63,19 @@ public class NetworkTopology{
             for (NetworkNode node: viewableNodes){
                 //scan self
                 if (node.getType().equals(NetworkNode.TYPE.WEBSERVER)){
-                    visibleSoftware.put(NetworkNode.TYPE.WEBSERVER, new ArrayList<>(node.getRemoteSoftware()));
+                    visibleSoftware.put(NetworkNode.TYPE.WEBSERVER, new HashSet<>(node.getRemoteSoftware()));
                 }
                 //TODO implement inner firewall
                 else if (node.getType().equals(NetworkNode.TYPE.ADMINPC)){
-                    visibleSoftware.put(NetworkNode.TYPE.ADMINPC, new ArrayList<>(node.getRemoteSoftware()));
+                    visibleSoftware.put(NetworkNode.TYPE.ADMINPC, new HashSet<>(node.getRemoteSoftware()));
                 }else if (node.getType().equals(NetworkNode.TYPE.DATABASE)){
-                    visibleSoftware.put(NetworkNode.TYPE.DATABASE, new ArrayList<>(node.getRemoteSoftware()));
+                    visibleSoftware.put(NetworkNode.TYPE.DATABASE, new HashSet<>(node.getRemoteSoftware()));
                 }
             }
         }else {
             //Admin & Database see everything
             for (NetworkNode node: viewableNodes){
-                visibleSoftware.put(node.getType(), new ArrayList<>(node.getRemoteSoftware()));
+                visibleSoftware.put(node.getType(), new HashSet<>(node.getRemoteSoftware()));
             }
         }
         return visibleSoftware;
