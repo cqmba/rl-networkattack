@@ -1,7 +1,9 @@
 package run;
 
+import core.State;
 import environment.*;
 import visualize.SimpleNetworkPrint;
+import visualize.SimpleStatePrint;
 
 import java.util.*;
 import java.util.function.Predicate;
@@ -33,11 +35,13 @@ public class Simulation {
 
 
     private static NetworkWorld simWorld = new NetworkWorld();
+    private static State state = State.getStartState();
 
     public static void main(String[] args) {
         System.out.println("Starting simulation");
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
+        SimpleStatePrint.print(state);
     }
 
     static void setupWorld(){
