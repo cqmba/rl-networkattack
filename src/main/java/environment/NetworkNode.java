@@ -1,7 +1,5 @@
 package environment;
 
-import run.Simulation;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,6 +14,7 @@ public class NetworkNode{
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
     private Set<Data> dataSet;
+    private ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
     //could be hidden
@@ -27,6 +26,12 @@ public class NetworkNode{
         ADMINPC,
         DATABASE,
         ADVERSARY
+    }
+
+    public enum ACCESS_LEVEL{
+        NONE,
+        USER,
+        ROOT
     }
 
     public NetworkNode(NetworkNode.TYPE type, String pub_ip, String priv_ip, String hostname, String operatingSystem, String osVersion, Set<Software> remoteSoftware, Set<Software> localSoftware, Set<Data> dataSet) {

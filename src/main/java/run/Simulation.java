@@ -32,12 +32,10 @@ public class Simulation {
 
 
     private static NetworkWorld simWorld = new NetworkWorld();
-    private static Set<Software> swRepo = new HashSet<>();
 
     public static void main(String[] args) {
         System.out.println("Starting simulation");
         setupWorld();
-        simWorld.initializeNetworkTopology();
         SimpleNetworkPrint.print(simWorld);
     }
 
@@ -56,6 +54,7 @@ public class Simulation {
         Set<Software> dbSWLocal = new LinkedHashSet<>();
         simWorld.addNode(NetworkWorld.DB_ID, new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
         //should add data here that can be sniffed in the network
+        simWorld.initializeNetworkTopology();
     }
 
     static Set<Software> setWebserverRemoteSW(){
@@ -82,7 +81,6 @@ public class Simulation {
         Software nginx = new Software(SERVICE_NGINX, "1.09");
         nginx.addVulnerability(new Vulnerability("CVE-2016-1247", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
         remoteSW.add(nginx);
-        swRepo.addAll(remoteSW);
         return remoteSW;
     }
 
@@ -116,7 +114,6 @@ public class Simulation {
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
         ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         remoteSW.add(ssh);
-        swRepo.addAll(remoteSW);
         return remoteSW;
     }
 
@@ -138,11 +135,11 @@ public class Simulation {
     }
 
     static Set<Software> setDBRemoteSW(){
+        //TODO need to define behaviour of authorization bypass, since currently its mapped to VALID_ACCOUNT exploit
         Set<Software> remoteSW = new LinkedHashSet<>();
         Software mySQL = new Software(SERVICE_MYSQL, "8.0.13");
         mySQL.addVulnerability(new Vulnerability("CVE-2019-2534", Vulnerability.TYPE.BYPASS_AUTHORIZATION, false));
         remoteSW.add(mySQL);
-        swRepo.addAll(remoteSW);
         return remoteSW;
     }
 
@@ -161,9 +158,5 @@ public class Simulation {
 
     public static NetworkWorld getSimWorld() {
         return simWorld;
-    }
-
-    public static Set<Software> getSwRepo() {
-        return swRepo;
     }
 }

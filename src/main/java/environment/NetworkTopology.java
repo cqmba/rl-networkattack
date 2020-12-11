@@ -36,10 +36,13 @@ public class NetworkTopology{
     //this implements inner & outer firewall behaviour
     public static Map<NetworkNode.TYPE, List<Software>> getRemoteSWMapByScanningNode(NetworkNode.TYPE scanning){
         Map<NetworkNode.TYPE, List<Software>> visibleSoftware = new HashMap<>();
+        //from all possible nodes, only check those who are actually connected
+        Predicate<NetworkNode> isConnected = node -> getConnectedHosts(scanning).contains(node.getType());
+        Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
         //assume Adversary is scanning
         //TODO do we want to return own remote sw here aswell?
         if (scanning.equals(NetworkNode.TYPE.ADVERSARY)){
-            for (NetworkNode node:Simulation.getSimWorld().getNodes()){
+            for (NetworkNode node:viewableNodes){
                 //default = drop
                 Predicate<Software> isVisibleByAdv = sw -> false;
                 //scans on Webserver
@@ -57,7 +60,7 @@ public class NetworkTopology{
             //TODO define behaviour
             //should we be able to scan from the router (we never own it currently)
         }else if (scanning.equals(NetworkNode.TYPE.WEBSERVER)){
-            for (NetworkNode node: Simulation.getSimWorld().getNodes()){
+            for (NetworkNode node: viewableNodes){
                 //scan self
                 if (node.getType().equals(NetworkNode.TYPE.WEBSERVER)){
                     visibleSoftware.put(NetworkNode.TYPE.WEBSERVER, new ArrayList<>(node.getRemoteSoftware()));
@@ -71,7 +74,7 @@ public class NetworkTopology{
             }
         }else {
             //Admin & Database see everything
-            for (NetworkNode node: Simulation.getSimWorld().getNodes()){
+            for (NetworkNode node: viewableNodes){
                 visibleSoftware.put(node.getType(), new ArrayList<>(node.getRemoteSoftware()));
             }
         }
