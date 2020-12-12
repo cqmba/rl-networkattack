@@ -3,17 +3,29 @@ package core;
 import aima.core.agent.Action;
 
 import environment.NetworkNode;
+import environment.NetworkTopology;
 import environment.Software;
 import knowledge.NodeKnowledge;
+import knowledge.SoftwareKnowledge;
 import run.Simulation;
 
 import java.util.*;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public enum AdversaryAction implements Action {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
-            return currentState.getNetworkKnowledge().getKnownNodes();
+            // change that we are able to scan just the nodes viewable from the current actor
+            NetworkNode.TYPE scanning = currentState.getCurrentActor();
+            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
+            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
+            Set<NetworkNode.TYPE> scannableNodes = new HashSet<>();
+            for(NetworkNode n : viewableNodes){
+                scannableNodes.add(n.getType());
+            }
+            return scannableNodes;
         }
 
         @Override
@@ -44,14 +56,31 @@ public enum AdversaryAction implements Action {
     ACTIVE_SCAN_VULNERABILITY {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState) {
-            currentState.getNetworkKnowledge().getKnownNodes();
-            return new HashSet<>();
+            //return just the nodes where we have an entry in our software knowledge map
+            return currentState.getSoftwareKnowledgeMap().keySet();
         }
 
         @Override
         public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+            NetworkNode node = Simulation.getNodeByType(target);
+            Set<Software> localSoftwareSet = node.getLocalSoftware();
+            Set<Software> remoteSoftwareSet = node.getRemoteSoftware();
+            Set<SoftwareKnowledge> softwareKnowledgeSet = currentState.getSoftwareKnowledgeMap().get(target);
+            // add to every software we know the version and the vulnerabilities
+            addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
+            addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
         }
+
+        private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
+            for(Software s : softwareSet){
+                SoftwareKnowledge softwareKnowledge = findSoftwareByName(softwareKnowledgeSet,s.getName());
+                if(softwareKnowledge!=null){
+                    softwareKnowledge.addVersion(s.getVersion());
+                    softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+                }
+            }
+        }
+
     },
     EXPLOIT_PUBLIC_FACING_APPLICATION {
         @Override
@@ -257,6 +286,15 @@ public enum AdversaryAction implements Action {
             return s;
         }
     }
+    public static SoftwareKnowledge findSoftwareByName(Set<SoftwareKnowledge> softwareKnowledgeSet, String swName){
+        for(SoftwareKnowledge softwareKnowledge: softwareKnowledgeSet){
+            if(softwareKnowledge.getName().equals(swName))
+                return softwareKnowledge;
+        }
+        return null;
+    }
+
+
 
     public static final Set<AdversaryAction> allActions(){
         return _actions;

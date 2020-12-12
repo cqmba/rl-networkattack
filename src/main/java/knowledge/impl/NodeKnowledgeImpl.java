@@ -102,46 +102,46 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
 
     @Override
     public NodeKnowledge addPubIp(String pubIp) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addPrivIp(String privIp) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addHostname(String hostname) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addOperationSystem(String os) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addOSVersion(String osVersion) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addData(Data data) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addNewLocalSoftware(String sw) {
-        return null;
+        return this;
     }
 
     @Override
     public NodeKnowledge addNewRemoteSoftware(String sw) {
-        return null;
+        return this;
     }
 }

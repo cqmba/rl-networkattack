@@ -1,6 +1,9 @@
 package knowledge;
 
+import environment.Vulnerability;
 import knowledge.impl.SoftwareKnowledgeImpl;
+
+import java.util.Set;
 
 public interface SoftwareKnowledge {
 
@@ -8,7 +11,8 @@ public interface SoftwareKnowledge {
         return new SoftwareKnowledgeImpl(service);
     }
 
-    boolean versionIsKnown(String version);
-
     //Vulnerabilities
+    void addVersion(String version);
+    void addVulnerabilities(Set<Vulnerability> vulnerabilities);
+    String getName();
 }

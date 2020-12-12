@@ -11,6 +11,9 @@ public class NetworkTopology{
         List<NetworkNode.TYPE> connectedHosts = new ArrayList<>();
         if(source.equals(NetworkNode.TYPE.ADVERSARY)){
             connectedHosts.add(NetworkNode.TYPE.ROUTER);
+            //todo just added so that the Advasery is able to do an ipscan
+            connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
+            connectedHosts.add(NetworkNode.TYPE.ADMINPC);
             return connectedHosts;
         }else if (source.equals(NetworkNode.TYPE.ROUTER)){
             connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
