@@ -29,28 +29,51 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+
             NetworkNode node = Simulation.getNodeByType(target);
             //check IP or hostname was gained
-            if (!currentState.getNetworkKnowledge().getKnownNodes().contains(target)){
-                currentState.addNodeKnowledge(target);
-                currentState.addNodePubIp(target, node.getPub_ip());
+            State newState = currentState;
+            Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
+            if (!knownNodes.contains(target)){
+                newState.addNodeKnowledge(target);
+                newState.addNodePubIp(target, node.getPub_ip());
                 //I dont think we see private IP on an IP Scan, only if we get system access
-                currentState.addNodeHostname(target, node.getHostname());
+                newState.addNodeHostname(target, node.getHostname());
+            }
+            //implement router port forwarding
+            if (target.equals(NetworkNode.TYPE.ROUTER)){
+                if (!knownNodes.contains(NetworkNode.TYPE.WEBSERVER)){
+                    NetworkNode.TYPE actualTarget = NetworkNode.TYPE.WEBSERVER;
+                    newState.setNetworkKnowledge(currentState.getNetworkKnowledge().addNewNode(NetworkNode.TYPE.WEBSERVER));
+                    newState.addNodeKnowledge(actualTarget);
+                    newState.addNodePubIp(actualTarget, node.getPub_ip());
+                    //I dont think we see private IP on an IP Scan, only if we get system access
+                    newState.addNodeHostname(actualTarget, node.getHostname());
+                }
+                if (!knownNodes.contains(NetworkNode.TYPE.ADMINPC)){
+                    NetworkNode.TYPE actualTarget = NetworkNode.TYPE.ADMINPC;
+                    newState.setNetworkKnowledge(currentState.getNetworkKnowledge().addNewNode(NetworkNode.TYPE.ADMINPC));
+                    newState.addNodeKnowledge(actualTarget);
+                    newState.addNodePubIp(actualTarget, node.getPub_ip());
+                    //I dont think we see private IP on an IP Scan, only if we get system access
+                    newState.addNodeHostname(actualTarget, node.getHostname());
+                }
             }
 
             NodeKnowledge nodeKnowledge = currentState.getNodeKnowledgeMap().get(target);
             //Get all the visible remote software FROM the node, where the scan was executed from
-            Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = Simulation.getNodeByType(currentState.getCurrentActor()).getRemotelyVisibleSWInNetwork();
+            Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentState.getCurrentActor());
             //can only see SW running on target
             if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
                 Set<Software> potentiallyNewSoftware = remotelyVisibleSWInNetwork.get(target);
                 for (Software sw: potentiallyNewSoftware){
                     if (!nodeKnowledge.isRemoteServiceKnown(sw.getName())){
-                        currentState.addNodeRemoteSoftwareName(target, sw.getName());
+                        newState.addNodeRemoteSoftwareName(target, sw.getName());
                     }
                 }
             }
+            return newState;
         }
     },
     ACTIVE_SCAN_VULNERABILITY {
@@ -61,7 +84,7 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
             NetworkNode node = Simulation.getNodeByType(target);
             Set<Software> localSoftwareSet = node.getLocalSoftware();
             Set<Software> remoteSoftwareSet = node.getRemoteSoftware();
@@ -69,6 +92,8 @@ public enum AdversaryAction implements Action {
             // add to every software we know the version and the vulnerabilities
             addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
             addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
+            //TODO fix
+            return currentState;
         }
 
         private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
@@ -89,8 +114,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     VALID_ACCOUNTS {
@@ -100,8 +125,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     EXPLOIT_FOR_CLIENT_EXECUTION {
@@ -111,8 +136,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     CREATE_ACCOUNT {
@@ -122,8 +147,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     EXPLOIT_FOR_PRIVILEGE_ESCALATION {
@@ -133,8 +158,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     MAN_IN_THE_MIDDLE {
@@ -144,8 +169,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     SOFTWARE_DISCOVERY {
@@ -155,8 +180,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     EXPLOITATION_OF_REMOTE_SERVICE {
@@ -166,8 +191,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     REMOTE_SERVICE {
@@ -177,8 +202,8 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     },
     DATA_FROM_LOCAL_SYSTEM {
@@ -188,113 +213,73 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            return null;
         }
     };
 
     private static final Set<AdversaryAction> _actions = new LinkedHashSet<>();
 
-    public State ipScan(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State ipScan(State s, NetworkNode.TYPE target){
 
         //TODO implement
         return null;
     }
 
-    public State vulnScan(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State vulnScan(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State exploitPFA(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State exploitPFA(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State validAccount(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State validAccount(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State exploitCE(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State exploitCE(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State createAccount(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State createAccount(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State exploitPE(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State exploitPE(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State mitm(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State mitm(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State softwareDiscovery(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State softwareDiscovery(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State exploitRS(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State exploitRS(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State remoteService(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State remoteService(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
 
-    public State dataFromLocalSystem(State s, List<NetworkNode> nodes, NetworkNode acting, NetworkNode target){
+    public static State dataFromLocalSystem(State s, NetworkNode.TYPE target){
         //TODO implement
         return null;
     }
-
-    //perform a certain Action from an acting node towards a target node
-    public State performGivenAction(State s, List<NetworkNode> nodes, AdversaryAction action, NetworkNode acting, NetworkNode target){
-        if (action.equals(AdversaryAction.ACTIVE_SCAN_IP_PORT)){
-            return ipScan(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.ACTIVE_SCAN_VULNERABILITY)){
-            return vulnScan(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.CREATE_ACCOUNT)){
-            return createAccount(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.DATA_FROM_LOCAL_SYSTEM)){
-            return dataFromLocalSystem(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION)){
-            return exploitCE(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION)){
-            return exploitPE(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION)){
-            return exploitPFA(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.EXPLOITATION_OF_REMOTE_SERVICE)){
-            return exploitRS(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.MAN_IN_THE_MIDDLE)){
-            return mitm(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.REMOTE_SERVICE)){
-            return remoteService(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.SOFTWARE_DISCOVERY)){
-            return softwareDiscovery(s, nodes, acting, target);
-        }else if (action.equals(AdversaryAction.VALID_ACCOUNTS)){
-            return validAccount(s, nodes, acting, target);
-        }else {
-            return s;
-        }
-    }
-    public static SoftwareKnowledge findSoftwareByName(Set<SoftwareKnowledge> softwareKnowledgeSet, String swName){
-        for(SoftwareKnowledge softwareKnowledge: softwareKnowledgeSet){
-            if(softwareKnowledge.getName().equals(swName))
-                return softwareKnowledge;
-        }
-        return null;
-    }
-
-
 
     public static final Set<AdversaryAction> allActions(){
         return _actions;
@@ -320,6 +305,14 @@ public enum AdversaryAction implements Action {
         return false;
     }
 
+    public static SoftwareKnowledge findSoftwareByName(Set<SoftwareKnowledge> softwareKnowledgeSet, String swName){
+        for(SoftwareKnowledge softwareKnowledge: softwareKnowledgeSet){
+            if(softwareKnowledge.getName().equals(swName))
+                return softwareKnowledge;
+        }
+        return null;
+    }
+
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState);
-    public abstract void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState);
+    public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState);
 }
