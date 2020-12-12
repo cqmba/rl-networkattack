@@ -24,24 +24,36 @@ public class State implements Serializable {
     public State() {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = new NetworkKnowledgeImpl();
+        this.currentActor = NetworkNode.TYPE.ADVERSARY;
     }
 
     public static State getStartState(){
         State start = new State();
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
-        //todo I just added it for testing I do not know how you intend to use it
-        start.currentActor = NetworkNode.TYPE.ADVERSARY;
         return start;
     }
 
-    public static Set<AdversaryAction> computePossibleActions(){
+    //assumes next acting node was determined already, not sure when this actually happens
+    public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current){
         //TODO
-        return null;
+        Map<AdversaryAction, Set<NetworkNode.TYPE>> targetsByAction = new HashMap<>();
+        for (AdversaryAction action: AdversaryAction.values()){
+            Set<NetworkNode.TYPE> targets = action.getTargetsWhichFullfillPrecondition(current);
+            if (!targets.isEmpty()){
+                targetsByAction.put(action, targets);
+            }
+        }
+        return targetsByAction;
+    }
+
+    //perform a certain Action from an acting node towards a target node
+    public static State performGivenAction(State s, AdversaryAction action, NetworkNode.TYPE target){
+        return action.executePostConditionOnTarget(target, s);
     }
 
     public void addNodeKnowledge(NetworkNode.TYPE node){
-        this.networkKnowledge.addNewNode(node);
-        this.nodeKnowledgeMap.put(node, new NodeKnowledgeImpl(node));
+        this.networkKnowledge= networkKnowledge.addNewNode(node);
+        this.nodeKnowledgeMap.put(node, NodeKnowledge.addNode(node));
     }
 
     public void addNodeHostname(NetworkNode.TYPE node, String hostname){
@@ -51,7 +63,8 @@ public class State implements Serializable {
 
     public void addNodePubIp(NetworkNode.TYPE node, String pubIp){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
-        nodeKnowledgeMap.replace(node, old.addPubIp(pubIp));
+        NodeKnowledge newNode = old.addPubIp(pubIp);
+        nodeKnowledgeMap.replace(node, newNode);
     }
 
     public void addNodePrivIp(NetworkNode.TYPE node, String privIp){
@@ -81,10 +94,6 @@ public class State implements Serializable {
             nodeKnowledgeMap.replace(node, old.addNewRemoteSoftware(swName));
         }
     }
-
-
-
-
 
     public NetworkKnowledge getNetworkKnowledge() {
         return networkKnowledge;

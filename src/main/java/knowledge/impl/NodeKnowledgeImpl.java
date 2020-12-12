@@ -102,6 +102,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
 
     @Override
     public NodeKnowledge addPubIp(String pubIp) {
+        this.pub_ip = pubIp;
         return this;
     }
 
@@ -112,6 +113,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
 
     @Override
     public NodeKnowledge addHostname(String hostname) {
+        this.hostname = hostname;
         return this;
     }
 

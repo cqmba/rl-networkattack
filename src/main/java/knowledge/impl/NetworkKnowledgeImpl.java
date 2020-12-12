@@ -12,7 +12,15 @@ import java.util.Map;
 import java.util.Set;
 
 public class NetworkKnowledgeImpl implements NetworkKnowledge {
-    private Set<NetworkNode.TYPE> nodes = new HashSet<>();
+    private Set<NetworkNode.TYPE> nodes;
+
+    public NetworkKnowledgeImpl(){
+        this.nodes = new HashSet<>();
+    }
+
+    public NetworkKnowledgeImpl(Set<NetworkNode.TYPE> nodes){
+        this.nodes = nodes;
+    }
 
     @Override
     public Set<NetworkNode.TYPE> getKnownNodes() {
@@ -30,8 +38,10 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge {
     }
 
     @Override
-    public void addNewNode(NetworkNode.TYPE node) {
-        nodes.add(node);
+    public NetworkKnowledge addNewNode(NetworkNode.TYPE node) {
+        Set<NetworkNode.TYPE> newNodes = new HashSet<>(nodes);
+        newNodes.add(node);
+        return new NetworkKnowledgeImpl(newNodes);
     }
 
     @Override

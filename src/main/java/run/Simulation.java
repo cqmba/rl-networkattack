@@ -3,6 +3,7 @@ package run;
 import core.AdversaryAction;
 import core.State;
 import environment.*;
+import visualize.SimpleActionsPrint;
 import visualize.SimpleNetworkPrint;
 import visualize.SimpleStatePrint;
 
@@ -43,16 +44,17 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        Set<NetworkNode.TYPE> targets = AdversaryAction.ACTIVE_SCAN_IP_PORT.getTargetsWhichFullfillPrecondition(state);
-        for(NetworkNode.TYPE t: targets){
-            AdversaryAction.ACTIVE_SCAN_IP_PORT.executePostConditionOnTarget(t,state);
+        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state);
+        SimpleActionsPrint.print(adversaryActionSetMap, state.getCurrentActor());
+        //for now do this manually
+        AdversaryAction nextAction = AdversaryAction.ACTIVE_SCAN_IP_PORT;
+        Set<NetworkNode.TYPE> targets = adversaryActionSetMap.get(nextAction);
+        NetworkNode.TYPE target = NetworkNode.TYPE.ROUTER;
+        if (targets.contains(target)){
+            System.out.println("........Performing ACTION "+nextAction.toString()+" on "+target.toString()+"..........");
+            State nextState = State.performGivenAction(Simulation.state, nextAction, target);
+            SimpleStatePrint.print(nextState);
         }
-
-        targets = AdversaryAction.ACTIVE_SCAN_VULNERABILITY.getTargetsWhichFullfillPrecondition(state);
-        for(NetworkNode.TYPE t: targets) {
-            AdversaryAction.ACTIVE_SCAN_VULNERABILITY.executePostConditionOnTarget(t, state); }
-
-        SimpleStatePrint.print(state);
     }
 
     static void setupWorld(){
@@ -69,8 +71,6 @@ public class Simulation {
         //add Database
         Set<Software> dbSWLocal = new LinkedHashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
-        //todo just add for testing
-        simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ADVERSARY, "","","","","",new HashSet<Software>(),new HashSet<Software>(),new HashSet<Data>()));
         //should add data here that can be sniffed in the network
         simWorld.initializeNetworkTopology();
     }
@@ -184,6 +184,5 @@ public class Simulation {
         if (first.isPresent()) {
             return first.get();
         }else throw new RuntimeException("Node doesnt exist in Simulation");
-
     }
 }
