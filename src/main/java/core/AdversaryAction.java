@@ -5,7 +5,6 @@ import aima.core.agent.Action;
 import environment.NetworkNode;
 import environment.NetworkTopology;
 import environment.Software;
-import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import run.Simulation;
@@ -85,7 +84,7 @@ public enum AdversaryAction implements Action {
         }
 
         @Override
-        public void executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
             NetworkNode node = Simulation.getNodeByType(target);
             Set<Software> localSoftwareSet = node.getLocalSoftware();
             Set<Software> remoteSoftwareSet = node.getRemoteSoftware();
@@ -93,6 +92,8 @@ public enum AdversaryAction implements Action {
             // add to every software we know the version and the vulnerabilities
             addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
             addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
+            //TODO fix
+            return currentState;
         }
 
         private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
@@ -302,6 +303,14 @@ public enum AdversaryAction implements Action {
     @Override
     public boolean isNoOp() {
         return false;
+    }
+
+    public static SoftwareKnowledge findSoftwareByName(Set<SoftwareKnowledge> softwareKnowledgeSet, String swName){
+        for(SoftwareKnowledge softwareKnowledge: softwareKnowledgeSet){
+            if(softwareKnowledge.getName().equals(swName))
+                return softwareKnowledge;
+        }
+        return null;
     }
 
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFullfillPrecondition(State currentState);

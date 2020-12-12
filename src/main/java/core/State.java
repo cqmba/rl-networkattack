@@ -122,4 +122,8 @@ public class State implements Serializable {
         }
         return false;
     }
+
+    public void setNetworkKnowledge(NetworkKnowledge networkKnowledge) {
+        this.networkKnowledge = networkKnowledge;
+    }
 }
