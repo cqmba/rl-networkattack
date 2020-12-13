@@ -15,4 +15,5 @@ public interface SoftwareKnowledge {
     void addVersion(String version);
     void addVulnerabilities(Set<Vulnerability> vulnerabilities);
     String getName();
+    Set<Vulnerability> getVulnerability();
 }

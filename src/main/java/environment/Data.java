@@ -14,7 +14,8 @@ public class Data {
     }
     public enum ORIGIN {
         LOCAL,
-        SNIFFED
+        SNIFFED,
+        CREATED
     }
     public enum ACCESS_REQUIRED {
         USER,
@@ -35,5 +36,42 @@ public class Data {
         this.gain = gain;
         this.origin = origin;
         this.access = access;
+    }
+
+    public Boolean containsCredentials() {
+        return containsCredentials;
+    }
+
+
+    public GAINED_KNOWLEDGE getGain() {
+        return gain;
+    }
+
+    public void setGain(GAINED_KNOWLEDGE gain) {
+        this.gain = gain;
+    }
+
+    public ORIGIN getOrigin() {
+        return origin;
+    }
+
+    public void setOrigin(ORIGIN origin) {
+        this.origin = origin;
+    }
+
+    public ACCESS_REQUIRED getAccess() {
+        return access;
+    }
+
+    public void setAccess(ACCESS_REQUIRED access) {
+        this.access = access;
+    }
+
+    public Credentials getCredentials() {
+        return credentials;
+    }
+
+    public void setCredentials(Credentials credentials) {
+        this.credentials = credentials;
     }
 }

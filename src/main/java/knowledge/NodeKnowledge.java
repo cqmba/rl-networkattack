@@ -33,6 +33,8 @@ public interface NodeKnowledge {
 
     Set<SoftwareKnowledge> getRemoteSoftwareKnowledge();
 
+    Set<Data> getKnownData();
+
     boolean isRemoteServiceKnown(String software);
 
     Set<DataKnowledge> getDataKnowledge();

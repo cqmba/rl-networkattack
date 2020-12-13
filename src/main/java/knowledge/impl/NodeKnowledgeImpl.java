@@ -7,9 +7,10 @@ import knowledge.DataKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 
+import java.io.Serializable;
 import java.util.*;
 
-public class NodeKnowledgeImpl implements NodeKnowledge {
+public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     private String pub_ip;
     private String priv_ip;
@@ -88,6 +89,11 @@ public class NodeKnowledgeImpl implements NodeKnowledge {
     @Override
     public Set<SoftwareKnowledge> getRemoteSoftwareKnowledge() {
         return null;
+    }
+
+    @Override
+    public Set<Data> getKnownData() {
+        return this.dataSet;
     }
 
     @Override

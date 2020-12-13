@@ -2,12 +2,10 @@ package core;
 
 
 import environment.NetworkNode;
-import environment.Software;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import knowledge.impl.NetworkKnowledgeImpl;
-import knowledge.impl.NodeKnowledgeImpl;
 
 import java.io.Serializable;
 import java.util.*;
@@ -38,7 +36,7 @@ public class State implements Serializable {
         //TODO
         Map<AdversaryAction, Set<NetworkNode.TYPE>> targetsByAction = new HashMap<>();
         for (AdversaryAction action: AdversaryAction.values()){
-            Set<NetworkNode.TYPE> targets = action.getTargetsWhichFullfillPrecondition(current);
+            Set<NetworkNode.TYPE> targets = action.getTargetsWhichFulfillPrecondition(current);
             if (!targets.isEmpty()){
                 targetsByAction.put(action, targets);
             }
