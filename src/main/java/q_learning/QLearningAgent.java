@@ -1,14 +1,12 @@
 package q_learning;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+
+import java.util.*;
 
 import aima.core.agent.Action;
 import aima.core.learning.reinforcement.PerceptStateReward;
 import aima.core.learning.reinforcement.agent.ReinforcementAgent;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
-import aima.core.util.datastructure.Pair;
 
 /**
  * Artificial Intelligence A Modern Approach (3rd Edition): page 844.<br>
@@ -81,8 +79,12 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
     private ActionsFunction<S, A> actionsFunction;
     private double alpha = 0.0;
     private double gamma = 0.0;
+    private double epsilon = 0.0;
     private int Ne = 0;
     private double Rplus = 0.0;
+
+    private Random random;
+    private double errorEpsilon;
 
     /**
      * Constructor.
@@ -99,12 +101,15 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
      *            R+ is an optimistic estimate of the best possible reward
      *            obtainable in any state, which is used in the method f(u, n).
      */
-    public QLearningAgent(ActionsFunction<S, A> actionsFunction, double alpha, double gamma, int Ne, double Rplus) {
+    public QLearningAgent(ActionsFunction<S, A> actionsFunction, double alpha, double gamma, double epsilon, int Ne, double Rplus, int seed, double errorEpsilon) {
         this.actionsFunction = actionsFunction;
         this.alpha = alpha;
         this.gamma = gamma;
+        this.epsilon = epsilon;
         this.Ne = Ne;
         this.Rplus = Rplus;
+        this.random = new Random(seed);
+        this.errorEpsilon = errorEpsilon;
     }
 
     /**
@@ -177,9 +182,9 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
         Map<S, Double> U = new HashMap<>();
         for (Pair<S, A> sa : Q.keySet()) {
             Double q = Q.get(sa);
-            Double u = U.get(sa.getFirst());
+            Double u = U.get(sa.getA());
             if (null == u || u < q) {
-                U.put(sa.getFirst(), q);
+                U.put(sa.getA(), q);
             }
         }
 
@@ -239,7 +244,7 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
     //
     // PRIVATE METHODS
     //
-    private boolean isTerminal(S s) {
+    public boolean isTerminal(S s) {
         boolean terminal = false;
         if (null != s && actionsFunction.actions(s).size() == 0) {
             // No actions possible in state is considered terminal.
@@ -269,18 +274,50 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
     }
 
     // argmax<sub>a'</sub>f(Q[s',a'],N<sub>sa</sub>[s',a'])
+    /*
+     * This method was improved by giving the possibility for a epsilon, where a random action is selected with
+     * probability epsilon.
+     * Also in case multiple actions share the same utility, a random action from the actions with maximum utility
+     * is selected.
+     * TODO Test this
+     */
     private A argmaxAPrime(S sPrime) {
         A a = null;
-        double max = Double.NEGATIVE_INFINITY;
-        for (A aPrime : actionsFunction.actions(sPrime)) {
-            Pair<S, A> sPrimeAPrime = new Pair<>(sPrime, aPrime);
-            double explorationValue = f(Q.get(sPrimeAPrime), Nsa
-                    .getCount(sPrimeAPrime));
-            if (explorationValue > max) {
-                max = explorationValue;
-                a = aPrime;
+        if (random.nextDouble() < epsilon) {
+            // choose random action
+            int item = random.nextInt(actionsFunction.actions(sPrime).size());
+            int i = 0;
+            for (A action : actionsFunction.actions(sPrime)) {
+                if (i == item) {
+                    a = action;
+                    break;
+                }
+                i++;
             }
+        } else {
+            // choose best action by estimated utility
+            List<Pair<A, Double>> actionReward = new ArrayList<>();
+            for (A aPrime : actionsFunction.actions(sPrime)) {
+                Pair<S, A> sPrimeAPrime = new Pair<>(sPrime, aPrime);
+                double explorationValue = f(Q.get(sPrimeAPrime), Nsa
+                        .getCount(sPrimeAPrime));
+                actionReward.add(new Pair<>(aPrime, explorationValue));
+            }
+            actionReward.sort(Comparator.comparing(Pair::getB, Collections.reverseOrder()));
+            double max = actionReward.get(0).getB();
+            List<A> maxActions = new ArrayList<>();
+            for (Pair<A, Double> aReward : actionReward) {
+                if (aReward.getB() < max - errorEpsilon)
+                    break;
+                maxActions.add(aReward.getA());
+            }
+            int item = random.nextInt(maxActions.size());
+            a = maxActions.get(item);
         }
         return a;
+    }
+
+    public Map<Pair<S, A>, Double> getQ() {
+        return Q;
     }
 }
