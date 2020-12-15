@@ -4,6 +4,7 @@ import aima.core.probability.mdp.ActionsFunction;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 
 /**
@@ -15,7 +16,7 @@ public class MainLearning {
      * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
      * (0.01 to 0.05), so that jumping over the perfect value (which should be learned) is prevented.
      */
-    private static final double LEARNING_RATE = 0.1;
+    private static final double LEARNING_RATE = 0.2;
 
     /*
      * In q-learning an action is selected and the value of that action is calculated. For that the best action after
@@ -23,7 +24,7 @@ public class MainLearning {
      * 0 and 1. A low value is considered short-sighted, while a high value looks further into the future.
      * Due to problems when the discount factor is near 1, it is advised to use a smaller value.
      */
-    private static final double DISCOUNT_FACTOR = 0.5;
+    private static final double DISCOUNT_FACTOR = 1.0;
 
     /*
      * In order to select the next action, the q-learning agent will select either the best action by utility for
@@ -39,12 +40,12 @@ public class MainLearning {
     /*
      * To which extend two doubles may differ and be considered identical
      */
-    private static final double ERROR = 0.00001;
+    private static final double ERROR = 0.000000001;
 
     /*
      * Number of times each state is at least viseted
      */
-    private static final int Ne = 15;
+    private static final int Ne = 5;
 
     // Should be the highest (or higher than that) reward possible
     private static final double Rplus = 2.0;
@@ -73,20 +74,31 @@ public class MainLearning {
                 new QLearningAgent<>(mdp.getActionsFunction(), LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, Ne, Rplus,
                         SEED, ERROR);
 
+        Random random = new Random();
         // run the q learning agent
         // Each run is started from the initial state and run until a final state is reached.
         // This is done x times as defined below
         for (int i = 0; i < 2000; i++) {
             // get initial state and an action
             // NOTE: The initial action is not used. It is just set for the while loop
-            NetworkState curState = mdp.getInitialState();
+            //NetworkState curState = mdp.getInitialState();
+            int item = random.nextInt(mdp.states().size());
+            NetworkState curState = null;
+            int counter = 0;
+            for (NetworkState state : mdp.states()) {
+                if (counter == item) {
+                    curState = state;
+                    break;
+                }
+                counter++;
+            }
             NetworkAction curAction = new NetworkAction(3);
 
-            //System.out.println(String.format("running iteration %d...", i));
+            System.out.println(String.format("running iteration %d...", i));
             while (curAction != null) {
                 // get next action using q learning
                 curAction = agent.execute(new NetworkPerceptStateReward(curState, mdp.reward(curState)));
-                //System.out.println(String.format("State: %d, %d Action: %s", curState.getX(), curState.getY(), curAction == null ? "NULL" : curAction.toString()));
+                System.out.println(String.format("State: %d, %d Action: %s", curState.getX(), curState.getY(), curAction == null ? "NULL" : curAction.toString()));
 
                 // Do the action and set the new state
                 if (curAction != null)
@@ -96,7 +108,7 @@ public class MainLearning {
 
         // print the learned results.
         // This part prints all actions taken in order to check that all where actually found
-        Map<Pair<NetworkState, NetworkAction>, Double> Q = agent.getQ();
+        /*Map<Pair<NetworkState, NetworkAction>, Double> Q = agent.getQ();
         for (Pair<NetworkState, NetworkAction> pair : Q.keySet()) {
             System.out.println(String.format("%d, %d, %s, %.2f", pair.getA().getX(), pair.getA().getY(), pair.getB() == null ? "NULL" : pair.getB().toString(), Q.get(pair)));
         }
@@ -118,6 +130,11 @@ public class MainLearning {
         }
         for (NetworkState state : policy.keySet()) {
             System.out.println(state.toString() + ": " + policy.get(state).toString());
+        }*/
+
+        Map<NetworkState, Double> util = agent.getUtility();
+        for (NetworkState state : util.keySet()) {
+            System.out.println(state.toString() + ", " + util.get(state));
         }
     }
 

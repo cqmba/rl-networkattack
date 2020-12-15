@@ -316,8 +316,4 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
         }
         return a;
     }
-
-    public Map<Pair<S, A>, Double> getQ() {
-        return Q;
-    }
 }
