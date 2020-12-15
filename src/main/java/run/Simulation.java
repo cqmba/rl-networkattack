@@ -44,15 +44,16 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state);
-        SimpleActionsPrint.print(adversaryActionSetMap, state.getCurrentActor());
+        NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
+        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
+        SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
         //for now do this manually
         AdversaryAction nextAction = AdversaryAction.ACTIVE_SCAN_IP_PORT;
         Set<NetworkNode.TYPE> targets = adversaryActionSetMap.get(nextAction);
         NetworkNode.TYPE target = NetworkNode.TYPE.ROUTER;
         if (targets.contains(target)){
             System.out.println("........Performing ACTION "+nextAction.toString()+" on "+target.toString()+"..........");
-            State nextState = State.performGivenAction(Simulation.state, nextAction, target);
+            State nextState = State.performGivenAction(Simulation.state, nextAction, target, currentActor);
             SimpleStatePrint.print(nextState);
         }
     }

@@ -15,14 +15,13 @@ public class State implements Serializable {
 
     private NetworkKnowledge networkKnowledge;
     //used to determine which Node an Action is executed FROM in PostCondition Of Action
-    private NetworkNode.TYPE currentActor;
+    //private NetworkNode.TYPE currentActor;
     //Map for the SoftwareKnowledge of the adversary for each NetworkNode
     private Map<NetworkNode.TYPE,Set<SoftwareKnowledge>> softwareKnowledgeMap = new HashMap<>();
 
     public State() {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = new NetworkKnowledgeImpl();
-        this.currentActor = NetworkNode.TYPE.ADVERSARY;
     }
 
     public static State getStartState(){
@@ -32,11 +31,11 @@ public class State implements Serializable {
     }
 
     //assumes next acting node was determined already, not sure when this actually happens
-    public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current){
+    public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current, NetworkNode.TYPE currentActor){
         //TODO
         Map<AdversaryAction, Set<NetworkNode.TYPE>> targetsByAction = new HashMap<>();
         for (AdversaryAction action: AdversaryAction.values()){
-            Set<NetworkNode.TYPE> targets = action.getTargetsWhichFulfillPrecondition(current);
+            Set<NetworkNode.TYPE> targets = action.getTargetsWhichFulfillPrecondition(current,currentActor);
             if (!targets.isEmpty()){
                 targetsByAction.put(action, targets);
             }
@@ -45,8 +44,8 @@ public class State implements Serializable {
     }
 
     //perform a certain Action from an acting node towards a target node
-    public static State performGivenAction(State s, AdversaryAction action, NetworkNode.TYPE target){
-        return action.executePostConditionOnTarget(target, s);
+    public static State performGivenAction(State s, AdversaryAction action, NetworkNode.TYPE target, NetworkNode.TYPE currentActor){
+        return action.executePostConditionOnTarget(target, s, currentActor);
     }
 
     public void addNodeKnowledge(NetworkNode.TYPE node){
@@ -101,17 +100,13 @@ public class State implements Serializable {
         return nodeKnowledgeMap;
     }
 
-    public NetworkNode.TYPE getCurrentActor() {
-        return currentActor;
-    }
+
 
     public Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> getSoftwareKnowledgeMap() {
         return softwareKnowledgeMap;
     }
 
-    public void setCurrentActor(NetworkNode.TYPE currentActor) {
-        this.currentActor = currentActor;
-    }
+
 
     Boolean softwareContainedInSet(String name , Set<SoftwareKnowledge> softwareKnowledgeSet){
         for(SoftwareKnowledge s : softwareKnowledgeSet){
