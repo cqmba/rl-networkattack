@@ -5,7 +5,6 @@ import aima.core.agent.Action;
 import environment.*;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
-import org.w3c.dom.Node;
 import run.Simulation;
 
 import java.util.*;
@@ -141,10 +140,12 @@ public enum AdversaryAction implements Action {
     VALID_ACCOUNTS {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState) {
+            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentState);
             Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
             for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
                 for(Data data :currentState.getNodeKnowledgeMap().get(node).getKnownData()){
-                    if(data.containsCredentials()){
+                    //check if data is a credential and the node is attackable from the current actor
+                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())){
                         nodesWithCredentials.add(data.getCredentials().getNode());
                     }
                 }
@@ -207,7 +208,7 @@ public enum AdversaryAction implements Action {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
             for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
                 //check if we have  root access on the node
-                if(currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
+                if(currentState.getCurrentActor().equals(node) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
                     attackableNodes.add(node);
                 }
             }
@@ -270,12 +271,11 @@ public enum AdversaryAction implements Action {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState) {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
-                //check if we have access on the node
-                if(currentState.getNodeKnowledgeMap().get(node).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    attackableNodes.add(node);
-                }
+            //check if we have access on the node
+            if(currentState.getNodeKnowledgeMap().containsKey(currentState.getCurrentActor()) && (currentState.getNodeKnowledgeMap().get(currentState.getCurrentActor()).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentState.getCurrentActor()).hasAccessLevelRoot())){
+                attackableNodes.add(currentState.getCurrentActor());
             }
+
             return attackableNodes;
         }
 
@@ -337,11 +337,9 @@ public enum AdversaryAction implements Action {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState) {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
-                //check if we have access on the node
-                if(currentState.getNodeKnowledgeMap().get(node).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    attackableNodes.add(node);
-                }
+            //check if we have access on the node
+            if(currentState.getNodeKnowledgeMap().containsKey(currentState.getCurrentActor()) && (currentState.getNodeKnowledgeMap().get(currentState.getCurrentActor()).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentState.getCurrentActor()).hasAccessLevelRoot())){
+                attackableNodes.add(currentState.getCurrentActor());
             }
             return attackableNodes;
         }
