@@ -5,16 +5,52 @@ import aima.core.probability.mdp.ActionsFunction;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 
 /**
  * This class runs and initializes the Q-Learning Agent.
+ * The Scenario is a Cellworld as follows
+ *
+ * -------------------------------------
+ * |  x  |     |     |||||||     |     |
+ * -------------------------------------
+ * |||||||||||||     |||||||     |     |
+ * -------------------------------------
+ * |     |     |     |     |     | 1.0 |
+ * -------------------------------------
+ * |     |||||||||||||||||||     |     |
+ * -------------------------------------
+ * |     | 2.0 |     |     |     |     |
+ * -------------------------------------
+ *
+ * Each cell is a state with x and y coordinate, where 0, 0 is the top left corner and 5, 4 is the bottom right corner.
+ * The x at the top left cell is the starting position, aka the initial state. The filled out cells are walls where
+ * the agent cannot move to. The 1.0 and 2.0 are final states with reward 1 and 2. The task for the Q-Learning agent
+ * is to find for each cell the best action path (policy) to get a high reward. Each cell except the final states have
+ * no reward and each action is for free and does not reduce the reward.
+ *
+ * The output of the algorithm is each cell and the corresponding action taken at run i. Note that for each run the
+ * initial state of the algorithm is selected at random and the actual initial state is ignored. At a later point the
+ * actual initial state, which is marked with x, will be used to print the learned policy, but for learning purposes
+ * it shows a lot better results to choose a random starting point at each run.
+ *
+ * At the end another output is printed. It shows each state with its expected utility. So if a state has utility 1.999
+ * or similar, it means that it will choose an action path, which will lead to the finals state 2.0. If it has utility
+ * 0.999 it will lead to the final state 1.0.
+ *
+ * Action NULL means that it is the final state and there is no action to be taken available.
+ *
+ * Note that the learning process is done a number of times. So with each iteration the agent goes from a starting state
+ * until he reaches a final state. When the number of iterations is picked high enough, it should end up with having
+ * an expected value of nearly 2.0 for every cell, since he can move from anywhere to the final state 2.0 (except the
+ * other final state of course). When that point is reached however, the agent cannot distinguish in which direction
+ * the best final state is. So he wanders randomly around until he reaches the final state 2.0. This is expected
+ * behaviour and not a bug. It could be changed by giving each action done a penalty.
  */
 public class MainLearning {
     /*
      * Learning Rate determines how much new information is used instead of old and is between 0 and 1. A learning rate
      * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
-     * (0.01 to 0.05), so that jumping over the perfect value (which should be learned) is prevented.
+     * (0.01 to 0.1), so that jumping over the perfect value (which should be learned) is prevented.
      */
     private static final double LEARNING_RATE = 0.2;
 
@@ -52,8 +88,9 @@ public class MainLearning {
 
 
     /**
-     * Main Function, which initializes the MDP and runs the Q Leaerning Agent. At the end it prints the policy that
-     * was learned.
+     * Main Function, which initializes the MDP and runs the Q Learning Agent. It prints each run, starting from a
+     * random state to an end state, which actions where taken at which state. At the end it prints for each state
+     * the learned expected utility it will return.
      * @param args
      */
     public static void main(String[] args) {
@@ -74,14 +111,15 @@ public class MainLearning {
                 new QLearningAgent<>(mdp.getActionsFunction(), LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, Ne, Rplus,
                         SEED, ERROR);
 
-        Random random = new Random();
+        // Used to get a random initial state
+        Random random = new Random(SEED + 1);
+
         // run the q learning agent
-        // Each run is started from the initial state and run until a final state is reached.
-        // This is done x times as defined below
+        // Each run is started from a random state and run until a final state is reached.
+        // This is done x times as defined in the "for" below
         for (int i = 0; i < 2000; i++) {
-            // get initial state and an action
-            // NOTE: The initial action is not used. It is just set for the while loop
-            //NetworkState curState = mdp.getInitialState();
+            // get random initial state and an action
+            // NOTE: The initial action is not used. It is just set for the while loop. Will be later changed to repeat until TODO
             int item = random.nextInt(mdp.states().size());
             NetworkState curState = null;
             int counter = 0;
@@ -94,11 +132,12 @@ public class MainLearning {
             }
             NetworkAction curAction = new NetworkAction(3);
 
-            System.out.println(String.format("running iteration %d...", i));
+            // run the simulation from curState until we reach a final state
+            System.out.printf("Running iteration %d...%n", i);
             while (curAction != null) {
                 // get next action using q learning
                 curAction = agent.execute(new NetworkPerceptStateReward(curState, mdp.reward(curState)));
-                System.out.println(String.format("State: %d, %d Action: %s", curState.getX(), curState.getY(), curAction == null ? "NULL" : curAction.toString()));
+                System.out.printf("\tState: x=%d, y=%d \tAction: %s%n", curState.getX(), curState.getY(), curAction == null ? "NULL" : curAction.toString());
 
                 // Do the action and set the new state
                 if (curAction != null)
@@ -107,36 +146,16 @@ public class MainLearning {
         }
 
         // print the learned results.
-        // This part prints all actions taken in order to check that all where actually found
-        /*Map<Pair<NetworkState, NetworkAction>, Double> Q = agent.getQ();
-        for (Pair<NetworkState, NetworkAction> pair : Q.keySet()) {
-            System.out.println(String.format("%d, %d, %s, %.2f", pair.getA().getX(), pair.getA().getY(), pair.getB() == null ? "NULL" : pair.getB().toString(), Q.get(pair)));
-        }
-        System.out.println(String.format("Numbers of Actions: %d", Q.size()));
-
-
-        // This part prints the policy. First the best action per state is found, then printed.
-        Set<NetworkState> stateSet = mdp.states();
-        HashMap<NetworkState, Pair<NetworkAction, Double>> policy = new HashMap<>();
-        for (NetworkState state : stateSet) {
-            double max = Double.NEGATIVE_INFINITY;
-            for (Pair<NetworkState, NetworkAction> pair : Q.keySet()) {
-                if (pair.getA().equals(state)) {
-                    if (Q.get(pair) > max) {
-                        policy.put(state, new Pair<>(pair.getB(), Q.get(pair)));
-                    }
-                }
-            }
-        }
-        for (NetworkState state : policy.keySet()) {
-            System.out.println(state.toString() + ": " + policy.get(state).toString());
-        }*/
-
+        // Prints each states calculated utility
+        // The actual actions taken in each state will be implemented later
+        System.out.println("Expected utility per state:");
         Map<NetworkState, Double> util = agent.getUtility();
         for (NetworkState state : util.keySet()) {
-            System.out.println(state.toString() + ", " + util.get(state));
+            System.out.printf("\tState: x=%d, y=%d \tUtiliy: %.16f%n", state.getX(), state.getY(), util.get(state));
         }
     }
+
+    // ###################################### The following is setting up the environment
 
     /**
      * Initializes the states
