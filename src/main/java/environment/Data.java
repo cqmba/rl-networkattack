@@ -1,6 +1,8 @@
 package environment;
 
-public class Data {
+import java.io.Serializable;
+
+public class Data implements Serializable {
     //private NetworkNode source;
     private Boolean containsCredentials;
     private GAINED_KNOWLEDGE gain;

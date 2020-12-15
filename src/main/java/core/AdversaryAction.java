@@ -7,6 +7,10 @@ import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import run.Simulation;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -24,7 +28,7 @@ public enum AdversaryAction implements Action {
 
             NetworkNode node = Simulation.getNodeByType(target);
             //check IP or hostname was gained
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
             if (!knownNodes.contains(target)){
                 newState.addNodeKnowledge(target);
@@ -85,15 +89,16 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
+            State newState = (State) deepCopy(currentState);
             NetworkNode node = Simulation.getNodeByType(target);
             Set<Software> localSoftwareSet = node.getLocalSoftware();
             Set<Software> remoteSoftwareSet = node.getRemoteSoftware();
-            Set<SoftwareKnowledge> softwareKnowledgeSet = currentState.getSoftwareKnowledgeMap().get(target);
+            Set<SoftwareKnowledge> softwareKnowledgeSet = newState.getSoftwareKnowledgeMap().get(target);
             // add to every software we know the version and the vulnerabilities
             addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
             addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
             //TODO fix
-            return currentState;
+            return newState;
         }
 
         private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
@@ -130,7 +135,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             // check if we have not root access so we do not override it
             if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
@@ -155,7 +160,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             NodeKnowledge nodeKnowledge = newState.getNodeKnowledgeMap().get(target);
             for(Data data : nodeKnowledge.getKnownData()){
                 if(data.containsCredentials()){
@@ -195,7 +200,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             // check if we have not root access so we do not override it
             if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
@@ -217,7 +222,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             //create new credentials
             Data data = new Data(new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
             NetworkNode node = Simulation.getNodeByType(target);
@@ -251,7 +256,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
             return newState;
         }
@@ -281,7 +286,7 @@ public enum AdversaryAction implements Action {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             NetworkNode node = Simulation.getNodeByType(target);
             // check if node is already in our software knowledge map
             if(newState.getSoftwareKnowledgeMap().containsKey(node.getType())) {
@@ -347,7 +352,7 @@ public enum AdversaryAction implements Action {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState) {
             NetworkNode node = Simulation.getNodeByType(target);
-            State newState = currentState;
+            State newState = (State) deepCopy(currentState);
             Set<Data> dataSet = currentState.getNodeKnowledgeMap().get(target).getKnownData();
             for(Data data : node.getDataSet()){
                 if(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot()){
@@ -469,5 +474,23 @@ public enum AdversaryAction implements Action {
             viewableNodeTypes.add(n.getType());
         }
         return viewableNodeTypes;
+    }
+
+    /**
+     * Makes a deep copy of any Java object that is passed.
+     */
+    private static Object deepCopy(Object object) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ObjectOutputStream outputStrm = new ObjectOutputStream(outputStream);
+            outputStrm.writeObject(object);
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+            ObjectInputStream objInputStream = new ObjectInputStream(inputStream);
+            return objInputStream.readObject();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

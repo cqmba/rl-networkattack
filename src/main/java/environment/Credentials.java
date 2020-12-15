@@ -1,6 +1,8 @@
 package environment;
 
-public class Credentials {
+import java.io.Serializable;
+
+public class Credentials implements Serializable {
     private TYPE type;
     private ACCESS_GRANT_LEVEL accessGrantLevel;
     private String useForPrivIP;

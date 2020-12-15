@@ -6,12 +6,13 @@ import environment.Software;
 import knowledge.DataKnowledge;
 import knowledge.NetworkKnowledge;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class NetworkKnowledgeImpl implements NetworkKnowledge {
+public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     private Set<NetworkNode.TYPE> nodes;
 
     public NetworkKnowledgeImpl(){
