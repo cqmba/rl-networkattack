@@ -44,9 +44,7 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        Set<State> states = State.computeListOfPossibleStates(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
-
         Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
         SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
         //for now do this manually
@@ -74,7 +72,6 @@ public class Simulation {
         //add Database
         Set<Software> dbSWLocal = new LinkedHashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
-        //simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ADVERSARY,"","","","","",new HashSet<>(),new HashSet<>(), new HashSet<>());
         //should add data here that can be sniffed in the network
         simWorld.initializeNetworkTopology();
     }
