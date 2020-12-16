@@ -62,4 +62,21 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     public boolean isRemote() {
         return remote;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SoftwareKnowledgeImpl)) return false;
+        SoftwareKnowledgeImpl that = (SoftwareKnowledgeImpl) o;
+        return remote == that.remote &&
+                Objects.equals(name, that.name) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(vulnerabilities, that.vulnerabilities);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(name, version, vulnerabilities, remote);
+    }
 }

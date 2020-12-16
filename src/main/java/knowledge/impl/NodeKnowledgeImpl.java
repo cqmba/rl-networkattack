@@ -19,7 +19,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private String osVersion;
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
-    private Set<Data> dataSet;
+    private Set<Data> dataSet ;
     private NetworkNode.ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
@@ -158,15 +158,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         return this;
     }
 
-    @Override
-    public NodeKnowledge addNewLocalSoftware(String sw) {
-        return this;
-    }
 
-    @Override
-    public NodeKnowledge addNewRemoteSoftware(String sw) {
-        return this;
-    }
 
     @Override
     public boolean equals(Object o) {

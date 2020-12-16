@@ -126,6 +126,16 @@ public class State implements Serializable {
                     newSetofStates.add(a.action.executePostConditionOnTarget(a.target,s,a.currentActor));
                 }
             }
+            for(State s : states){
+                int i=0;
+                for(State s2 :states){
+                    if(s.equals(s2)){
+                        i+=1;
+                    }
+                }
+                System.out.println(i);
+
+            }
             states = newSetofStates;
         }
         return states;
@@ -146,11 +156,12 @@ public class State implements Serializable {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof State) {
-            State other = (State) o;
-            return this.softwareKnowledgeMap.equals(other.softwareKnowledgeMap) && this.networkKnowledge.equals(other.networkKnowledge) && this.nodeKnowledgeMap.equals(other.nodeKnowledgeMap);
-        }
-        return false;
+        if (this == o) return true;
+        if (!(o instanceof State)) return false;
+        State state = (State) o;
+        return Objects.equals(nodeKnowledgeMap, state.nodeKnowledgeMap) &&
+                Objects.equals(networkKnowledge, state.networkKnowledge) &&
+                Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap);
     }
 
     @Override

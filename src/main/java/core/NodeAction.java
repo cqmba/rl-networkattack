@@ -1,5 +1,6 @@
 package core;
 
+import aima.core.agent.Action;
 import environment.NetworkNode;
 import q_learning.NetworkAction;
 
@@ -7,7 +8,7 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class NodeAction {
+public class NodeAction implements Action {
     NetworkNode.TYPE target;
     NetworkNode.TYPE currentActor;
     AdversaryAction action;
@@ -53,6 +54,10 @@ public class NodeAction {
         return allPossibleActionsWithChangeState;
     }
 
+    @Override
+    public boolean isNoOp() {
+        return false;
+    }
 }
 
 

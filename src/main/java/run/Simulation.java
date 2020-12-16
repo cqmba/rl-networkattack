@@ -44,6 +44,7 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
+        Set<State> states = State.computeListOfPossibleStates(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
         //for now do this manually
