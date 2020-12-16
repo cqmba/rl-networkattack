@@ -29,47 +29,68 @@ public enum AdversaryAction implements Action {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
 
             NetworkNode node = Simulation.getNodeByType(target);
-            //check IP or hostname was gained
             State newState = (State) deepCopy(currentState);
             Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
             if (!knownNodes.contains(target)){
                 newState.addNodeKnowledge(target);
+            }
+            if (!newState.getNodeKnowledgeMap().get(target).hasPubIp()){
                 newState.addNodePubIp(target, node.getPub_ip());
-                //I dont think we see private IP on an IP Scan, only if we get system access
+            }
+            if (!newState.getNodeKnowledgeMap().get(target).hasHostname()){
                 newState.addNodeHostname(target, node.getHostname());
             }
             //implement router port forwarding
             if (target.equals(NetworkNode.TYPE.ROUTER)){
-                if (!knownNodes.contains(NetworkNode.TYPE.WEBSERVER)){
-                    NetworkNode.TYPE actualTarget = NetworkNode.TYPE.WEBSERVER;
-                    newState.setNetworkKnowledge(currentState.getNetworkKnowledge().addNewNode(NetworkNode.TYPE.WEBSERVER));
-                    newState.addNodeKnowledge(actualTarget);
-                    newState.addNodePubIp(actualTarget, node.getPub_ip());
-                    //I dont think we see private IP on an IP Scan, only if we get system access
-                    newState.addNodeHostname(actualTarget, node.getHostname());
-                }
-                if (!knownNodes.contains(NetworkNode.TYPE.ADMINPC)){
-                    NetworkNode.TYPE actualTarget = NetworkNode.TYPE.ADMINPC;
-                    newState.setNetworkKnowledge(currentState.getNetworkKnowledge().addNewNode(NetworkNode.TYPE.ADMINPC));
-                    newState.addNodeKnowledge(actualTarget);
-                    newState.addNodePubIp(actualTarget, node.getPub_ip());
-                    //I dont think we see private IP on an IP Scan, only if we get system access
-                    newState.addNodeHostname(actualTarget, node.getHostname());
+                for (NetworkNode.TYPE relayTargets: Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC)){
+                    if (!knownNodes.contains(relayTargets)){
+                        newState.addNodeKnowledge(relayTargets);
+                        newState.addNodePubIp(relayTargets, node.getPub_ip());
+                        //I dont think we see private IP on an IP Scan, only if we get system access
+                        newState.addNodeHostname(relayTargets, node.getHostname());
+                    }
                 }
             }
 
             NodeKnowledge nodeKnowledge = currentState.getNodeKnowledgeMap().get(target);
             //Get all the visible remote software FROM the node, where the scan was executed from
             Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
-            //can only see SW running on target
-            if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
-                Set<Software> potentiallyNewSoftware = remotelyVisibleSWInNetwork.get(target);
-                for (Software sw: potentiallyNewSoftware){
-                    if (!nodeKnowledge.isRemoteServiceKnown(sw.getName())){
-                        newState.addNodeRemoteSoftwareName(target, sw.getName());
+            //when scanning on router, get port forwarded sw only
+            if (target.equals(NetworkNode.TYPE.ROUTER)){
+                Set<NetworkNode.TYPE> targets = new HashSet<>();
+                targets.add(NetworkNode.TYPE.WEBSERVER);
+                targets.add(NetworkNode.TYPE.ADMINPC);
+                for (NetworkNode.TYPE scanned:targets){
+                    for (Software software:remotelyVisibleSWInNetwork.get(scanned)){
+                        newState.addNodeRemoteSoftwareName(scanned, software.getName(), true);
                     }
                 }
+            }else if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
+                for (Software sw: remotelyVisibleSWInNetwork.get(target)){
+                    newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
+                }
             }
+
+            /*
+            if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
+                Set<Software> potentiallyNewSoftware = remotelyVisibleSWInNetwork.get(target);
+                //Predicate<SoftwareKnowledge> isRemoteSw = software -> software.isRemote();
+                Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> swKnowledge = newState.getSoftwareKnowledgeMap();
+                //if nothing was known about target
+                if (swKnowledge.isEmpty() || !swKnowledge.containsKey(target)){
+                    Set<SoftwareKnowledge> gainedSwKnowledge = new HashSet<>();
+                    for (Software sw:potentiallyNewSoftware){
+                        gainedSwKnowledge.add(SoftwareKnowledge.addNew(sw.getName(), true));
+
+                    }
+                    swKnowledge.put(target, gainedSwKnowledge);
+                }
+                for (Software sw: potentiallyNewSoftware){
+                    newState.addNodeRemoteSoftwareName(target, sw.getName());
+                }
+            }
+
+             */
             return newState;
         }
     },
@@ -123,7 +144,7 @@ public enum AdversaryAction implements Action {
                 //check if we could attack the node from our current location
                 if(viewableNodes.contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerability()) {
+                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
                             //todo maybe we should check if we have already access?
                             if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_PUBLIC_FACING_APPLICATION)) {
                                 attackableNodes.add(node);
@@ -189,7 +210,7 @@ public enum AdversaryAction implements Action {
                 //check if we could attack the node from our current location
                 if(viewableNodes.contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerability()) {
+                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
                             if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_FOR_CLIENT_EXECUTION)) {
                                 attackableNodes.add(node);
                             }
@@ -244,7 +265,7 @@ public enum AdversaryAction implements Action {
                 //check if we could attack the node from our current location
                 if(viewableNodes.contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerability()) {
+                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
                             //check if we have user access on the node
                             if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_FOR_PRIVILEGE_ESCALATION) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelUser()) {
                                 attackableNodes.add(node);
@@ -300,7 +321,7 @@ public enum AdversaryAction implements Action {
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
                     }else{
-                        softwareKnowledge = SoftwareKnowledge.addNew(s.getName());
+                        softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
                     }
@@ -308,7 +329,7 @@ public enum AdversaryAction implements Action {
             }else{
                 Set<SoftwareKnowledge> softwareKnowledgeSet = new HashSet<>();
                 for(Software s : node.getLocalSoftware()){
-                    SoftwareKnowledge softwareKnowledge = SoftwareKnowledge.addNew(s.getName());
+                    SoftwareKnowledge softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                     softwareKnowledge.addVersion(s.getVersion());
                     softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
                     softwareKnowledgeSet.add(softwareKnowledge);
@@ -371,67 +392,6 @@ public enum AdversaryAction implements Action {
 
     private static final Set<AdversaryAction> _actions = new LinkedHashSet<>();
 
-    public static State ipScan(State s, NetworkNode.TYPE target){
-
-        //TODO implement
-        return null;
-    }
-
-    public static State vulnScan(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State exploitPFA(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State validAccount(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State exploitCE(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State createAccount(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State exploitPE(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State mitm(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State softwareDiscovery(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State exploitRS(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State remoteService(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
-    public static State dataFromLocalSystem(State s, NetworkNode.TYPE target){
-        //TODO implement
-        return null;
-    }
-
     public static final Set<AdversaryAction> allActions(){
         return _actions;
     }
@@ -467,7 +427,7 @@ public enum AdversaryAction implements Action {
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor);
     public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
 
-    public Set<NetworkNode.TYPE> getViewableNodes(NetworkNode.TYPE currentActor){
+    private static Set<NetworkNode.TYPE> getViewableNodes(NetworkNode.TYPE currentActor){
         NetworkNode.TYPE scanning = currentActor;
         Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
         Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());

@@ -39,10 +39,8 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     }
 
     @Override
-    public NetworkKnowledge addNewNode(NetworkNode.TYPE node) {
-        Set<NetworkNode.TYPE> newNodes = new HashSet<>(nodes);
-        newNodes.add(node);
-        return new NetworkKnowledgeImpl(newNodes);
+    public void addNewNode(NetworkNode.TYPE node) {
+        nodes.add(node);
     }
 
     @Override

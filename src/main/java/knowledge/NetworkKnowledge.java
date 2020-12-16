@@ -21,7 +21,7 @@ public interface NetworkKnowledge {
 
     Map<NetworkNode.TYPE, List<Software>> getMapOfNodeRemoteSWForNodesWithoutEstablishedSystemAccess();
 
-    NetworkKnowledge addNewNode(NetworkNode.TYPE node);
+    void addNewNode(NetworkNode.TYPE node);
 
     void addSniffedData(Data data);
 }

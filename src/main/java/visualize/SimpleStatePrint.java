@@ -2,8 +2,12 @@ package visualize;
 
 import core.State;
 import environment.NetworkNode;
+import environment.Vulnerability;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
+import knowledge.SoftwareKnowledge;
+
+import java.util.Set;
 
 public class SimpleStatePrint {
     public static void print(State state){
@@ -18,6 +22,25 @@ public class SimpleStatePrint {
         for (NetworkNode.TYPE node:state.getNodeKnowledgeMap().keySet()){
             System.out.println("\tNode Detail: "+node.toString());
             printNodeKnowledge(state.getNodeKnowledgeMap().get(node));
+            if (state.getSoftwareKnowledgeMap().containsKey(node)){
+                System.out.println("\t\tSoftware:");
+                printNodeSoftwareKnowledge(state.getSoftwareKnowledgeMap().get(node));
+            }
+        }
+    }
+
+    private static void printNodeSoftwareKnowledge(Set<SoftwareKnowledge> softwareKnowledges) {
+        for (SoftwareKnowledge sw:softwareKnowledges){
+            System.out.println("\t\t\t"+sw.getName());
+            if (sw.hasVersion()){
+                System.out.println("\t\t\tVersion: "+sw.getVersion());
+            }
+            if (sw.hasVulnerability()){
+                System.out.println("\t\t\tVulnerabilities found!");
+                for (Vulnerability vuln:sw.getVulnerabilities()){
+                    System.out.println("\t\t\t\t"+vuln.getType());
+                }
+            }
         }
     }
 
@@ -31,6 +54,7 @@ public class SimpleStatePrint {
     private static void printNodeKnowledge(NodeKnowledge knowledge){
         if (knowledge.hasPubIp()) System.out.println("\t\t\tPubIP known");
         if (knowledge.hasPrivIp()) System.out.println("\t\t\tPrivIP known");
+        if (knowledge.hasHostname()) System.out.println("\t\t\tHostname known");
         if (knowledge.hasOperatingSystem()) System.out.println("\t\t\tOS known");
         if (knowledge.hasOSVersion()) System.out.println("\t\t\tOS Version known");
         if (knowledge.hasAccessLevelUser()) System.out.println("\t\t\tHas user access");

@@ -80,6 +80,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     public boolean hasFoundData(Data data) {
         return false;
     }
+    /*
 
     @Override
     public Set<SoftwareKnowledge> getLocalSoftwareKnowledge() {
@@ -92,13 +93,25 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public Set<Data> getKnownData() {
-        return this.dataSet;
+    public boolean isRemoteServiceKnown(String software) {
+        return false;
     }
 
     @Override
-    public boolean isRemoteServiceKnown(String software) {
-        return false;
+    public NodeKnowledge addNewLocalSoftware(String sw) {
+        return this;
+    }
+
+    @Override
+    public NodeKnowledge addNewRemoteSoftware(String sw) {
+        return this;
+    }
+
+     */
+
+    @Override
+    public Set<Data> getKnownData() {
+        return this.dataSet;
     }
 
     @Override
@@ -140,16 +153,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     @Override
     public NodeKnowledge addData(Data data) {
-        return this;
-    }
-
-    @Override
-    public NodeKnowledge addNewLocalSoftware(String sw) {
-        return this;
-    }
-
-    @Override
-    public NodeKnowledge addNewRemoteSoftware(String sw) {
         return this;
     }
 }

@@ -29,13 +29,13 @@ public interface NodeKnowledge {
 
     boolean hasFoundData(Data data);
 
-    Set<SoftwareKnowledge> getLocalSoftwareKnowledge();
+    //Set<SoftwareKnowledge> getLocalSoftwareKnowledge();
 
-    Set<SoftwareKnowledge> getRemoteSoftwareKnowledge();
+    //Set<SoftwareKnowledge> getRemoteSoftwareKnowledge();
 
     Set<Data> getKnownData();
 
-    boolean isRemoteServiceKnown(String software);
+    //boolean isRemoteServiceKnown(String software);
 
     Set<DataKnowledge> getDataKnowledge();
 
@@ -53,8 +53,8 @@ public interface NodeKnowledge {
 
     NodeKnowledge addData(Data data);
 
-    NodeKnowledge addNewLocalSoftware(String sw);
+    //NodeKnowledge addNewLocalSoftware(String sw);
 
-    NodeKnowledge addNewRemoteSoftware(String sw);
+    //NodeKnowledge addNewRemoteSoftware(String sw);
 
 }

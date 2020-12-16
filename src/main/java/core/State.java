@@ -49,8 +49,8 @@ public class State implements Serializable {
     }
 
     public void addNodeKnowledge(NetworkNode.TYPE node){
-        this.networkKnowledge= networkKnowledge.addNewNode(node);
-        this.nodeKnowledgeMap.put(node, NodeKnowledge.addNode(node));
+        networkKnowledge.addNewNode(node);
+        nodeKnowledgeMap.put(node, NodeKnowledge.addNode(node));
     }
 
     public void addNodeHostname(NetworkNode.TYPE node, String hostname){
@@ -69,26 +69,20 @@ public class State implements Serializable {
         nodeKnowledgeMap.replace(node, old.addPrivIp(privIp));
     }
 
-    public void addNodeRemoteSoftwareName(NetworkNode.TYPE node, String swName){
+    public void addNodeRemoteSoftwareName(NetworkNode.TYPE node, String swName, boolean remote){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
-        //SoftwareKnowledge swKnowledge = SoftwareKnowledge.addNew(swName);
+        //node already entered
         if(softwareKnowledgeMap.containsKey(node)) {
             Set<SoftwareKnowledge> softwareKnowledgeSet = softwareKnowledgeMap.get(node);
             //check if the software is already known
             if (!softwareContainedInSet(swName, softwareKnowledgeSet)) {
-                softwareKnowledgeSet.add(SoftwareKnowledge.addNew(swName));
-                softwareKnowledgeMap.put(node,softwareKnowledgeSet);
-                //todo: do we need this?
-                nodeKnowledgeMap.replace(node, old.addNewRemoteSoftware(swName));
+                Set<SoftwareKnowledge> newKnowledge = new HashSet<>(softwareKnowledgeSet);
+                newKnowledge.add(SoftwareKnowledge.addNew(swName, remote));
+                softwareKnowledgeMap.replace(node, newKnowledge);
             }
         }else{
             //for the case that the node is not contained in the map, create entry in the map
-            Set<SoftwareKnowledge> softwareKnowledgeSet = new HashSet<>();
-            SoftwareKnowledge softwareKnowledge = SoftwareKnowledge.addNew(swName);
-            softwareKnowledgeSet.add(softwareKnowledge);
-            softwareKnowledgeMap.put(node,softwareKnowledgeSet);
-            //todo: do we need this?
-            nodeKnowledgeMap.replace(node, old.addNewRemoteSoftware(swName));
+            softwareKnowledgeMap.put(node, Set.of(SoftwareKnowledge.addNew(swName, remote)));
         }
     }
 

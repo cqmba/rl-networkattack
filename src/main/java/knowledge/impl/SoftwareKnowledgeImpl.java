@@ -11,10 +11,14 @@ import java.util.Set;
 public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     private String name;
     private String version;
-    private Set<Vulnerability> vulnerabilities = new HashSet<>();
+    private Set<Vulnerability> vulnerabilities;
+    private boolean remote;
 
-    public SoftwareKnowledgeImpl(String name) {
+    public SoftwareKnowledgeImpl(String name, boolean remote) {
         this.name = name;
+        this.version = "";
+        this.vulnerabilities = new HashSet<>();
+        this.remote = remote;
     }
 
 
@@ -34,7 +38,27 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     }
 
     @Override
-    public Set<Vulnerability> getVulnerability() {
+    public String getVersion() {
+        return version;
+    }
+
+    @Override
+    public Set<Vulnerability> getVulnerabilities() {
         return this.vulnerabilities;
+    }
+
+    @Override
+    public boolean hasVersion() {
+        return !version.isEmpty();
+    }
+
+    @Override
+    public boolean hasVulnerability() {
+        return !vulnerabilities.isEmpty();
+    }
+
+    @Override
+    public boolean isRemote() {
+        return remote;
     }
 }

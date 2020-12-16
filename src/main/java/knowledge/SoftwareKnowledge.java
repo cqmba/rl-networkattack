@@ -7,13 +7,17 @@ import java.util.Set;
 
 public interface SoftwareKnowledge {
 
-    static SoftwareKnowledge addNew(String service) {
-        return new SoftwareKnowledgeImpl(service);
+    static SoftwareKnowledge addNew(String service, boolean remote) {
+        return new SoftwareKnowledgeImpl(service, remote);
     }
 
     //Vulnerabilities
     void addVersion(String version);
     void addVulnerabilities(Set<Vulnerability> vulnerabilities);
     String getName();
-    Set<Vulnerability> getVulnerability();
+    String getVersion();
+    Set<Vulnerability> getVulnerabilities();
+    boolean hasVersion();
+    boolean hasVulnerability();
+    boolean isRemote();
 }
