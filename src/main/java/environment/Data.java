@@ -1,7 +1,6 @@
 package environment;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 public class Data implements Serializable {
     //private NetworkNode source;
@@ -76,23 +75,5 @@ public class Data implements Serializable {
 
     public void setCredentials(Credentials credentials) {
         this.credentials = credentials;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Data)) return false;
-        Data data = (Data) o;
-        return Objects.equals(containsCredentials, data.containsCredentials) &&
-                gain == data.gain &&
-                origin == data.origin &&
-                access == data.access &&
-                Objects.equals(credentials, data.credentials);
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(containsCredentials, gain, origin, access, credentials);
     }
 }

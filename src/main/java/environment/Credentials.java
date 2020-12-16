@@ -1,7 +1,6 @@
 package environment;
 
 import java.io.Serializable;
-import java.util.Objects;
 
 public class Credentials implements Serializable {
     private TYPE type;
@@ -37,23 +36,5 @@ public class Credentials implements Serializable {
 
     public void setAccessGrantLevel(ACCESS_GRANT_LEVEL accessGrantLevel) {
         this.accessGrantLevel = accessGrantLevel;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof Credentials)) return false;
-        Credentials that = (Credentials) o;
-        return type == that.type &&
-                accessGrantLevel == that.accessGrantLevel &&
-                Objects.equals(useForPrivIP, that.useForPrivIP) &&
-                Objects.equals(useInSW, that.useInSW) &&
-                node == that.node;
-    }
-
-    @Override
-    public int hashCode() {
-
-        return Objects.hash(type, accessGrantLevel, useForPrivIP, useInSW, node);
     }
 }
