@@ -39,19 +39,19 @@ public interface NodeKnowledge {
 
     Set<DataKnowledge> getDataKnowledge();
 
-    NodeKnowledge addPubIp(String pubIp);
+    void addPubIp(String pubIp);
 
-    NodeKnowledge addPrivIp(String privIp);
+    void addPrivIp(String privIp);
 
-    NodeKnowledge addHostname(String hostname);
+    void addHostname(String hostname);
 
-    NodeKnowledge addOperationSystem(String os);
+    void addOperationSystem(String os);
 
-    NodeKnowledge addOSVersion(String osVersion);
+    void addOSVersion(String osVersion);
 
-    NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
+    void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
 
-    NodeKnowledge addData(Data data);
+    void addData(Data data);
 
     //NodeKnowledge addNewLocalSoftware(String sw);
 

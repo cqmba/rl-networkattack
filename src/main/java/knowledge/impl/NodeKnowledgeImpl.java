@@ -19,7 +19,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private String osVersion;
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
-    private Set<Data> dataSet ;
+    private Set<Data> dataSet;
     private NetworkNode.ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
@@ -68,7 +68,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     @Override
     public boolean hasAccessLevelUser(){
-        return (sysAccess.equals(NetworkNode.ACCESS_LEVEL.USER) || sysAccess.equals(NetworkNode.ACCESS_LEVEL.ROOT));
+        return (sysAccess.equals(NetworkNode.ACCESS_LEVEL.USER));
     }
 
     @Override
@@ -80,34 +80,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     public boolean hasFoundData(Data data) {
         return false;
     }
-    /*
-
-    @Override
-    public Set<SoftwareKnowledge> getLocalSoftwareKnowledge() {
-        return null;
-    }
-
-    @Override
-    public Set<SoftwareKnowledge> getRemoteSoftwareKnowledge() {
-        return null;
-    }
-
-    @Override
-    public boolean isRemoteServiceKnown(String software) {
-        return false;
-    }
-
-    @Override
-    public NodeKnowledge addNewLocalSoftware(String sw) {
-        return this;
-    }
-
-    @Override
-    public NodeKnowledge addNewRemoteSoftware(String sw) {
-        return this;
-    }
-
-     */
 
     @Override
     public Set<Data> getKnownData() {
@@ -120,62 +92,38 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public NodeKnowledge addPubIp(String pubIp) {
+    public void addPubIp(String pubIp) {
         this.pub_ip = pubIp;
-        return this;
     }
 
     @Override
-    public NodeKnowledge addPrivIp(String privIp) {
-        return this;
+    public void addPrivIp(String privIp) {
+        this.priv_ip = privIp;
     }
 
     @Override
-    public NodeKnowledge addHostname(String hostname) {
+    public void addHostname(String hostname) {
         this.hostname = hostname;
-        return this;
     }
 
     @Override
-    public NodeKnowledge addOperationSystem(String os) {
-        return this;
+    public void addOperationSystem(String os) {
+        this.operatingSystem = os;
     }
 
     @Override
-    public NodeKnowledge addOSVersion(String osVersion) {
-        return this;
+    public void addOSVersion(String osVersion) {
+        this.osVersion = osVersion;
     }
 
     @Override
-    public NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
-        this.sysAccess = accessLevel;
-        return this;
+    public void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
+        sysAccess = accessLevel;
     }
 
     @Override
-    public NodeKnowledge addData(Data data) {
-        this.dataSet.add(data);
-        return this;
-    }
-
-
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof NodeKnowledgeImpl)) return false;
-        NodeKnowledgeImpl that = (NodeKnowledgeImpl) o;
-        return Objects.equals(pub_ip, that.pub_ip) &&
-                Objects.equals(priv_ip, that.priv_ip) &&
-                Objects.equals(hostname, that.hostname) &&
-                Objects.equals(operatingSystem, that.operatingSystem) &&
-                Objects.equals(osVersion, that.osVersion) &&
-                Objects.equals(remoteSoftware, that.remoteSoftware) &&
-                Objects.equals(localSoftware, that.localSoftware) &&
-                Objects.equals(dataSet, that.dataSet) &&
-                sysAccess == that.sysAccess &&
-                Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
-                type == that.type;
+    public void addData(Data data) {
+        dataSet.add(data);
     }
 
     @Override

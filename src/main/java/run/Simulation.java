@@ -56,7 +56,9 @@ public class Simulation {
         targets.add(1, NetworkNode.TYPE.WEBSERVER);
         actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
         targets.add(2, NetworkNode.TYPE.ADMINPC);
-        for (int i=0; i<2;i++){
+        actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
+        targets.add(3, NetworkNode.TYPE.WEBSERVER);
+        for (int i=0; i<actions.size();i++){
             AdversaryAction action = actions.get(i);
             printPossibleActions(currentActor);
             printPerformAction(action, targets.get(i));

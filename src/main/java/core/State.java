@@ -26,8 +26,9 @@ public class State implements Serializable {
 
     public static State getStartState(){
         State start = new State();
-        start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
-        start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+        //TODO is adding these necessary/helpful?
+        //start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
+        //start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
 
         return start;
@@ -58,18 +59,32 @@ public class State implements Serializable {
 
     public void addNodeHostname(NetworkNode.TYPE node, String hostname){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
-        nodeKnowledgeMap.replace(node, old.addHostname(hostname));
+        old.addHostname(hostname);
+        nodeKnowledgeMap.replace(node, old);
     }
 
     public void addNodePubIp(NetworkNode.TYPE node, String pubIp){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
-        NodeKnowledge newNode = old.addPubIp(pubIp);
-        nodeKnowledgeMap.replace(node, newNode);
+        old.addPubIp(pubIp);
+        nodeKnowledgeMap.replace(node, old);
     }
 
     public void addNodePrivIp(NetworkNode.TYPE node, String privIp){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
-        nodeKnowledgeMap.replace(node, old.addPrivIp(privIp));
+        old.addPrivIp(privIp);
+        nodeKnowledgeMap.replace(node, old);
+    }
+
+    public void addNodeOS(NetworkNode.TYPE node, String os){
+        NodeKnowledge old = nodeKnowledgeMap.get(node);
+        old.addOperationSystem(os);
+        nodeKnowledgeMap.replace(node, old);
+    }
+
+    public void addNodeOSVersion(NetworkNode.TYPE node, String osversion){
+        NodeKnowledge old = nodeKnowledgeMap.get(node);
+        old.addOSVersion(osversion);
+        nodeKnowledgeMap.replace(node, old);
     }
 
     public void addNodeRemoteSoftwareName(NetworkNode.TYPE node, String swName, boolean remote){
@@ -140,8 +155,15 @@ public class State implements Serializable {
         return false;
     }
 
-    public void setNetworkKnowledge(NetworkKnowledge networkKnowledge) {
-        this.networkKnowledge = networkKnowledge;
+    public Set<NetworkNode.TYPE> getNodesWithoutSystemAccess(){
+        Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
+        Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
+        for (NetworkNode.TYPE node: nodes){
+            if (!nodeKnowledgeMap.get(node).hasAccessLevelUser()){
+                needsAccess.add(node);
+            }
+        }
+        return needsAccess;
     }
 
     @Override

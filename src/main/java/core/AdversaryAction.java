@@ -100,13 +100,19 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            NetworkNode node = Simulation.getNodeByType(target);
-            Set<Software> localSoftwareSet = node.getLocalSoftware();
-            Set<Software> remoteSoftwareSet = node.getRemoteSoftware();
-            Set<SoftwareKnowledge> softwareKnowledgeSet = newState.getSoftwareKnowledgeMap().get(target);
+            NetworkNode actualTarget = Simulation.getNodeByType(target);
+            Set<SoftwareKnowledge> knownSoftware = newState.getSoftwareKnowledgeMap().get(target);
             // add to every software we know the version and the vulnerabilities
-            addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
-            addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
+            addVersionAndVulnerabilities(actualTarget.getLocalSoftware(), knownSoftware);
+            addVersionAndVulnerabilities(actualTarget.getRemoteSoftware(), knownSoftware);
+            NodeKnowledge knownNode = newState.getNodeKnowledgeMap().get(target);
+            //TODO since Router can never be target (see pre), we can never obtain router OS & version
+            if (!knownNode.hasOperatingSystem()){
+                newState.addNodeOS(target, actualTarget.getOperatingSystem());
+            }
+            if (!knownNode.hasOSVersion()){
+                newState.addNodeOSVersion(target, actualTarget.getOsVersion());
+            }
             return newState;
         }
 
@@ -124,12 +130,16 @@ public enum AdversaryAction {
         }
 
 
-        private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
-            for(Software s : softwareSet){
-                SoftwareKnowledge softwareKnowledge = findSoftwareByName(softwareKnowledgeSet,s.getName());
-                if(softwareKnowledge!=null){
-                    softwareKnowledge.addVersion(s.getVersion());
-                    softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+        private void addVersionAndVulnerabilities(Set<Software> actualSoftware, Set<SoftwareKnowledge> knownSoftware) {
+            for(Software s : actualSoftware){
+                SoftwareKnowledge foundSw = findSoftwareByName(knownSoftware,s.getName());
+                if(foundSw!=null){
+                    if (!foundSw.hasVersion()){
+                        foundSw.addVersion(s.getVersion());
+                    }
+                    if (foundSw.getVulnerabilities().isEmpty()){
+                        foundSw.addVulnerabilities(s.getVulnerabilities());
+                    }
                 }
             }
         }
@@ -138,14 +148,13 @@ public enum AdversaryAction {
     EXPLOIT_PUBLIC_FACING_APPLICATION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node: currentState.getSoftwareKnowledgeMap().keySet()){
+            Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
+            for(NetworkNode.TYPE node: nodes){
                 //check if we could attack the node from our current location
-                if(viewableNodes.contains(node)) {
+                if(currentState.getNetworkKnowledge().getKnownNodes().contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
                         for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            //todo maybe we should check if we have already access?
                             if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_PUBLIC_FACING_APPLICATION)) {
                                 attackableNodes.add(node);
                             }
@@ -153,6 +162,8 @@ public enum AdversaryAction {
                     }
                 }
             }
+            //only keep those, which we actually need
+            attackableNodes.retainAll(currentState.getNodesWithoutSystemAccess());
             return attackableNodes;
         }
 
@@ -160,8 +171,7 @@ public enum AdversaryAction {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             // check if we have not root access so we do not override it
-            if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
-                newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+            newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
             return newState;
         }
         @Override
@@ -353,7 +363,6 @@ public enum AdversaryAction {
         }
 
     },
-
     MAN_IN_THE_MIDDLE {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
