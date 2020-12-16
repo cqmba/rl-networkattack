@@ -7,7 +7,7 @@ import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import knowledge.impl.NetworkKnowledgeImpl;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 
 public class State implements Serializable {
@@ -26,7 +26,10 @@ public class State implements Serializable {
 
     public static State getStartState(){
         State start = new State();
+        start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
+        start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
+
         return start;
     }
 
@@ -86,6 +89,15 @@ public class State implements Serializable {
         }
     }
 
+    public Set<NetworkNode.TYPE> getSetOfSystemWithAcess(){
+        Set<NetworkNode.TYPE> nodesWithAcess = new HashSet<>();
+        for(NetworkNode.TYPE node : this.getNodeKnowledgeMap().keySet()){
+            if(this.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()||this.getNodeKnowledgeMap().get(node).hasAccessLevelUser())
+                nodesWithAcess.add(node);
+        }
+        return nodesWithAcess;
+    }
+
     public NetworkKnowledge getNetworkKnowledge() {
         return networkKnowledge;
     }
@@ -100,6 +112,24 @@ public class State implements Serializable {
         return softwareKnowledgeMap;
     }
 
+    public static Set<State> computeListOfPossibleStates(State startState){
+        Set<State> states = new HashSet<>();
+        states.add(startState);
+        int previousNumber_of_States =0;
+
+        while(previousNumber_of_States<states.size()) {
+            previousNumber_of_States = states.size();
+            Set<State> newSetofStates = (Set<State>) deepCopy(states);
+            for (State s : states) {
+                Set<NodeAction> possibleActions = NodeAction.getAllActionPossibleWithChangeState(s);
+                for (NodeAction a : possibleActions) {
+                    newSetofStates.add(a.action.executePostConditionOnTarget(a.target,s,a.currentActor));
+                }
+            }
+            states = newSetofStates;
+        }
+        return states;
+    }
 
 
     Boolean softwareContainedInSet(String name , Set<SoftwareKnowledge> softwareKnowledgeSet){
@@ -112,5 +142,38 @@ public class State implements Serializable {
 
     public void setNetworkKnowledge(NetworkKnowledge networkKnowledge) {
         this.networkKnowledge = networkKnowledge;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (o instanceof State) {
+            State other = (State) o;
+            return this.softwareKnowledgeMap.equals(other.softwareKnowledgeMap) && this.networkKnowledge.equals(other.networkKnowledge) && this.nodeKnowledgeMap.equals(other.nodeKnowledgeMap);
+        }
+        return false;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap);
+    }
+
+    /**
+     * Makes a deep copy of any Java object that is passed.
+     */
+    private static Object deepCopy(Object object) {
+        try {
+            ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ObjectOutputStream outputStrm = new ObjectOutputStream(outputStream);
+            outputStrm.writeObject(object);
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(outputStream.toByteArray());
+            ObjectInputStream objInputStream = new ObjectInputStream(inputStream);
+            return objInputStream.readObject();
+        }
+        catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 }

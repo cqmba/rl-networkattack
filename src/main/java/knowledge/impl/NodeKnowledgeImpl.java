@@ -148,11 +148,47 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     @Override
     public NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
+        this.sysAccess = accessLevel;
         return this;
     }
 
     @Override
     public NodeKnowledge addData(Data data) {
+        this.dataSet.add(data);
         return this;
+    }
+
+    @Override
+    public NodeKnowledge addNewLocalSoftware(String sw) {
+        return this;
+    }
+
+    @Override
+    public NodeKnowledge addNewRemoteSoftware(String sw) {
+        return this;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof NodeKnowledgeImpl)) return false;
+        NodeKnowledgeImpl that = (NodeKnowledgeImpl) o;
+        return Objects.equals(pub_ip, that.pub_ip) &&
+                Objects.equals(priv_ip, that.priv_ip) &&
+                Objects.equals(hostname, that.hostname) &&
+                Objects.equals(operatingSystem, that.operatingSystem) &&
+                Objects.equals(osVersion, that.osVersion) &&
+                Objects.equals(remoteSoftware, that.remoteSoftware) &&
+                Objects.equals(localSoftware, that.localSoftware) &&
+                Objects.equals(dataSet, that.dataSet) &&
+                sysAccess == that.sysAccess &&
+                Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
+                type == that.type;
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(pub_ip, priv_ip, hostname, operatingSystem, osVersion, remoteSoftware, localSoftware, dataSet, sysAccess, remotelyVisibleSWInNetwork, type);
     }
 }
