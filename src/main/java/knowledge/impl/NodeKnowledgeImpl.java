@@ -68,7 +68,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     @Override
     public boolean hasAccessLevelUser(){
-        return (sysAccess.equals(NetworkNode.ACCESS_LEVEL.USER) || sysAccess.equals(NetworkNode.ACCESS_LEVEL.ROOT));
+        return (sysAccess.equals(NetworkNode.ACCESS_LEVEL.USER));
     }
 
     @Override
@@ -120,39 +120,37 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public NodeKnowledge addPubIp(String pubIp) {
+    public void addPubIp(String pubIp) {
         this.pub_ip = pubIp;
-        return this;
     }
 
     @Override
-    public NodeKnowledge addPrivIp(String privIp) {
-        return this;
+    public void addPrivIp(String privIp) {
+        this.priv_ip = privIp;
     }
 
     @Override
-    public NodeKnowledge addHostname(String hostname) {
+    public void addHostname(String hostname) {
         this.hostname = hostname;
-        return this;
     }
 
     @Override
-    public NodeKnowledge addOperationSystem(String os) {
-        return this;
+    public void addOperationSystem(String os) {
+        this.operatingSystem = os;
     }
 
     @Override
-    public NodeKnowledge addOSVersion(String osVersion) {
-        return this;
+    public void addOSVersion(String osVersion) {
+        this.osVersion = osVersion;
     }
 
     @Override
-    public NodeKnowledge addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
-        return this;
+    public void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel) {
+        sysAccess = accessLevel;
     }
 
     @Override
-    public NodeKnowledge addData(Data data) {
-        return this;
+    public void addData(Data data) {
+        //TODO
     }
 }

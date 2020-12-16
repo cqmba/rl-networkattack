@@ -13,7 +13,6 @@ public class SimpleStatePrint {
     public static void print(State state){
         System.out.println("\nState info:");
         printAdversaryKnowledge(state);
-        printPossibleAdversaryActions();
     }
 
     private static void printAdversaryKnowledge(State state){
@@ -59,9 +58,5 @@ public class SimpleStatePrint {
         if (knowledge.hasOSVersion()) System.out.println("\t\t\tOS Version known");
         if (knowledge.hasAccessLevelUser()) System.out.println("\t\t\tHas user access");
         if (knowledge.hasAccessLevelRoot()) System.out.println("\t\t\tHas root access");
-    }
-
-    private static void printPossibleAdversaryActions(){
-
     }
 }
