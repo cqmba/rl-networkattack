@@ -15,7 +15,7 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public enum AdversaryAction implements Action {
+public enum AdversaryAction {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
@@ -69,6 +69,19 @@ public enum AdversaryAction implements Action {
             }
             return newState;
         }
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAccess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAccess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     ACTIVE_SCAN_VULNERABILITY {
         @Override
@@ -96,6 +109,20 @@ public enum AdversaryAction implements Action {
             addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAccess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAccess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
 
         private void addVersionAndVulnerabilities(Set<Software> softwareSet, Set<SoftwareKnowledge> softwareKnowledgeSet) {
             for(Software s : softwareSet){
@@ -137,6 +164,19 @@ public enum AdversaryAction implements Action {
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
             return newState;
         }
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     VALID_ACCOUNTS {
         @Override
@@ -146,7 +186,7 @@ public enum AdversaryAction implements Action {
             for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
                 for(Data data :currentState.getNodeKnowledgeMap().get(node).getKnownData()){
                     //check if data is a credential and the node is attackable from the current actor
-                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())){
+                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())&&currentState.getNodeKnowledgeMap().containsKey(data.getCredentials())){
                         nodesWithCredentials.add(data.getCredentials().getNode());
                     }
                 }
@@ -173,6 +213,20 @@ public enum AdversaryAction implements Action {
             }
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     EXPLOIT_FOR_CLIENT_EXECUTION {
         @Override
@@ -202,6 +256,20 @@ public enum AdversaryAction implements Action {
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     CREATE_ACCOUNT {
         @Override
@@ -209,7 +277,7 @@ public enum AdversaryAction implements Action {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
             for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
                 //check if we have  root access on the node
-                if(currentActor.equals(node) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
+                if(!currentActor.equals(NetworkNode.TYPE.ADVERSARY)&&currentActor.equals(node) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
                     attackableNodes.add(node);
                 }
             }
@@ -228,6 +296,20 @@ public enum AdversaryAction implements Action {
             newState.getNodeKnowledgeMap().get(target).getKnownData().add(data);
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     EXPLOIT_FOR_PRIVILEGE_ESCALATION {
         @Override
@@ -256,7 +338,22 @@ public enum AdversaryAction implements Action {
             newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
+
     MAN_IN_THE_MIDDLE {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
@@ -267,13 +364,18 @@ public enum AdversaryAction implements Action {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             return null;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            return new HashSet<>();
+        }
     },
     SOFTWARE_DISCOVERY {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
             //check if we have access on the node
-            if(currentState.getNodeKnowledgeMap().containsKey(currentActor) && (currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelRoot())){
+            if(!currentActor.equals(NetworkNode.TYPE.ADVERSARY)&&currentState.getNodeKnowledgeMap().containsKey(currentActor) && (currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelRoot())){
                 attackableNodes.add(currentActor);
             }
 
@@ -311,6 +413,20 @@ public enum AdversaryAction implements Action {
             }
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     },
     EXPLOITATION_OF_REMOTE_SERVICE {
         @Override
@@ -321,6 +437,11 @@ public enum AdversaryAction implements Action {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             return null;
+        }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            return new HashSet<>();
         }
     },
     REMOTE_SERVICE {
@@ -333,13 +454,18 @@ public enum AdversaryAction implements Action {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             return null;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            return new HashSet<>();
+        }
     },
     DATA_FROM_LOCAL_SYSTEM {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
             //check if we have access on the node
-            if(currentState.getNodeKnowledgeMap().containsKey(currentActor) && (currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelRoot())){
+            if(!currentActor.equals(NetworkNode.TYPE.ADVERSARY)&&currentState.getNodeKnowledgeMap().containsKey(currentActor) && (currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelUser() || currentState.getNodeKnowledgeMap().get(currentActor).hasAccessLevelRoot())){
                 attackableNodes.add(currentActor);
             }
             return attackableNodes;
@@ -361,6 +487,20 @@ public enum AdversaryAction implements Action {
             }
             return newState;
         }
+
+        @Override
+        public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
+            Set<NodeAction> nodeActions = new HashSet<>();
+            Set<NetworkNode.TYPE> nodesWithAcess = currentState.getSetOfSystemWithAcess();
+            for(NetworkNode.TYPE node: nodesWithAcess) {
+                Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
+                for(NetworkNode.TYPE target: targets){
+                    nodeActions.add(new NodeAction(target,node,this));
+                }
+            }
+            return nodeActions;
+        }
+
     };
 
     private static final Set<AdversaryAction> _actions = new LinkedHashSet<>();
@@ -384,10 +524,6 @@ public enum AdversaryAction implements Action {
         _actions.add(SOFTWARE_DISCOVERY);
     }
 
-    @Override
-    public boolean isNoOp() {
-        return false;
-    }
 
     public static SoftwareKnowledge findSoftwareByName(Set<SoftwareKnowledge> softwareKnowledgeSet, String swName){
         for(SoftwareKnowledge softwareKnowledge: softwareKnowledgeSet){
@@ -399,14 +535,24 @@ public enum AdversaryAction implements Action {
 
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor);
     public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
+    public abstract Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState);
 
     private static Set<NetworkNode.TYPE> getViewableNodes(NetworkNode.TYPE currentActor){
-        NetworkNode.TYPE scanning = currentActor;
-        Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
-        Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
         Set<NetworkNode.TYPE> viewableNodeTypes = new HashSet<>();
-        for(NetworkNode n : viewableNodes){
-            viewableNodeTypes.add(n.getType());
+        if(currentActor.equals(NetworkNode.TYPE.ADVERSARY)){
+            NetworkNode.TYPE scanning = NetworkNode.TYPE.ROUTER;
+            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
+            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
+            for (NetworkNode n : viewableNodes) {
+                viewableNodeTypes.add(n.getType());
+            }
+        }else {
+            NetworkNode.TYPE scanning = currentActor;
+            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
+            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
+            for (NetworkNode n : viewableNodes) {
+                viewableNodeTypes.add(n.getType());
+            }
         }
         return viewableNodeTypes;
     }
