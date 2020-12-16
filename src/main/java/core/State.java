@@ -126,16 +126,6 @@ public class State implements Serializable {
                     newSetofStates.add(a.action.executePostConditionOnTarget(a.target,s,a.currentActor));
                 }
             }
-            for(State s : states){
-                int i=0;
-                for(State s2 :states){
-                    if(s.equals(s2)){
-                        i+=1;
-                    }
-                }
-                System.out.println(i);
-
-            }
             states = newSetofStates;
         }
         return states;
