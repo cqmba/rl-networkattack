@@ -27,8 +27,8 @@ public class State implements Serializable {
     public static State getStartState(){
         State start = new State();
         //TODO is adding these necessary/helpful?
-        //start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
-        //start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+        start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
+        start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
 
         return start;

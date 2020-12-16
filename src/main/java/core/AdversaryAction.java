@@ -148,11 +148,12 @@ public enum AdversaryAction {
     EXPLOIT_PUBLIC_FACING_APPLICATION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
+            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
             Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
             Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
             for(NetworkNode.TYPE node: nodes){
                 //check if we could attack the node from our current location
-                if(currentState.getNetworkKnowledge().getKnownNodes().contains(node)) {
+                if(viewableNodes.contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
                         for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
                             if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_PUBLIC_FACING_APPLICATION)) {
@@ -171,7 +172,9 @@ public enum AdversaryAction {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             // check if we have not root access so we do not override it
-            newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+            if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
+                newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+
             return newState;
         }
         @Override
