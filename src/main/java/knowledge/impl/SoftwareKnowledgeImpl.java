@@ -5,6 +5,7 @@ import knowledge.SoftwareKnowledge;
 
 import java.io.Serializable;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 
 
@@ -36,5 +37,21 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     @Override
     public Set<Vulnerability> getVulnerability() {
         return this.vulnerabilities;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof SoftwareKnowledgeImpl)) return false;
+        SoftwareKnowledgeImpl that = (SoftwareKnowledgeImpl) o;
+        return Objects.equals(name, that.name) &&
+                Objects.equals(version, that.version) &&
+                Objects.equals(vulnerabilities, that.vulnerabilities);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(name, version, vulnerabilities);
     }
 }

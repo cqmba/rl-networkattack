@@ -7,10 +7,7 @@ import knowledge.DataKnowledge;
 import knowledge.NetworkKnowledge;
 
 import java.io.Serializable;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     private Set<NetworkNode.TYPE> nodes;
@@ -48,5 +45,19 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     @Override
     public void addSniffedData(Data data) {
 
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+        NetworkKnowledgeImpl that = (NetworkKnowledgeImpl) o;
+        return Objects.equals(nodes, that.nodes);
+    }
+
+    @Override
+    public int hashCode() {
+
+        return Objects.hash(nodes);
     }
 }

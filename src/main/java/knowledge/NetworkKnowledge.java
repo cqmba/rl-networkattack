@@ -24,4 +24,7 @@ public interface NetworkKnowledge {
     NetworkKnowledge addNewNode(NetworkNode.TYPE node);
 
     void addSniffedData(Data data);
+
+
+
 }
