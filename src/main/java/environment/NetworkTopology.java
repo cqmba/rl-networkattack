@@ -7,8 +7,8 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class NetworkTopology{
-    public static List<NetworkNode.TYPE> getConnectedHosts(NetworkNode.TYPE source){
-        List<NetworkNode.TYPE> connectedHosts = new ArrayList<>();
+    public static Set<NetworkNode.TYPE> getConnectedHosts(NetworkNode.TYPE source){
+        Set<NetworkNode.TYPE> connectedHosts = new HashSet<>();
         if(source.equals(NetworkNode.TYPE.ADVERSARY)){
             connectedHosts.add(NetworkNode.TYPE.ROUTER);
             return connectedHosts;

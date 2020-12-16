@@ -23,11 +23,8 @@ public enum AdversaryAction implements Action {
             return getViewableNodes(currentActor);
         }
 
-
-
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
-
             NetworkNode node = Simulation.getNodeByType(target);
             State newState = (State) deepCopy(currentState);
             Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
@@ -70,44 +67,21 @@ public enum AdversaryAction implements Action {
                     newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
                 }
             }
-
-            /*
-            if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
-                Set<Software> potentiallyNewSoftware = remotelyVisibleSWInNetwork.get(target);
-                //Predicate<SoftwareKnowledge> isRemoteSw = software -> software.isRemote();
-                Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> swKnowledge = newState.getSoftwareKnowledgeMap();
-                //if nothing was known about target
-                if (swKnowledge.isEmpty() || !swKnowledge.containsKey(target)){
-                    Set<SoftwareKnowledge> gainedSwKnowledge = new HashSet<>();
-                    for (Software sw:potentiallyNewSoftware){
-                        gainedSwKnowledge.add(SoftwareKnowledge.addNew(sw.getName(), true));
-
-                    }
-                    swKnowledge.put(target, gainedSwKnowledge);
-                }
-                for (Software sw: potentiallyNewSoftware){
-                    newState.addNodeRemoteSoftwareName(target, sw.getName());
-                }
-            }
-
-             */
             return newState;
         }
     },
     ACTIVE_SCAN_VULNERABILITY {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            //return just the nodes where we have an entry in our software knowledge map
-            NetworkNode.TYPE scanning = currentActor;
-            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(scanning).contains(node.getType());
-            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
-            Set<NetworkNode.TYPE> viewableNodeTypes = new HashSet<>();
-            for(NetworkNode n : viewableNodes){
-                if(currentState.getSoftwareKnowledgeMap().containsKey(n.getType()))
-                    viewableNodeTypes.add(n.getType());
+            Set<NetworkNode.TYPE> targets = new HashSet<>();
+            for (NetworkNode.TYPE host: currentState.getNetworkKnowledge().getKnownNodes()){
+                //software has to beknown of the host and it has to be remote (currently ROUTER wont be a target, but WS & AdminPC
+                if (currentState.getSoftwareKnowledgeMap().containsKey(host)
+                        && currentState.getSoftwareKnowledgeMap().get(host).stream().anyMatch(sw -> sw.isRemote())){
+                    targets.add(host);
+                }
             }
-            return viewableNodeTypes;
-
+            return targets;
         }
 
         @Override
@@ -120,7 +94,6 @@ public enum AdversaryAction implements Action {
             // add to every software we know the version and the vulnerabilities
             addVersionAndVulnerabilities(localSoftwareSet, softwareKnowledgeSet);
             addVersionAndVulnerabilities(remoteSoftwareSet, softwareKnowledgeSet);
-            //TODO fix
             return newState;
         }
 

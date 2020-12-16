@@ -45,16 +45,22 @@ public class Simulation {
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
-        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
-        SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
+
         //for now do this manually
-        AdversaryAction nextAction = AdversaryAction.ACTIVE_SCAN_IP_PORT;
-        Set<NetworkNode.TYPE> targets = adversaryActionSetMap.get(nextAction);
-        NetworkNode.TYPE target = NetworkNode.TYPE.ROUTER;
-        if (targets.contains(target)){
-            System.out.println("........Performing ACTION "+nextAction.toString()+" on "+target.toString()+"..........");
-            State nextState = State.performGivenAction(Simulation.state, nextAction, target, currentActor);
-            SimpleStatePrint.print(nextState);
+        List<NetworkNode.TYPE> targets = new ArrayList<>();
+        List<AdversaryAction> actions = new ArrayList<>();
+        actions.add(0, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(0, NetworkNode.TYPE.ROUTER);
+        actions.add(1, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(1, NetworkNode.TYPE.WEBSERVER);
+        actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(2, NetworkNode.TYPE.ADMINPC);
+        for (int i=0; i<2;i++){
+            AdversaryAction action = actions.get(i);
+            printPossibleActions(currentActor);
+            printPerformAction(action, targets.get(i));
+            state = State.performGivenAction(state, action, targets.get(i), currentActor);
+            SimpleStatePrint.print(state);
         }
     }
 
@@ -185,5 +191,14 @@ public class Simulation {
         if (first.isPresent()) {
             return first.get();
         }else throw new RuntimeException("Node doesnt exist in Simulation");
+    }
+
+    private static void printPerformAction(AdversaryAction action, NetworkNode.TYPE target){
+        System.out.println("........Performing ACTION "+action+" on "+target+"..........");
+    }
+
+    private static void printPossibleActions(NetworkNode.TYPE currentActor){
+        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
+        SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
     }
 }
