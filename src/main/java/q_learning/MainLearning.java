@@ -6,6 +6,8 @@ import q_learning.interfaces.StateReward;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * This class runs and initializes the Q-Learning Agent.
@@ -48,6 +50,8 @@ import java.util.Map;
  * behaviour and not a bug. It could be changed by giving each action done a penalty.
  */
 public class MainLearning {
+    private static final Logger LOGGER = Logger.getLogger(MainLearning.class.getName());
+
     /*
      * Learning Rate determines how much new information is used instead of old and is between 0 and 1. A learning rate
      * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
@@ -82,17 +86,17 @@ public class MainLearning {
     /*
      * Number of times each state is at least viseted
      */
-    private static final int Ne = 5;
+    private static final int NE = 5;
 
     // Should be the highest (or higher than that) reward possible
-    private static final double Rplus = 2.0;
+    private static final double R_PLUS = 2.0;
 
 
     /**
      * Main Function, which initializes the MDP and runs the Q Learning Agent. It prints each run, starting from a
      * random state to an end state, which actions where taken at which state. At the end it prints for each state
      * the learned expected utility it will return.
-     * @param args
+     * @param args arguments
      */
     public static void main(String[] args) {
 
@@ -100,20 +104,25 @@ public class MainLearning {
         Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = generateStates();
         ActionsFunction<NetworkState, NetworkAction> actions = generateActions(states);
         QStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
-        HashSet<NetworkState> finalStates = new HashSet<>() {{ add(new NetworkState(5, 2)); add(new NetworkState(1, 4)); }};
+        HashSet<NetworkState> finalStates = new HashSet<>();
+        finalStates.add(new NetworkState(5, 2));
+        finalStates.add(new NetworkState(1, 4));
         MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions, finalStates);
 
-        QLearner learner = new QLearner(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, Ne, Rplus, SEED);
+        QLearner<NetworkState, NetworkAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
         learner.runIterations(20000);
 
         // print the learned results.
         // Prints each states calculated utility
         // The actual actions taken in each state will be implemented later
-        System.out.println("Expected utility per state:");
+        LOGGER.info("Expected utility per state:");
         Map<NetworkState, Double> util = learner.getUtility();
-        for (NetworkState state : util.keySet()) {
-            System.out.printf("\tState: x=%d, y=%d \tUtiliy: %.16f%n", state.getX(), state.getY(), util.get(state));
+        if (LOGGER.isLoggable(Level.INFO)) {
+            for (Map.Entry<NetworkState, Double> entry : util.entrySet()) {
+                LOGGER.info(String.format("\tState: x=%d, y=%d \tUtiliy: %.16f%n", entry.getKey().getX(),
+                        entry.getKey().getY(), util.get(entry.getKey())));
+            }
         }
     }
 
@@ -127,13 +136,8 @@ public class MainLearning {
         Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = new HashMap<>();
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
-                if (!(x == 3 && y == 0) &&
-                !(x == 0 && y == 1) &&
-                !(x == 1 && y ==1) &&
-                !(x == 3 && y == 1) &&
-                !(x == 1 && y == 3) &&
-                !(x == 2 && y == 3) &&
-                !(x == 3 && y == 3)) {
+                if (!(x == 3 && y == 0) && !(x == 0 && y == 1) && !(x == 1 && y ==1) && !(x == 3 && y == 1) &&
+                !(x == 1 && y == 3) && !(x == 2 && y == 3) && !(x == 3 && y == 3)) {
                     double reward = 0.0;
                     if (x == 5 && y == 2)
                         reward = 1.0;
@@ -154,7 +158,7 @@ public class MainLearning {
      */
     private static ActionsFunction<NetworkState, NetworkAction> generateActions(Map<NetworkState,
             StateReward<NetworkState, NetworkAction>> states) {
-        QActionsFunction actions = new QActionsFunction(states);
+        QActionsFunction<NetworkState, NetworkAction> actions = new QActionsFunction(states);
         NetworkAction up = new NetworkAction(0);
         NetworkAction down = new NetworkAction(1);
         NetworkAction left = new NetworkAction(2);

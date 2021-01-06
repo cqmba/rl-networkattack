@@ -25,7 +25,7 @@ import java.util.Map;
  * @author Ravi Mohan
  */
 public abstract class QReinforcementAgent<S, A extends Action> extends AbstractAgent {
-    public QReinforcementAgent() {
+    protected QReinforcementAgent() {
     }
 
     public abstract A execute(S state, MDP<S, A> mdp);
@@ -37,7 +37,7 @@ public abstract class QReinforcementAgent<S, A extends Action> extends AbstractA
     @Override
     public Action execute(Percept p) {
         if (p instanceof PerceptStateReward<?>) {
-            Action a = execute((PerceptStateReward<S>) p);
+            Action a = execute(p);
             if (null == a) {
                 a = NoOpAction.NO_OP;
                 setAlive(false);

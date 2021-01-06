@@ -5,8 +5,6 @@ import java.util.*;
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
-import q_learning.MDP;
-import q_learning.Pair;
 import q_learning.abstracts.QReinforcementAgent;
 
 /**
@@ -68,24 +66,24 @@ import q_learning.abstracts.QReinforcementAgent;
 public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, A> {
     // persistent: Q, a table of action values indexed by state and action,
     // initially zero
-    private Map<Pair<S, A>, Double> Q = new HashMap<>();
+    private final Map<Pair<S, A>, Double> Q = new HashMap<>();
     // N<sub>sa</sub>, a table of frequencies for state-action pairs, initially
     // zero
-    private FrequencyCounter<Pair<S, A>> Nsa = new FrequencyCounter<>();
+    private final FrequencyCounter<Pair<S, A>> Nsa = new FrequencyCounter<>();
     // s,a,r, the previous state, action, and reward, initially null
     private S s = null;
     private A a = null;
     private Double r = null;
     //
-    private ActionsFunction<S, A> actionsFunction;
-    private double alpha = 0.0;
-    private double gamma = 0.0;
-    private double epsilon = 0.0;
-    private int Ne = 0;
-    private double Rplus = 0.0;
+    private final ActionsFunction<S, A> actionsFunction;
+    private final double alpha;
+    private final double gamma;
+    private final double epsilon;
+    private final int Ne;
+    private final double Rplus;
 
-    private Random random;
-    private double errorEpsilon;
+    private final Random random;
+    private final double errorEpsilon;
 
     /**
      * Constructor.
@@ -129,9 +127,7 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
      */
     @Override
     public A execute(S state, MDP<S, A> mdp) {
-
         S sPrime = state;
-        //double rPrime = percept.reward();
 
         // if TERMAINAL?(s') then Q[s',None] <- r'
         if (mdp.isFinalState(sPrime)) {

@@ -6,7 +6,7 @@ import java.util.HashMap;
 
 public class QStateTransition<S, A extends Action> {
     // Map from State and Action to target state
-    private HashMap<Pair<S, A>, S> transitions;
+    private final HashMap<Pair<S, A>, S> transitions;
 
     public QStateTransition() {
         this.transitions = new HashMap<>();

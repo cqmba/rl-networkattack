@@ -37,7 +37,7 @@ public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
 
     /**
      * This function returns an ActionsFunction, which is needed for Q-Learning Agent to work.
-     * @return
+     * @return the actionsfunction
      */
     @Override
     public ActionsFunction<S, A> getActionsFunction() {
@@ -71,9 +71,7 @@ public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
 
     @Override
     public double reward(S state) {
-        if (true)
-            throw new UnsupportedOperationException("State, action and target action are required. Use reward(state, action, targetState) instead.");
-        return 0.0;
+        throw new UnsupportedOperationException("State, action and target action are required. Use reward(state, action, targetState) instead.");
     }
 
     @Override
