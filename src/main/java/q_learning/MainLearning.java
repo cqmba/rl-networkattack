@@ -94,62 +94,22 @@ public class MainLearning {
      * @param args
      */
     public static void main(String[] args) {
-        // Check if Values are chosen in possible range
-        if (LEARNING_RATE < 0 || LEARNING_RATE > 1)
-            throw new IllegalArgumentException("Learning Rate must be in 0<=LearningRate<=1");
-        if (DISCOUNT_FACTOR < 0 || DISCOUNT_FACTOR > 1)
-            throw new IllegalArgumentException("Discount factor must be in 0<=DiscountFactor<=1");
-        if (Ne <= 0)
-            throw new IllegalArgumentException("Ne must be greater 0");
 
         // generate states, actions and MDP
-        Map<NetworkState, Double> states = generateStates();
-        MDP mdp = new MDP(states, new NetworkState(0, 0), generateActions(states));
+        Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = generateStates();
+        ActionsFunction<NetworkState, NetworkAction> actions = generateActions(states);
+        NetworkStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
+        MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions);
 
-        // Initialize QLearningAgent
-        QLearningAgent<NetworkState, NetworkAction> agent =
-                new QLearningAgent<>(mdp.getActionsFunction(), LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, Ne, Rplus,
-                        SEED, ERROR);
+        QLearner learner = new QLearner(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, Ne, Rplus, SEED);
 
-        // Used to get a random initial state
-        Random random = new Random(SEED + 1);
-
-        // run the q learning agent
-        // Each run is started from a random state and run until a final state is reached.
-        // This is done x times as defined in the "for" below
-        for (int i = 0; i < 2000; i++) {
-            // get random initial state and an action
-            // NOTE: The initial action is not used. It is just set for the while loop. Will be later changed to repeat until TODO
-            int item = random.nextInt(mdp.states().size());
-            NetworkState curState = null;
-            int counter = 0;
-            for (NetworkState state : mdp.states()) {
-                if (counter == item) {
-                    curState = state;
-                    break;
-                }
-                counter++;
-            }
-            NetworkAction curAction = new NetworkAction(3);
-
-            // run the simulation from curState until we reach a final state
-            System.out.printf("Running iteration %d...%n", i);
-            while (curAction != null) {
-                // get next action using q learning
-                curAction = agent.execute(new NetworkPerceptStateReward(curState, mdp.reward(curState)));
-                System.out.printf("\tState: x=%d, y=%d \tAction: %s%n", curState.getX(), curState.getY(), curAction == null ? "NULL" : curAction.toString());
-
-                // Do the action and set the new state
-                if (curAction != null)
-                    curState = useAction(curState, curAction);
-            }
-        }
+        learner.runIterations(20000);
 
         // print the learned results.
         // Prints each states calculated utility
         // The actual actions taken in each state will be implemented later
         System.out.println("Expected utility per state:");
-        Map<NetworkState, Double> util = agent.getUtility();
+        Map<NetworkState, Double> util = learner.getUtility();
         for (NetworkState state : util.keySet()) {
             System.out.printf("\tState: x=%d, y=%d \tUtiliy: %.16f%n", state.getX(), state.getY(), util.get(state));
         }
@@ -161,8 +121,8 @@ public class MainLearning {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static Map<NetworkState, Double> generateStates() {
-        Map<NetworkState, Double> states = new HashMap<>();
+    private static Map<NetworkState, StateReward<NetworkState, NetworkAction>> generateStates() {
+        Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = new HashMap<>();
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
                 if (!(x == 3 && y == 0) &&
@@ -178,7 +138,7 @@ public class MainLearning {
                     if (x == 1 && y == 4)
                         reward = 2.0;
 
-                    states.put(new NetworkState(x, y), reward);
+                    states.put(new NetworkState(x, y), new NetworkStateReward(new NetworkState(x, y), reward));
                 }
             }
         }
@@ -190,7 +150,8 @@ public class MainLearning {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<NetworkState, NetworkAction> generateActions(Map<NetworkState, Double> states) {
+    private static ActionsFunction<NetworkState, NetworkAction> generateActions(Map<NetworkState,
+            StateReward<NetworkState, NetworkAction>> states) {
         NetworkActionsFunction actions = new NetworkActionsFunction(states);
         NetworkAction up = new NetworkAction(0);
         NetworkAction down = new NetworkAction(1);
@@ -198,7 +159,7 @@ public class MainLearning {
         NetworkAction right = new NetworkAction(3);
 
         for (NetworkState state : states.keySet()) {
-            if (states.get(state) > 0.5)
+            if (states.get(state).reward(null, null) > 0.5)
                 continue;
             int x = state.getX();
             int y = state.getY();
@@ -248,5 +209,17 @@ public class MainLearning {
             case 3: return new NetworkState(state.getX() + 1, state.getY());
             default: return null;
         }
+    }
+
+    private static NetworkStateTransition<NetworkState, NetworkAction> generateTransitions(Map<NetworkState,
+            StateReward<NetworkState, NetworkAction>> states, ActionsFunction<NetworkState, NetworkAction> actions) {
+        NetworkStateTransition<NetworkState, NetworkAction> transition = new NetworkStateTransition<>();
+        for (NetworkState state : states.keySet()) {
+            for (NetworkAction action : actions.actions(state)) {
+                transition.addTransition(state, action, useAction(state, action));
+            }
+        }
+
+        return transition;
     }
 }

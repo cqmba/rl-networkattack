@@ -1,5 +1,6 @@
 package q_learning;
 
+import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 
 import java.util.*;
@@ -8,22 +9,22 @@ import java.util.*;
  * A simple implementation of ActionsFunction.
  * Actions can be added after initialization.
  */
-public class NetworkActionsFunction implements ActionsFunction<NetworkState, NetworkAction> {
-    private final Map<NetworkState, Set<NetworkAction>> actions;
+public class NetworkActionsFunction<S, A extends Action> implements ActionsFunction<S, A> {
+    private final Map<S, Set<A>> actions;
 
-    public NetworkActionsFunction(Map<NetworkState, Double> states) {
+    public NetworkActionsFunction(Map<S, Double> states) {
         this.actions = new HashMap<>();
-        for (NetworkState state : states.keySet()) {
+        for (S state : states.keySet()) {
             actions.put(state, new HashSet<>());
         }
     }
 
-    public void addAction(NetworkState state, NetworkAction action) {
+    public void addAction(S state, A action) {
         actions.get(state).add(action);
     }
 
     @Override
-    public Set<NetworkAction> actions(NetworkState networkState) {
-        return actions.get(networkState);
+    public Set<A> actions(S state) {
+        return actions.get(state);
     }
 }

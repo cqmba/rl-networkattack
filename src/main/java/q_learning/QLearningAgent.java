@@ -64,7 +64,7 @@ import aima.core.util.FrequencyCounter;
  * @author Ruediger Lunde
  *
  */
-public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A> {
+public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, A> {
     // persistent: Q, a table of action values indexed by state and action,
     // initially zero
     private Map<Pair<S, A>, Double> Q = new HashMap<>();
@@ -101,7 +101,8 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
      *            R+ is an optimistic estimate of the best possible reward
      *            obtainable in any state, which is used in the method f(u, n).
      */
-    public QLearningAgent(ActionsFunction<S, A> actionsFunction, double alpha, double gamma, double epsilon, int Ne, double Rplus, int seed, double errorEpsilon) {
+    public QLearningAgent(ActionsFunction<S, A> actionsFunction, double alpha, double gamma, double epsilon, int Ne,
+                          double Rplus, int seed, double errorEpsilon) {
         this.actionsFunction = actionsFunction;
         this.alpha = alpha;
         this.gamma = gamma;
@@ -119,20 +120,21 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
      * learn the transition model because the Q-value of a state can be related
      * directly to those of its neighbors.
      *
-     * @param percept
-     *            a percept indicating the current state s' and reward signal
-     *            r'.
+     * @param state
+     *            the current state
+     * @param mdp
+     *            The markov decision process, which is used to get the reward for a state and an action
      * @return an action
      */
     @Override
-    public A execute(PerceptStateReward<S> percept) {
+    public A execute(S state, MDP<S, A> mdp) {
 
-        S sPrime = percept.state();
-        double rPrime = percept.reward();
+        S sPrime = state;
+        //double rPrime = percept.reward();
 
         // if TERMAINAL?(s') then Q[s',None] <- r'
         if (isTerminal(sPrime)) {
-            Q.put(new Pair<>(sPrime, null), rPrime);
+            Q.put(new Pair<>(sPrime, null), mdp.reward(state,null, null));
         }
 
         // if s is not null then
@@ -158,7 +160,7 @@ public class QLearningAgent<S, A extends Action> extends ReinforcementAgent<S, A
         } else {
             s = sPrime;
             a = argmaxAPrime(sPrime);
-            r = rPrime;
+            r = mdp.reward(s, a, mdp.stateTransition(s, a));
         }
 
         // return a
