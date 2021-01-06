@@ -12,32 +12,38 @@ import java.util.Set;
  */
 public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
     // Save state and reward
-    private Map<S, StateReward<S, A>> states;
+    private final Map<S, StateReward<S, A>> states;
 
-    private S initialState;
+    private final S initialState;
 
     // Each state with all possible actions
-    private ActionsFunction<S, A> actions;
+    private final ActionsFunction<S, A> actions;
 
     // Every transition of a given state and action to a state
-    private NetworkStateTransition<S, A> transitions;
+    private final NetworkStateTransition<S, A> transitions;
+
+    private final Set<S> finalStates;
 
     public MDP(Map<S, StateReward<S, A>> states, S initialState,
-               ActionsFunction<S, A> actions, NetworkStateTransition<S, A> transitions) {
+               ActionsFunction<S, A> actions, NetworkStateTransition<S, A> transitions,
+               Set<S> finalStates) {
         this.states = states;
         this.initialState = initialState;
         this.actions = actions;
         this.transitions = transitions;
+        this.finalStates = finalStates;
     }
 
     /**
      * This function returns an ActionsFunction, which is needed for Q-Learning Agent to work.
      * @return
      */
+    @Override
     public ActionsFunction<S, A> getActionsFunction() {
         return actions;
     }
 
+    @Override
     public S stateTransition(S state, A action) {
         return transitions.stateTransition(state, action);
     }
@@ -72,5 +78,10 @@ public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
     @Override
     public double reward(S state, A action, S targetState) {
         return states.get(state).reward(action, targetState);
+    }
+
+    @Override
+    public boolean isFinalState(S state) {
+        return finalStates.contains(state);
     }
 }

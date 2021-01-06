@@ -3,6 +3,7 @@ package q_learning;
 import aima.core.probability.mdp.ActionsFunction;
 
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Random;
 
@@ -99,7 +100,8 @@ public class MainLearning {
         Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = generateStates();
         ActionsFunction<NetworkState, NetworkAction> actions = generateActions(states);
         NetworkStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
-        MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions);
+        HashSet<NetworkState> finalStates = new HashSet<>() {{ add(new NetworkState(5, 2)); add(new NetworkState(1, 4)); }};
+        MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions, finalStates);
 
         QLearner learner = new QLearner(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, Ne, Rplus, SEED);
 

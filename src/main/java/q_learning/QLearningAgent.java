@@ -133,7 +133,7 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         //double rPrime = percept.reward();
 
         // if TERMAINAL?(s') then Q[s',None] <- r'
-        if (isTerminal(sPrime)) {
+        if (mdp.isFinalState(sPrime)) {
             Q.put(new Pair<>(sPrime, null), mdp.reward(state,null, null));
         }
 
@@ -153,7 +153,7 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         }
         // if s'.TERMINAL? then s,a,r <- null else
         // s,a,r <- s',argmax<sub>a'</sub>f(Q[s',a'],N<sub>sa</sub>[s',a']),r'
-        if (isTerminal(sPrime)) {
+        if (mdp.isFinalState(sPrime)) {
             s = null;
             a = null;
             r = null;
@@ -241,18 +241,6 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
             return Rplus;
         }
         return u;
-    }
-
-    //
-    // PRIVATE METHODS
-    //
-    public boolean isTerminal(S s) {
-        boolean terminal = false;
-        if (null != s && actionsFunction.actions(s).size() == 0) {
-            // No actions possible in state is considered terminal.
-            terminal = true;
-        }
-        return terminal;
     }
 
     private double maxAPrime(S sPrime) {
