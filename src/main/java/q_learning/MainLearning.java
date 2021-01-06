@@ -1,11 +1,11 @@
 package q_learning;
 
 import aima.core.probability.mdp.ActionsFunction;
+import q_learning.interfaces.StateReward;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Random;
 
 /**
  * This class runs and initializes the Q-Learning Agent.
@@ -99,7 +99,7 @@ public class MainLearning {
         // generate states, actions and MDP
         Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = generateStates();
         ActionsFunction<NetworkState, NetworkAction> actions = generateActions(states);
-        NetworkStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
+        QStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
         HashSet<NetworkState> finalStates = new HashSet<>() {{ add(new NetworkState(5, 2)); add(new NetworkState(1, 4)); }};
         MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions, finalStates);
 
@@ -154,7 +154,7 @@ public class MainLearning {
      */
     private static ActionsFunction<NetworkState, NetworkAction> generateActions(Map<NetworkState,
             StateReward<NetworkState, NetworkAction>> states) {
-        NetworkActionsFunction actions = new NetworkActionsFunction(states);
+        QActionsFunction actions = new QActionsFunction(states);
         NetworkAction up = new NetworkAction(0);
         NetworkAction down = new NetworkAction(1);
         NetworkAction left = new NetworkAction(2);
@@ -213,9 +213,9 @@ public class MainLearning {
         }
     }
 
-    private static NetworkStateTransition<NetworkState, NetworkAction> generateTransitions(Map<NetworkState,
+    private static QStateTransition<NetworkState, NetworkAction> generateTransitions(Map<NetworkState,
             StateReward<NetworkState, NetworkAction>> states, ActionsFunction<NetworkState, NetworkAction> actions) {
-        NetworkStateTransition<NetworkState, NetworkAction> transition = new NetworkStateTransition<>();
+        QStateTransition<NetworkState, NetworkAction> transition = new QStateTransition<>();
         for (NetworkState state : states.keySet()) {
             for (NetworkAction action : actions.actions(state)) {
                 transition.addTransition(state, action, useAction(state, action));

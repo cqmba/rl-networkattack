@@ -2,7 +2,8 @@ package q_learning;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
-import aima.core.probability.mdp.MarkovDecisionProcess;
+import q_learning.interfaces.QMarkovDecisionProcess;
+import q_learning.interfaces.StateReward;
 
 import java.util.Map;
 import java.util.Set;
@@ -20,12 +21,12 @@ public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
     private final ActionsFunction<S, A> actions;
 
     // Every transition of a given state and action to a state
-    private final NetworkStateTransition<S, A> transitions;
+    private final QStateTransition<S, A> transitions;
 
     private final Set<S> finalStates;
 
     public MDP(Map<S, StateReward<S, A>> states, S initialState,
-               ActionsFunction<S, A> actions, NetworkStateTransition<S, A> transitions,
+               ActionsFunction<S, A> actions, QStateTransition<S, A> transitions,
                Set<S> finalStates) {
         this.states = states;
         this.initialState = initialState;

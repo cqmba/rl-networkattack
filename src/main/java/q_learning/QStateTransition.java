@@ -4,11 +4,11 @@ import aima.core.agent.Action;
 
 import java.util.HashMap;
 
-public class NetworkStateTransition<S, A extends Action> {
+public class QStateTransition<S, A extends Action> {
     // Map from State and Action to target state
     private HashMap<Pair<S, A>, S> transitions;
 
-    public NetworkStateTransition() {
+    public QStateTransition() {
         this.transitions = new HashMap<>();
     }
 

@@ -3,10 +3,11 @@ package q_learning;
 import java.util.*;
 
 import aima.core.agent.Action;
-import aima.core.learning.reinforcement.PerceptStateReward;
-import aima.core.learning.reinforcement.agent.ReinforcementAgent;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
+import q_learning.MDP;
+import q_learning.Pair;
+import q_learning.abstracts.QReinforcementAgent;
 
 /**
  * Artificial Intelligence A Modern Approach (3rd Edition): page 844.<br>

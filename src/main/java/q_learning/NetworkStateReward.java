@@ -1,5 +1,7 @@
 package q_learning;
 
+import q_learning.interfaces.StateReward;
+
 public class NetworkStateReward implements StateReward<NetworkState, NetworkAction> {
     private final NetworkState state;
     private final double reward;

@@ -9,10 +9,10 @@ import java.util.*;
  * A simple implementation of ActionsFunction.
  * Actions can be added after initialization.
  */
-public class NetworkActionsFunction<S, A extends Action> implements ActionsFunction<S, A> {
+public class QActionsFunction<S, A extends Action> implements ActionsFunction<S, A> {
     private final Map<S, Set<A>> actions;
 
-    public NetworkActionsFunction(Map<S, Double> states) {
+    public QActionsFunction(Map<S, Double> states) {
         this.actions = new HashMap<>();
         for (S state : states.keySet()) {
             actions.put(state, new HashSet<>());
