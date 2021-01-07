@@ -11,6 +11,8 @@ public class NetworkTopology{
         Set<NetworkNode.TYPE> connectedHosts = new HashSet<>();
         if(source.equals(NetworkNode.TYPE.ADVERSARY)){
             connectedHosts.add(NetworkNode.TYPE.ROUTER);
+            connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
+            connectedHosts.add(NetworkNode.TYPE.ADMINPC);
             return connectedHosts;
         }else if (source.equals(NetworkNode.TYPE.ROUTER)){
             connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
@@ -42,21 +44,16 @@ public class NetworkTopology{
         Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
         //assume Adversary is scanning
         if (scanning.equals(NetworkNode.TYPE.ADVERSARY)){
-            for (NetworkNode node:viewableNodes){
-                //default = drop
-                Predicate<Software> isVisibleByAdv = sw -> false;
-                //scans on Router
-                if (node.getType().equals(NetworkNode.TYPE.ROUTER)){
-                    //define outer firewall
-                    List<String> webserverPublicWhitelist = List.of(Simulation.SERVICE_HTTP, Simulation.SERVICE_HTTPS, Simulation.SERVICE_PHP, Simulation.SERVICE_NGINX);
-                    isVisibleByAdv = sw -> webserverPublicWhitelist.contains(sw.getName());
-                    visibleSoftware.put(NetworkNode.TYPE.WEBSERVER, Simulation.getNodeByType(NetworkNode.TYPE.WEBSERVER).getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toSet()));
 
-                    List<String> adminPublicWhitelist = List.of(Simulation.SERVICE_SSH);
-                    isVisibleByAdv = sw -> adminPublicWhitelist.contains(sw.getName());
-                    visibleSoftware.put(NetworkNode.TYPE.ADMINPC, Simulation.getNodeByType(NetworkNode.TYPE.ADMINPC).getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toSet()));
-                }
-            }
+            Predicate<Software> isVisibleByAdv;
+            //scans on Router
+            List<String> webserverPublicWhitelist = List.of(Simulation.SERVICE_HTTP, Simulation.SERVICE_HTTPS, Simulation.SERVICE_PHP, Simulation.SERVICE_NGINX);
+            isVisibleByAdv = sw -> webserverPublicWhitelist.contains(sw.getName());
+            visibleSoftware.put(NetworkNode.TYPE.WEBSERVER, Simulation.getNodeByType(NetworkNode.TYPE.WEBSERVER).getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toSet()));
+
+            List<String> adminPublicWhitelist = List.of(Simulation.SERVICE_SSH);
+            isVisibleByAdv = sw -> adminPublicWhitelist.contains(sw.getName());
+            visibleSoftware.put(NetworkNode.TYPE.ADMINPC, Simulation.getNodeByType(NetworkNode.TYPE.ADMINPC).getRemoteSoftware().stream().filter(isVisibleByAdv).collect(Collectors.toSet()));
         }else if (scanning.equals(NetworkNode.TYPE.ROUTER)){
             for (NetworkNode node: viewableNodes){
                 visibleSoftware.put(node.getType(), new HashSet<>(node.getRemoteSoftware()));

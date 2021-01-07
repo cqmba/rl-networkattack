@@ -21,6 +21,9 @@ public enum AdversaryAction {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             // change that we are able to scan just the nodes viewable from the current actor
+            if (currentState.isStartState()){
+                return Set.of(NetworkNode.TYPE.ROUTER);
+            }
             return getViewableNodes(currentActor);
         }
 
@@ -387,6 +390,7 @@ public enum AdversaryAction {
 
     private static Set<NetworkNode.TYPE> getViewableNodes(NetworkNode.TYPE currentActor){
         Set<NetworkNode.TYPE> viewableNodeTypes = new HashSet<>();
+        /*
         if(currentActor.equals(NetworkNode.TYPE.ADVERSARY)){
             Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(NetworkNode.TYPE.ROUTER).contains(node.getType());
             Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
@@ -394,11 +398,14 @@ public enum AdversaryAction {
                 viewableNodeTypes.add(n.getType());
             }
         }else {
-            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(currentActor).contains(node.getType());
-            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
-            for (NetworkNode n : viewableNodes) {
-                viewableNodeTypes.add(n.getType());
-            }
+
+        }
+
+         */
+        Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(currentActor).contains(node.getType());
+        Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
+        for (NetworkNode n : viewableNodes) {
+            viewableNodeTypes.add(n.getType());
         }
         return viewableNodeTypes;
     }

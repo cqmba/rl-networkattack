@@ -12,6 +12,7 @@ import java.util.*;
 
 public class State implements Serializable {
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
+    private Boolean startState = false;
 
     private NetworkKnowledge networkKnowledge;
     //used to determine which Node an Action is executed FROM in PostCondition Of Action
@@ -19,14 +20,14 @@ public class State implements Serializable {
     //Map for the SoftwareKnowledge of the adversary for each NetworkNode
     private Map<NetworkNode.TYPE,Set<SoftwareKnowledge>> softwareKnowledgeMap = new HashMap<>();
 
-    public State() {
+    public State(Boolean startState) {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = new NetworkKnowledgeImpl();
+        this.startState = startState;
     }
 
     public static State getStartState(){
-        State start = new State();
-        //TODO is adding these necessary/helpful?
+        State start = new State(true);
         start.addNodeKnowledge(NetworkNode.TYPE.ADVERSARY);
         start.nodeKnowledgeMap.get(NetworkNode.TYPE.ADVERSARY).addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
@@ -164,6 +165,10 @@ public class State implements Serializable {
             }
         }
         return needsAccess;
+    }
+
+    public Boolean isStartState(){
+        return startState;
     }
 
     @Override
