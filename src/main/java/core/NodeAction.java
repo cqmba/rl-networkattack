@@ -2,7 +2,6 @@ package core;
 
 import aima.core.agent.Action;
 import environment.NetworkNode;
-import q_learning.NetworkAction;
 
 import java.util.HashSet;
 import java.util.Objects;
@@ -36,7 +35,6 @@ public class NodeAction implements Action {
         Set<NodeAction> allPossibleActions = new HashSet<>();
         Set<AdversaryAction> actions = AdversaryAction.allActions();
         for(AdversaryAction action : actions){
-            Set<NodeAction> algdsgf = action.getActionsWhichFulfillPrecondition(currentState);
             allPossibleActions.addAll(action.getActionsWhichFulfillPrecondition(currentState));
         }
         return allPossibleActions;
