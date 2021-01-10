@@ -4,7 +4,7 @@ import aima.core.agent.Action;
 import aima.core.agent.Percept;
 import aima.core.agent.impl.*;
 import aima.core.learning.reinforcement.PerceptStateReward;
-import q_learning.MDP;
+import q_learning.mdp.MDP;
 
 import java.util.Map;
 

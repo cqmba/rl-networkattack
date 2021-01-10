@@ -1,10 +1,11 @@
-package q_learning;
+package q_learning.mdp;
 
 import java.util.*;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
+import q_learning.Pair;
 import q_learning.abstracts.QReinforcementAgent;
 
 /**

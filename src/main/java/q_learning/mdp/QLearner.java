@@ -1,4 +1,4 @@
-package q_learning;
+package q_learning.mdp;
 
 import aima.core.agent.Action;
 

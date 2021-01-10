@@ -5,6 +5,10 @@ import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
 import q_learning.interfaces.StateReward;
+import q_learning.mdp.MDP;
+import q_learning.mdp.QActionsFunction;
+import q_learning.mdp.QLearner;
+import q_learning.mdp.QStateTransition;
 
 import java.util.HashMap;
 import java.util.HashSet;
