@@ -162,7 +162,7 @@ public enum AdversaryAction {
             for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
                 for(Data data :currentState.getNodeKnowledgeMap().get(node).getKnownData()){
                     //check if data is a credential and the node is attackable from the current actor
-                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())&&currentState.getNodeKnowledgeMap().containsKey(data.getCredentials())){
+                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())&&currentState.getNodeKnowledgeMap().containsKey(data.getCredentials().getNode())){
                         nodesWithCredentials.add(data.getCredentials().getNode());
                     }
                 }
@@ -173,17 +173,20 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            NodeKnowledge nodeKnowledge = newState.getNodeKnowledgeMap().get(target);
-            for(Data data : nodeKnowledge.getKnownData()){
-                if(data.containsCredentials()){
-                    Credentials.ACCESS_GRANT_LEVEL access_grant_level = data.getCredentials().getAccessGrantLevel();
-                    if(!nodeKnowledge.hasAccessLevelRoot()){
-                        if(access_grant_level==Credentials.ACCESS_GRANT_LEVEL.ROOT){
-                            nodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                        }else{
-                            nodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
-                        }
+            NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
+            for(NetworkNode.TYPE node : newState.getNodeKnowledgeMap().keySet()) {
+                NodeKnowledge nodeKnowledge = newState.getNodeKnowledgeMap().get(node);
+                for (Data data : nodeKnowledge.getKnownData()) {
+                    if (data.containsCredentials()) {
+                        Credentials.ACCESS_GRANT_LEVEL access_grant_level = data.getCredentials().getAccessGrantLevel();
+                        if (!targetNodeKnowledge.hasAccessLevelRoot()) {
+                            if (access_grant_level == Credentials.ACCESS_GRANT_LEVEL.ROOT) {
+                                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+                            } else {
+                                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+                            }
 
+                        }
                     }
                 }
             }

@@ -67,7 +67,7 @@ public class Simulation {
         }
     }
 
-    static void setupWorld(){
+    public static void setupWorld(){
         //add Router, currently no Software
         Set<Data> routerData = new LinkedHashSet<>();
         Set<Software> routerSW = new LinkedHashSet<>();
