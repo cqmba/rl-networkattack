@@ -87,7 +87,7 @@ public class MainLearning {
     private static final double ERROR = 0.000000001;
 
     /*
-     * Number of times each state is at least viseted
+     * Number of times each state is at least visited
      */
     private static final int NE = 5;
 

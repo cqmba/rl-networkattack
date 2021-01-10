@@ -9,10 +9,18 @@ import aima.core.agent.Action;
 public class CellAction implements Action {
     private final int direction;
 
+    /**
+     * Constructor for the directions.
+     * @param direction The direction. 0 is Up, 1 is down, 2 is left and 3 is right
+     */
     public CellAction(int direction) {
         this.direction = direction;
     }
 
+    /**
+     * Returns the direction
+     * @return The direction
+     */
     public int getDirection() {
         return direction;
     }

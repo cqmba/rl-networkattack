@@ -8,6 +8,11 @@ public class CellState {
     private final int x;
     private final int y;
 
+    /**
+     * The state of the MDP. 0, 0 is the top left corner
+     * @param x x-coordinate
+     * @param y y coordinate
+     */
     public CellState(int x, int y) {
         this.x = x;
         this.y = y;

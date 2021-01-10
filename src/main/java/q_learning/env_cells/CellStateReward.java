@@ -2,6 +2,9 @@ package q_learning.env_cells;
 
 import q_learning.interfaces.StateReward;
 
+/**
+ * Simple implementation of a StateReward. In this case each state has a fixed reward.
+ */
 public class CellStateReward implements StateReward<CellState, CellAction> {
     private final CellState state;
     private final double reward;
