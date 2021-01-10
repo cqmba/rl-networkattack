@@ -1,4 +1,4 @@
-package q_learning;
+package q_learning.env_cells;
 
 import aima.core.agent.Action;
 
@@ -6,10 +6,10 @@ import aima.core.agent.Action;
  * A simple implementation of an Action.
  * The Scenario is a cellworld. The Actions are moving Up, Down, Left and Right.
  */
-public class NetworkAction implements Action {
+public class CellAction implements Action {
     private final int direction;
 
-    public NetworkAction(int direction) {
+    public CellAction(int direction) {
         this.direction = direction;
     }
 
@@ -24,8 +24,8 @@ public class NetworkAction implements Action {
 
     @Override
     public boolean equals(Object o) {
-        if (o instanceof NetworkAction) {
-            NetworkAction other = (NetworkAction) o;
+        if (o instanceof CellAction) {
+            CellAction other = (CellAction) o;
             return this.direction == other.direction;
         }
         return false;

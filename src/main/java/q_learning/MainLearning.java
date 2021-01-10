@@ -1,6 +1,9 @@
 package q_learning;
 
 import aima.core.probability.mdp.ActionsFunction;
+import q_learning.env_cells.CellAction;
+import q_learning.env_cells.CellState;
+import q_learning.env_cells.CellStateReward;
 import q_learning.interfaces.StateReward;
 
 import java.util.HashMap;
@@ -101,15 +104,15 @@ public class MainLearning {
     public static void main(String[] args) {
 
         // generate states, actions and MDP
-        Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = generateStates();
-        ActionsFunction<NetworkState, NetworkAction> actions = generateActions(states);
-        QStateTransition<NetworkState, NetworkAction> transitions = generateTransitions(states, actions);
-        HashSet<NetworkState> finalStates = new HashSet<>();
-        finalStates.add(new NetworkState(5, 2));
-        finalStates.add(new NetworkState(1, 4));
-        MDP<NetworkState, NetworkAction> mdp = new MDP<>(states, new NetworkState(0, 0), actions, transitions, finalStates);
+        Map<CellState, StateReward<CellState, CellAction>> states = generateStates();
+        ActionsFunction<CellState, CellAction> actions = generateActions(states);
+        QStateTransition<CellState, CellAction> transitions = generateTransitions(states, actions);
+        HashSet<CellState> finalStates = new HashSet<>();
+        finalStates.add(new CellState(5, 2));
+        finalStates.add(new CellState(1, 4));
+        MDP<CellState, CellAction> mdp = new MDP<>(states, new CellState(0, 0), actions, transitions, finalStates);
 
-        QLearner<NetworkState, NetworkAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
+        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
         learner.runIterations(20000);
 
@@ -117,10 +120,10 @@ public class MainLearning {
         // Prints each states calculated utility
         // The actual actions taken in each state will be implemented later
         LOGGER.info("Expected utility per state:");
-        Map<NetworkState, Double> util = learner.getUtility();
+        Map<CellState, Double> util = learner.getUtility();
         if (LOGGER.isLoggable(Level.INFO)) {
-            for (Map.Entry<NetworkState, Double> entry : util.entrySet()) {
-                LOGGER.info(String.format("\tState: x=%d, y=%d \tUtiliy: %.16f%n", entry.getKey().getX(),
+            for (Map.Entry<CellState, Double> entry : util.entrySet()) {
+                LOGGER.info(String.format("\tState: x=%d, y=%d \tUtiliy: %.16f", entry.getKey().getX(),
                         entry.getKey().getY(), util.get(entry.getKey())));
             }
         }
@@ -132,8 +135,8 @@ public class MainLearning {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static Map<NetworkState, StateReward<NetworkState, NetworkAction>> generateStates() {
-        Map<NetworkState, StateReward<NetworkState, NetworkAction>> states = new HashMap<>();
+    private static Map<CellState, StateReward<CellState, CellAction>> generateStates() {
+        Map<CellState, StateReward<CellState, CellAction>> states = new HashMap<>();
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
                 if (!(x == 3 && y == 0) && !(x == 0 && y == 1) && !(x == 1 && y ==1) && !(x == 3 && y == 1) &&
@@ -144,7 +147,7 @@ public class MainLearning {
                     if (x == 1 && y == 4)
                         reward = 2.0;
 
-                    states.put(new NetworkState(x, y), new NetworkStateReward(new NetworkState(x, y), reward));
+                    states.put(new CellState(x, y), new CellStateReward(new CellState(x, y), reward));
                 }
             }
         }
@@ -156,15 +159,15 @@ public class MainLearning {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<NetworkState, NetworkAction> generateActions(Map<NetworkState,
-            StateReward<NetworkState, NetworkAction>> states) {
-        QActionsFunction<NetworkState, NetworkAction> actions = new QActionsFunction(states);
-        NetworkAction up = new NetworkAction(0);
-        NetworkAction down = new NetworkAction(1);
-        NetworkAction left = new NetworkAction(2);
-        NetworkAction right = new NetworkAction(3);
+    private static ActionsFunction<CellState, CellAction> generateActions(
+            Map<CellState, StateReward<CellState, CellAction>> states) {
+        QActionsFunction<CellState, CellAction> actions = new QActionsFunction(states);
+        CellAction up = new CellAction(0);
+        CellAction down = new CellAction(1);
+        CellAction left = new CellAction(2);
+        CellAction right = new CellAction(3);
 
-        for (NetworkState state : states.keySet()) {
+        for (CellState state : states.keySet()) {
             if (states.get(state).reward(null, null) > 0.5)
                 continue;
             int x = state.getX();
@@ -207,21 +210,21 @@ public class MainLearning {
      * @param action The action used
      * @return The new state
      */
-    private static NetworkState useAction(NetworkState state, NetworkAction action) {
+    private static CellState useAction(CellState state, CellAction action) {
         switch (action.getDirection()) {
-            case 0: return new NetworkState(state.getX(), state.getY() - 1);
-            case 1: return new NetworkState(state.getX(), state.getY() + 1);
-            case 2: return new NetworkState(state.getX() - 1, state.getY());
-            case 3: return new NetworkState(state.getX() + 1, state.getY());
+            case 0: return new CellState(state.getX(), state.getY() - 1);
+            case 1: return new CellState(state.getX(), state.getY() + 1);
+            case 2: return new CellState(state.getX() - 1, state.getY());
+            case 3: return new CellState(state.getX() + 1, state.getY());
             default: return null;
         }
     }
 
-    private static QStateTransition<NetworkState, NetworkAction> generateTransitions(Map<NetworkState,
-            StateReward<NetworkState, NetworkAction>> states, ActionsFunction<NetworkState, NetworkAction> actions) {
-        QStateTransition<NetworkState, NetworkAction> transition = new QStateTransition<>();
-        for (NetworkState state : states.keySet()) {
-            for (NetworkAction action : actions.actions(state)) {
+    private static QStateTransition<CellState, CellAction> generateTransitions(Map<CellState,
+            StateReward<CellState, CellAction>> states, ActionsFunction<CellState, CellAction> actions) {
+        QStateTransition<CellState, CellAction> transition = new QStateTransition<>();
+        for (CellState state : states.keySet()) {
+            for (CellAction action : actions.actions(state)) {
                 transition.addTransition(state, action, useAction(state, action));
             }
         }

@@ -1,14 +1,14 @@
-package q_learning;
+package q_learning.env_cells;
 
 /**
  * A simple implementation of a state.
  * The Scenario is a cellworld. Each state is therefore a cell with x and y coordinates, where 0,0 is the top left.
  */
-public class NetworkState {
+public class CellState {
     private final int x;
     private final int y;
 
-    public NetworkState(int x, int y) {
+    public CellState(int x, int y) {
         this.x = x;
         this.y = y;
     }
@@ -25,10 +25,10 @@ public class NetworkState {
     public boolean equals(Object o) {
         if (o == this)
             return true;
-        if (!(o instanceof NetworkState))
+        if (!(o instanceof CellState))
             return false;
 
-        NetworkState other = (NetworkState) o;
+        CellState other = (CellState) o;
         return this.x == other.x && this.y == other.y;
     }
 
