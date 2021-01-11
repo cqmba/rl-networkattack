@@ -3,7 +3,6 @@ package knowledge.impl;
 import environment.Data;
 import environment.NetworkNode;
 import environment.Software;
-import knowledge.DataKnowledge;
 import knowledge.NetworkKnowledge;
 
 import java.io.Serializable;
@@ -23,11 +22,6 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     @Override
     public Set<NetworkNode.TYPE> getKnownNodes() {
         return nodes;
-    }
-
-    @Override
-    public Set<DataKnowledge> getSniffedData() {
-        return null;
     }
 
     @Override

@@ -39,9 +39,9 @@ public class CreateAccountTest {
     public void testPostCondition(){
         Predicate<Data> isCrediential;
         isCrediential = d -> d.containsCredentials();
-        assertFalse(stateWithRootAcess.getNodeKnowledgeMap().get(target).getKnownData().stream().anyMatch(isCrediential));
+        assertFalse(stateWithRootAcess.getNodeKnowledgeMap().get(target).getKnownData().values().stream().anyMatch(isCrediential));
         State newState = AdversaryAction.CREATE_ACCOUNT.executePostConditionOnTarget(target,stateWithRootAcess,currentActor);
-        assertTrue(newState.getNodeKnowledgeMap().get(target).getKnownData().stream().anyMatch(isCrediential));
+        assertTrue(newState.getNodeKnowledgeMap().get(target).getKnownData().values().stream().anyMatch(isCrediential));
     }
 
     @Test

@@ -30,7 +30,7 @@ public class ValidAccountsTest {
         stateWithValidAccount.addNodeHostname(target, actualTarget.getHostname());
         stateWithValidAccount.addNodeKnowledge(webserver);
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.ROOT, actualTarget.getPriv_ip(), Simulation.SERVICE_SSH, NetworkNode.TYPE.ADMINPC);
-        stateWithValidAccount.getNodeKnowledgeMap().get(webserver).addData(new Data(ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        stateWithValidAccount.getNodeKnowledgeMap().get(webserver).addData(0, new Data(0, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
 
 
         withOutValidAccount.addNodeKnowledge(target);

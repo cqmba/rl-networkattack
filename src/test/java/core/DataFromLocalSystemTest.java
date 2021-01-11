@@ -1,4 +1,4 @@
-package ActionTests;
+package core;
 
 import core.AdversaryAction;
 import core.State;
@@ -11,6 +11,7 @@ import run.Simulation;
 
 import java.util.HashSet;
 import java.util.LinkedHashSet;
+import java.util.Map;
 import java.util.Set;
 
 import static org.junit.Assert.*;
@@ -22,7 +23,7 @@ public class DataFromLocalSystemTest {
     static NetworkNode.TYPE target = NetworkNode.TYPE.WEBSERVER;
     static NetworkNode.TYPE currentActor = NetworkNode.TYPE.WEBSERVER;
     static Set<Software> sw = new LinkedHashSet<>();
-    static Set<Data> dataOnWebserver;
+    static Map<Integer, Data> dataOnWebserver;
 
     @BeforeClass
     public static void setUp(){
@@ -39,18 +40,18 @@ public class DataFromLocalSystemTest {
 
     @Test
     public void testPostCondition(){
-        Set<Data> DataKnowledgeSetBeforeAction = state.getNodeKnowledgeMap().get(target).getKnownData();
-        for(Data data : dataOnWebserver){
-            assertFalse(DataKnowledgeSetBeforeAction.contains(data));
+        Map<Integer, Data> DataKnowledgeSetBeforeAction = state.getNodeKnowledgeMap().get(target).getKnownData();
+        for(Integer ID : dataOnWebserver.keySet()){
+            assertFalse(DataKnowledgeSetBeforeAction.containsKey(ID));
         }
 
         assertFalse(state.getSoftwareKnowledgeMap().containsKey(target));
 
         State newState = AdversaryAction.DATA_FROM_LOCAL_SYSTEM.executePostConditionOnTarget(target,state,currentActor);
 
-        Set<Data> DataKnowledgeSetAfterAction = newState.getNodeKnowledgeMap().get(target).getKnownData();
-        for(Data data : dataOnWebserver){
-            assertTrue(DataKnowledgeSetAfterAction.contains(data));
+        Map<Integer, Data> DataKnowledgeSetAfterAction = newState.getNodeKnowledgeMap().get(target).getKnownData();
+        for(Integer ID : dataOnWebserver.keySet()){
+            assertTrue(DataKnowledgeSetAfterAction.containsKey(ID));
         }
 
 

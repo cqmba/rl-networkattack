@@ -1,6 +1,7 @@
 package core;
 
 
+import environment.Data;
 import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
@@ -107,6 +108,12 @@ public class State implements Serializable {
             //for the case that the node is not contained in the map, create entry in the map
             softwareKnowledgeMap.put(node, Set.of(SoftwareKnowledge.addNew(swName, remote)));
         }
+    }
+
+    public void addNodeData(NetworkNode.TYPE node, Integer ID, Data data){
+        NodeKnowledge old = nodeKnowledgeMap.get(node);
+        old.addData(ID, data);
+        nodeKnowledgeMap.replace(node, old);
     }
 
     public Set<NetworkNode.TYPE> getSetOfSystemWithAcess(){

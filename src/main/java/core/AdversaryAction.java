@@ -195,12 +195,23 @@ public enum AdversaryAction {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
+            //we can also use valid acc locally for priv esc (password file)
+            viewableNodes.add(currentActor);
             Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
-            for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
-                for(Data data :currentState.getNodeKnowledgeMap().get(node).getKnownData()){
-                    //check if data is a credential and the node is attackable from the current actor
-                    if(data.containsCredentials() && viewableNodes.contains(data.getCredentials().getNode())&&currentState.getNodeKnowledgeMap().containsKey(data.getCredentials().getNode())){
-                        nodesWithCredentials.add(data.getCredentials().getNode());
+            Map<NetworkNode.TYPE, NodeKnowledge> knownNodes = currentState.getNodeKnowledgeMap();
+            for(NetworkNode.TYPE node : knownNodes.keySet()){
+                Map<Integer, Data> dataKnowledge = knownNodes.get(node).getKnownData();
+                for(Integer ID:dataKnowledge.keySet()){
+                    Data data = dataKnowledge.get(ID);
+                    if (data.containsCredentials()){
+                        Credentials creds = data.getCredentials();
+                        NetworkNode.TYPE accessibleNode = creds.getNode();
+                        //changed to make privilege escalation possible
+                        if (viewableNodes.contains(accessibleNode) && knownNodes.containsKey(accessibleNode)
+                                && (currentState.getNodesWithoutSystemAccess().contains(accessibleNode)
+                                        || creds.getAccessGrantLevel().equals(Credentials.ACCESS_GRANT_LEVEL.ROOT))){
+                            nodesWithCredentials.add(accessibleNode);
+                        }
                     }
                 }
             }
@@ -212,8 +223,9 @@ public enum AdversaryAction {
             State newState = (State) deepCopy(currentState);
             NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
             for(NetworkNode.TYPE node : newState.getNodeKnowledgeMap().keySet()) {
-                NodeKnowledge nodeKnowledge = newState.getNodeKnowledgeMap().get(node);
-                for (Data data : nodeKnowledge.getKnownData()) {
+                Map<Integer, Data> dataKnowledge = newState.getNodeKnowledgeMap().get(node).getKnownData();
+                for (Integer ID:dataKnowledge.keySet()) {
+                    Data data = dataKnowledge.get(ID);
                     if (data.containsCredentials()) {
                         Credentials.ACCESS_GRANT_LEVEL access_grant_level = data.getCredentials().getAccessGrantLevel();
                         if (!targetNodeKnowledge.hasAccessLevelRoot()) {
@@ -283,13 +295,15 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
+            int cred_id = 9999;
             //create new credentials
-            Data data = new Data(new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
+            Data data = new Data(cred_id, new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
             NetworkNode node = Simulation.getNodeByType(target);
             //add credentials to node
-            node.getDataSet().add(data);
+            //TODO this changes the environment! is that ok?
+            node.getDataSet().put(cred_id, data);
             //add credentials to node knowledge
-            newState.getNodeKnowledgeMap().get(target).getKnownData().add(data);
+            newState.getNodeKnowledgeMap().get(target).getKnownData().put(cred_id, data);
             return newState;
         }
     },
@@ -380,14 +394,18 @@ public enum AdversaryAction {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             NetworkNode node = Simulation.getNodeByType(target);
             State newState = (State) deepCopy(currentState);
-            Set<Data> dataSet = newState.getNodeKnowledgeMap().get(target).getKnownData();
-            for(Data data : node.getDataSet()){
-                if(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot()){
-                  dataSet.add(data);
-                }else {
-                    if (data.getAccess() == Data.ACCESS_REQUIRED.USER){
-                        dataSet.add(data);
-                    }
+            Set<Integer> knowndataSet = newState.getNodeKnowledgeMap().get(target).getKnownData().keySet();
+            //assume ID always increases by one and starts with 0
+            Map<Integer, Data> actualDataMap = node.getDataSet();
+            for(Integer ID : actualDataMap.keySet()){
+                if (knowndataSet.contains(ID)){
+                    continue;
+                }
+                // new data
+                if(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){
+                  newState.addNodeData(target, ID, actualDataMap.get(ID));
+                  //only add one
+                  break;
                 }
             }
             return newState;
@@ -438,18 +456,6 @@ public enum AdversaryAction {
 
     private static Set<NetworkNode.TYPE> getViewableNodes(NetworkNode.TYPE currentActor){
         Set<NetworkNode.TYPE> viewableNodeTypes = new HashSet<>();
-        /*
-        if(currentActor.equals(NetworkNode.TYPE.ADVERSARY)){
-            Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(NetworkNode.TYPE.ROUTER).contains(node.getType());
-            Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
-            for (NetworkNode n : viewableNodes) {
-                viewableNodeTypes.add(n.getType());
-            }
-        }else {
-
-        }
-
-         */
         Predicate<NetworkNode> isConnected = node -> NetworkTopology.getConnectedHosts(currentActor).contains(node.getType());
         Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());
         for (NetworkNode n : viewableNodes) {
