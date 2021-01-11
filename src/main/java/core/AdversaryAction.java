@@ -9,10 +9,7 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
-import java.util.HashSet;
-import java.util.LinkedHashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -397,7 +394,9 @@ public enum AdversaryAction {
             Set<Integer> knowndataSet = newState.getNodeKnowledgeMap().get(target).getKnownData().keySet();
             //assume ID always increases by one and starts with 0
             Map<Integer, Data> actualDataMap = node.getDataSet();
-            for(Integer ID : actualDataMap.keySet()){
+            List<Integer> randomisedData = new ArrayList<>(actualDataMap.keySet());
+            Collections.shuffle(randomisedData);
+            for(Integer ID : randomisedData){
                 if (knowndataSet.contains(ID)){
                     continue;
                 }
