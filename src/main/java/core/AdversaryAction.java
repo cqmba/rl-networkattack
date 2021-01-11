@@ -335,6 +335,7 @@ public enum AdversaryAction {
     MAN_IN_THE_MIDDLE {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
+
             return new HashSet<>();
         }
 

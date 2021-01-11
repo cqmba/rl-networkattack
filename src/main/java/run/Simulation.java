@@ -35,6 +35,7 @@ public class Simulation {
     public static final String SERVICE_PHP = "PHP";
     public static final String SERVICE_NGINX = "nginx";
 
+    public static final int MAX_DATA_PER_HOST = 10;
 
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
@@ -44,7 +45,7 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        Set<State> states = State.computeListOfPossibleStates(state);
+        //Set<State> states = State.computeListOfPossibleStates(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
         //for now do this manually
@@ -56,20 +57,41 @@ public class Simulation {
         targets.add(1, NetworkNode.TYPE.WEBSERVER);
         actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
         targets.add(2, NetworkNode.TYPE.ADMINPC);
-        actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
+        //actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
+        //targets.add(3, NetworkNode.TYPE.WEBSERVER);
+        actions.add(3, AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION);
         targets.add(3, NetworkNode.TYPE.WEBSERVER);
+        actions.add(4, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
+        targets.add(4, NetworkNode.TYPE.WEBSERVER);
+        //now from Webserver
+        actions.add(5, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(5, NetworkNode.TYPE.ROUTER);
+        actions.add(6, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(6, NetworkNode.TYPE.ROUTER);
+        actions.add(7, AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
+        targets.add(7, NetworkNode.TYPE.WEBSERVER);
+        for (int a=8; a<18;a++){
+            actions.add(a,AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
+            targets.add(a, NetworkNode.TYPE.WEBSERVER);
+        }
         for (int i=0; i<actions.size();i++){
             AdversaryAction action = actions.get(i);
+            //Assume we have Webserver root control
+            if (i>=5){
+                currentActor = NetworkNode.TYPE.WEBSERVER;
+            }
             printPossibleActions(currentActor);
             printPerformAction(action, targets.get(i));
             state = State.performGivenAction(state, action, targets.get(i), currentActor);
             SimpleStatePrint.print(state);
         }
+
+        printPossibleActions(currentActor);
     }
 
     public static void setupWorld(){
         //add Router, currently no Software
-        Set<Data> routerData = new LinkedHashSet<>();
+        Map<Integer, Data> routerData = new LinkedHashMap<>();
         Set<Software> routerSW = new LinkedHashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ROUTER, PUB_IP, ROUTER_PRIV_IP, ROUTER_HOSTNAME,ROUTER_OS, ROUTER_OS_VERSION, routerSW, routerSW, routerData));
         //add Webserver
@@ -112,20 +134,30 @@ public class Simulation {
         return remoteSW;
     }
 
-    static Set<Data> setWebserverData(){
+    static Map<Integer, Data> setWebserverData(){
+        //get 2 unique random IDs
+        Random r = new Random();
+        int pass_id = r.nextInt(MAX_DATA_PER_HOST-1);
+        int ssh_id;
+        do {
+            ssh_id = r.nextInt(MAX_DATA_PER_HOST-1);
+        }
+        while (pass_id == ssh_id);
         //create some data that can be used for priv escalation on the webserver locally (for now uses software Ubuntu)
-        Set<Data> wsData = new LinkedHashSet<>();
+        Map<Integer, Data> wsData = new LinkedHashMap<>();
         Credentials passwordfile = new Credentials(Credentials.TYPE.PASSWORD_FILE, Credentials.ACCESS_GRANT_LEVEL.ROOT, WEBSERVER_PRIV_IP, NODE_OS, NetworkNode.TYPE.WEBSERVER);
-        wsData.add(new Data(passwordfile, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        wsData.put(pass_id, new Data(pass_id, passwordfile, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
         //create data for ssh access (key) to admin pc
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.ROOT, ADMINPC_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.ADMINPC);
-        wsData.add(new Data(ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        wsData.put(ssh_id, new Data(ssh_id, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
         //fill some less usefull data
-        for (int i=0;i<10; i++){
-            if (i/2==0){
-                wsData.add(new Data(Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        for (int i=0;i<MAX_DATA_PER_HOST; i++){
+            if (i == pass_id || i == ssh_id){
+                //do nothing
+            }else if (i/2==0){
+                wsData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
             } else {
-                wsData.add(new Data(Data.GAINED_KNOWLEDGE.NONE, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+                wsData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.NONE, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
             }
         }
         return wsData;
@@ -145,18 +177,23 @@ public class Simulation {
         return remoteSW;
     }
 
-    static Set<Data> setAdminPCData(){
+    static Map<Integer, Data> setAdminPCData(){
+        //unique random IDs
+        int ssh_id = new Random().nextInt(MAX_DATA_PER_HOST-1);
         //AdminPC contains mostly high value data
-        Set<Data> adminData = new LinkedHashSet<>();
+        Map<Integer, Data> adminData = new LinkedHashMap<>();
         //create data for ssh access (key) to webserver
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.USER, WEBSERVER_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.WEBSERVER);
-        adminData.add(new Data(ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+        adminData.put(ssh_id, new Data(ssh_id, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
         //fill some additional data
-        for (int i=0;i<10; i++){
+        for (int i=0;i<MAX_DATA_PER_HOST; i++){
+            if (i == ssh_id){
+                //do nothing
+            }
             if (i/2==0){
-                adminData.add(new Data(Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+                adminData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
             } else {
-               adminData.add(new Data(Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+               adminData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
             }
         }
         return adminData;
@@ -171,14 +208,14 @@ public class Simulation {
         return remoteSW;
     }
 
-    static Set<Data> setDBData(){
+    static Map<Integer, Data> setDBData(){
         //Database contains mostly high value data
-        Set<Data> dbData = new LinkedHashSet<>();
-        for (int i=0;i<20; i++){
+        Map<Integer, Data> dbData = new LinkedHashMap<>();
+        for (int i=0;i<(2*MAX_DATA_PER_HOST); i++){
             if (i/2==0){
-                dbData.add(new Data(Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+                dbData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
             } else {
-                dbData.add(new Data(Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+                dbData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
             }
         }
         return dbData;
