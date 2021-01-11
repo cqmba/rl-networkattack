@@ -20,6 +20,7 @@ public enum AdversaryAction {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
+            //TODO debug this if webserver/admin is scanning, not working as intended
             // change that we are able to scan just the nodes viewable from the current actor
             if (currentState.isStartState()){
                 return Set.of(NetworkNode.TYPE.ROUTER);
@@ -52,25 +53,33 @@ public enum AdversaryAction {
                     }
                 }
             }
-
             //Get all the visible remote software FROM the node, where the scan was executed from
             Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
-            //when scanning on router, get port forwarded sw only
-            if (target.equals(NetworkNode.TYPE.ROUTER)){
-                Set<NetworkNode.TYPE> targets = new HashSet<>();
-                targets.add(NetworkNode.TYPE.WEBSERVER);
-                targets.add(NetworkNode.TYPE.ADMINPC);
+            Set<NetworkNode.TYPE> internal = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE);
+            //when scanning on router from outside, get port forwarded sw only
+            if (target.equals(NetworkNode.TYPE.ROUTER) && !internal.contains(currentActor)){
+                Set<NetworkNode.TYPE> targets = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC);
                 for (NetworkNode.TYPE scanned:targets){
                     for (Software software:remotelyVisibleSWInNetwork.get(scanned)){
                         newState.addNodeRemoteSoftwareName(scanned, software.getName(), true);
                     }
                 }
-            }else if (remotelyVisibleSWInNetwork.containsKey(target) && !remotelyVisibleSWInNetwork.get(target).isEmpty()){
-                for (Software sw: remotelyVisibleSWInNetwork.get(target)){
+                return newState;
+            }else if(internal.contains(currentActor)){
+                if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                    newState.addNodePrivIp(target, node.getPriv_ip());
+                }
+            }
+            addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
+            return newState;
+        }
+
+        private void addRemoteSw(Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork, NetworkNode.TYPE target, State newState){
+            for (Software sw: remotelyVisibleSWInNetwork.get(target)){
+                if (!newState.getSoftwareKnowledgeMap().containsKey(target) || !newState.softwareContainedInSet(sw.getName(), newState.getSoftwareKnowledgeMap().get(target))){
                     newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
                 }
             }
-            return newState;
         }
     },
     ACTIVE_SCAN_VULNERABILITY {
@@ -150,6 +159,10 @@ public enum AdversaryAction {
             // check if we have not root access so we do not override it
             if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+            //learn own IP if new
+            if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+            }
 
             return newState;
         }
@@ -190,6 +203,10 @@ public enum AdversaryAction {
                     }
                 }
             }
+            //learn own IP if new
+            if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+            }
             return newState;
         }
     },
@@ -219,6 +236,10 @@ public enum AdversaryAction {
             // check if we have not root access so we do not override it
             if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
+            //learn own IP if new
+            if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+            }
             return newState;
         }
     },
