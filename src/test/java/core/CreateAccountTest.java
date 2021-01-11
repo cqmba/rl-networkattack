@@ -1,11 +1,8 @@
-package ActionTests;
+package core;
 
-import core.AdversaryAction;
-import core.State;
 import environment.Data;
 import environment.NetworkNode;
 import environment.NetworkWorld;
-import environment.Software;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import run.Simulation;

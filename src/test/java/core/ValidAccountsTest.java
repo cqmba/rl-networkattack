@@ -1,7 +1,5 @@
-package ActionTests;
+package core;
 
-import core.AdversaryAction;
-import core.State;
 import environment.Credentials;
 import environment.Data;
 import environment.NetworkNode;
