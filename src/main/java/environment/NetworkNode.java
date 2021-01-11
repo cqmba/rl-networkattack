@@ -81,6 +81,10 @@ public class NetworkNode{
         return type;
     }
 
+    public void setLocalSoftware(Set<Software> localSoftware) {
+        this.localSoftware = localSoftware;
+    }
+
     public Map<TYPE, Set<Software>> getRemotelyVisibleSWInNetwork() {
         return remotelyVisibleSWInNetwork;
     }
