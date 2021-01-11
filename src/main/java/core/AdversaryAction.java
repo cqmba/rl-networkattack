@@ -20,8 +20,6 @@ public enum AdversaryAction {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            //TODO debug this if webserver/admin is scanning, not working as intended
-            // change that we are able to scan just the nodes viewable from the current actor
             if (currentState.isStartState()){
                 return Set.of(NetworkNode.TYPE.ROUTER);
             }
@@ -60,19 +58,30 @@ public enum AdversaryAction {
             Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
             Set<NetworkNode.TYPE> internal = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE);
             //when scanning on router from outside, get port forwarded sw only
-            if (target.equals(NetworkNode.TYPE.ROUTER) && !internal.contains(currentActor)){
-                Set<NetworkNode.TYPE> targets = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC);
-                for (NetworkNode.TYPE scanned:targets){
-                    for (Software software:remotelyVisibleSWInNetwork.get(scanned)){
-                        newState.addNodeRemoteSoftwareName(scanned, software.getName(), true);
-                    }
-                }
+            if (target.equals(NetworkNode.TYPE.ROUTER) && newState.getNodeKnowledgeMap().get(NetworkNode.TYPE.ROUTER).hasPrivIp()){
                 return newState;
+            }else if (target.equals(NetworkNode.TYPE.ROUTER)){
+                if (internal.contains(currentActor)){
+                    if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                        newState.addNodePrivIp(target, node.getPriv_ip());
+                    }
+                    return newState;
+                }
+                if (!internal.contains(currentActor)){
+                    Set<NetworkNode.TYPE> targets = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC);
+                    for (NetworkNode.TYPE scanned:targets){
+                        for (Software software:remotelyVisibleSWInNetwork.get(scanned)){
+                            //TODO no check if sw is new
+                            newState.addNodeRemoteSoftwareName(scanned, software.getName(), true);
+                        }
+                    }
+                    return newState;
+                }
             }else if(internal.contains(currentActor)){
                 if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
                     newState.addNodePrivIp(target, node.getPriv_ip());
                 }
-            }
+            }else
             addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
             return newState;
         }
@@ -96,6 +105,9 @@ public enum AdversaryAction {
                     targets.add(host);
                 }
             }
+            if (!currentState.isStartState()){
+                targets.add(NetworkNode.TYPE.ROUTER);
+            }
             return targets;
         }
 
@@ -103,12 +115,21 @@ public enum AdversaryAction {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             NetworkNode actualTarget = Simulation.getNodeByType(target);
+            NodeKnowledge knownNode = newState.getNodeKnowledgeMap().get(target);
+            //TODO Router OS info can be read, but actual software scanning is bypassed for now and doesnt work as relay
+            if (target.equals(NetworkNode.TYPE.ROUTER)){
+                if (!knownNode.hasOperatingSystem()){
+                    newState.addNodeOS(target, actualTarget.getOperatingSystem());
+                }
+                if (!knownNode.hasOSVersion()){
+                    newState.addNodeOSVersion(target, actualTarget.getOsVersion());
+                }
+                return newState;
+            }
             Set<SoftwareKnowledge> knownSoftware = newState.getSoftwareKnowledgeMap().get(target);
             // add to every software we know the version and the vulnerabilities
             addVersionAndVulnerabilities(actualTarget.getLocalSoftware(), knownSoftware);
             addVersionAndVulnerabilities(actualTarget.getRemoteSoftware(), knownSoftware);
-            NodeKnowledge knownNode = newState.getNodeKnowledgeMap().get(target);
-            //TODO since Router can never be target (see pre), we can never obtain router OS & version
             if (!knownNode.hasOperatingSystem()){
                 newState.addNodeOS(target, actualTarget.getOperatingSystem());
             }
