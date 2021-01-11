@@ -35,6 +35,10 @@ public class State implements Serializable {
         return start;
     }
 
+    public void setStartState(boolean startState){
+        this.startState = startState;
+    }
+
     //assumes next acting node was determined already, not sure when this actually happens
     public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current, NetworkNode.TYPE currentActor){
         //TODO

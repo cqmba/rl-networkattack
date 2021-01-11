@@ -20,14 +20,17 @@ public class NetworkTopology{
             connectedHosts.add(NetworkNode.TYPE.DATABASE);
             return connectedHosts;
         }else if (source.equals(NetworkNode.TYPE.WEBSERVER)){
+            connectedHosts.add(NetworkNode.TYPE.ROUTER);
             connectedHosts.add(NetworkNode.TYPE.ADMINPC);
             connectedHosts.add(NetworkNode.TYPE.DATABASE);
             return connectedHosts;
         }else if (source.equals(NetworkNode.TYPE.ADMINPC)){
+            connectedHosts.add(NetworkNode.TYPE.ROUTER);
             connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
             connectedHosts.add(NetworkNode.TYPE.DATABASE);
             return connectedHosts;
         }else if (source.equals(NetworkNode.TYPE.DATABASE)){
+            connectedHosts.add(NetworkNode.TYPE.ROUTER);
             connectedHosts.add(NetworkNode.TYPE.WEBSERVER);
             connectedHosts.add(NetworkNode.TYPE.ADMINPC);
             return connectedHosts;
