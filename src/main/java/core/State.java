@@ -23,7 +23,7 @@ public class State implements Serializable {
 
     public State(Boolean startState) {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
-        this.networkKnowledge = new NetworkKnowledgeImpl();
+        this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
     }
 
@@ -167,11 +167,23 @@ public class State implements Serializable {
         return false;
     }
 
+    //TODO naming is bad since it returns both without any access and root access
     public Set<NetworkNode.TYPE> getNodesWithoutSystemAccess(){
         Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
         Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
         for (NetworkNode.TYPE node: nodes){
             if (!nodeKnowledgeMap.get(node).hasAccessLevelUser()){
+                needsAccess.add(node);
+            }
+        }
+        return needsAccess;
+    }
+
+    public Set<NetworkNode.TYPE> getNodesWithAnyNodeAccess(){
+        Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
+        Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
+        for (NetworkNode.TYPE node: nodes){
+            if (nodeKnowledgeMap.get(node).hasAccessLevelUser() || nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
                 needsAccess.add(node);
             }
         }

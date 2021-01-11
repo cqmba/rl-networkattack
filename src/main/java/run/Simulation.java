@@ -35,7 +35,7 @@ public class Simulation {
     public static final String SERVICE_PHP = "PHP";
     public static final String SERVICE_NGINX = "nginx";
 
-    public static final int MAX_DATA_PER_HOST = 10;
+    public static final int MAX_DATA_PER_HOST = 3;
 
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
@@ -105,6 +105,7 @@ public class Simulation {
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
         //should add data here that can be sniffed in the network
         simWorld.initializeNetworkTopology();
+        simWorld.setSniffableData(getNetworkData());
     }
 
     static Set<Software> setWebserverRemoteSW(){
@@ -211,7 +212,7 @@ public class Simulation {
     static Map<Integer, Data> setDBData(){
         //Database contains mostly high value data
         Map<Integer, Data> dbData = new LinkedHashMap<>();
-        for (int i=0;i<(2*MAX_DATA_PER_HOST); i++){
+        for (int i=0;i<MAX_DATA_PER_HOST; i++){
             if (i/2==0){
                 dbData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
             } else {
@@ -240,5 +241,23 @@ public class Simulation {
     private static void printPossibleActions(NetworkNode.TYPE currentActor){
         Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
         SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
+    }
+
+    private static Map<Integer, Data> getNetworkData(){
+        Map<Integer, Data> networkData = new HashMap<>();
+        //currently only DB password is sniffable
+        //get 2 unique random IDs
+        int db_pw_id = new Random().nextInt(MAX_DATA_PER_HOST-1);
+        for (int i=0;i<MAX_DATA_PER_HOST; i++){
+            if (i == db_pw_id){
+                //do nothing
+            }
+            if (i/2==0){
+                networkData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+            } else {
+                networkData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
+            }
+        }
+        return networkData;
     }
 }

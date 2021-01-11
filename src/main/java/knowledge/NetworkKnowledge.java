@@ -17,12 +17,10 @@ public interface NetworkKnowledge {
 
     Set<NetworkNode.TYPE> getKnownNodes();
 
-    Map<NetworkNode.TYPE, List<Software>> getMapOfNodeRemoteSWForNodesWithoutEstablishedSystemAccess();
-
     void addNewNode(NetworkNode.TYPE node);
 
     void addSniffedData(Data data);
 
-
+    Map<Integer, Data> getSniffedDataMap();
 
 }

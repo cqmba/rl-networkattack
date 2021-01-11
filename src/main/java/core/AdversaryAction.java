@@ -1,6 +1,7 @@
 package core;
 
 import environment.*;
+import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import run.Simulation;
@@ -335,13 +336,29 @@ public enum AdversaryAction {
     MAN_IN_THE_MIDDLE {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-
-            return new HashSet<>();
+            //define that node has to selftarget here
+            if (currentState.getNodesWithAnyNodeAccess().contains(currentActor) && !currentActor.equals(NetworkNode.TYPE.ADVERSARY)){
+                return Set.of(currentActor);
+            }else return new HashSet<>();
         }
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
-            return null;
+            State newState = (State) deepCopy(currentState);
+            NetworkNode node = Simulation.getNodeByType(target);
+            Set<Integer> knownSniffedData = currentState.getNetworkKnowledge().getSniffedDataMap().keySet();
+            Map<Integer, Data> actualDataMap = Simulation.getSimWorld().getSniffableData();
+            List<Integer> randomisedData = new ArrayList<>(actualDataMap.keySet());
+            Collections.shuffle(randomisedData);
+            for (Integer ID: randomisedData){
+                if (knownSniffedData.contains(ID)){
+                    continue;
+                }
+                // new data
+                newState.addNodeData(target, ID, actualDataMap.get(ID));
+                break;
+            }
+            return newState;
         }
     },
     SOFTWARE_DISCOVERY {

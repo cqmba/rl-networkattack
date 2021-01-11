@@ -48,6 +48,9 @@ public class Data implements Serializable {
         return containsCredentials;
     }
 
+    public Integer getID() {
+        return ID;
+    }
 
     public GAINED_KNOWLEDGE getGain() {
         return gain;
