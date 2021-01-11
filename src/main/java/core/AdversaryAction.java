@@ -32,7 +32,9 @@ public enum AdversaryAction {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             NetworkNode node = Simulation.getNodeByType(target);
             State newState = (State) deepCopy(currentState);
-            newState.setStartState(false);
+            if (currentState.isStartState()){
+                newState.setStartState(false);
+            }
             Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
             if (!knownNodes.contains(target)){
                 newState.addNodeKnowledge(target);
