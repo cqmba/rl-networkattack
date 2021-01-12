@@ -90,7 +90,7 @@ public class Data implements Serializable {
         if (!(o instanceof Data)) return false;
         Data data = (Data) o;
         return Objects.equals(containsCredentials, data.containsCredentials) &&
-                ID == data.ID &&
+                Objects.equals(ID, data.ID) &&
                 gain == data.gain &&
                 origin == data.origin &&
                 access == data.access &&
