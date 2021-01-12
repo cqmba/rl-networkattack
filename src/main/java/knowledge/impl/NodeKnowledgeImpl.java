@@ -3,9 +3,7 @@ package knowledge.impl;
 import environment.Data;
 import environment.NetworkNode;
 import environment.Software;
-import knowledge.DataKnowledge;
 import knowledge.NodeKnowledge;
-import knowledge.SoftwareKnowledge;
 
 import java.io.Serializable;
 import java.util.*;
@@ -19,7 +17,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private String osVersion;
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
-    private Set<Data> dataSet;
+    private Map<Integer, Data> dataSet;
     private NetworkNode.ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
@@ -34,7 +32,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         this.osVersion = "";
         this.remoteSoftware = new HashSet<>();
         this.localSoftware = new HashSet<>();
-        this.dataSet = new HashSet<>();
+        this.dataSet = new HashMap<>();
         this.sysAccess = NetworkNode.ACCESS_LEVEL.NONE;
         this.remotelyVisibleSWInNetwork = new HashMap<>();
         //could also add new unknown type
@@ -77,18 +75,13 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public boolean hasFoundData(Data data) {
-        return false;
+    public boolean hasFoundData(Integer ID) {
+        return dataSet.containsKey(ID);
     }
 
     @Override
-    public Set<Data> getKnownData() {
+    public Map<Integer, Data> getKnownData() {
         return this.dataSet;
-    }
-
-    @Override
-    public Set<DataKnowledge> getDataKnowledge() {
-        return null;
     }
 
     @Override
@@ -122,8 +115,8 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public void addData(Data data) {
-        dataSet.add(data);
+    public void addData(Integer ID, Data data) {
+        dataSet.put(ID, data);
     }
 
     @Override

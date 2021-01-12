@@ -2,18 +2,18 @@ package knowledge.impl;
 
 import environment.Data;
 import environment.NetworkNode;
-import environment.Software;
-import knowledge.DataKnowledge;
 import knowledge.NetworkKnowledge;
 
 import java.io.Serializable;
 import java.util.*;
 
 public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
+    private Map<Integer, Data> sniffedData;
     private Set<NetworkNode.TYPE> nodes;
 
     public NetworkKnowledgeImpl(){
         this.nodes = new HashSet<>();
+        this.sniffedData = new HashMap<>();
     }
 
     public NetworkKnowledgeImpl(Set<NetworkNode.TYPE> nodes){
@@ -26,23 +26,18 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     }
 
     @Override
-    public Set<DataKnowledge> getSniffedData() {
-        return null;
-    }
-
-    @Override
-    public Map<NetworkNode.TYPE, List<Software>> getMapOfNodeRemoteSWForNodesWithoutEstablishedSystemAccess() {
-        return null;
-    }
-
-    @Override
     public void addNewNode(NetworkNode.TYPE node) {
         nodes.add(node);
     }
 
     @Override
     public void addSniffedData(Data data) {
+        sniffedData.put(data.getID(), data);
+    }
 
+    @Override
+    public Map<Integer, Data> getSniffedDataMap() {
+        return sniffedData;
     }
 
     @Override

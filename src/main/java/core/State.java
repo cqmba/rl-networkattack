@@ -1,6 +1,7 @@
 package core;
 
 
+import environment.Data;
 import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
@@ -22,7 +23,7 @@ public class State implements Serializable {
 
     public State(Boolean startState) {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
-        this.networkKnowledge = new NetworkKnowledgeImpl();
+        this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
     }
 
@@ -33,6 +34,10 @@ public class State implements Serializable {
         start.addNodeKnowledge(NetworkNode.TYPE.ROUTER);
 
         return start;
+    }
+
+    public void setStartState(boolean startState){
+        this.startState = startState;
     }
 
     //assumes next acting node was determined already, not sure when this actually happens
@@ -105,6 +110,12 @@ public class State implements Serializable {
         }
     }
 
+    public void addNodeData(NetworkNode.TYPE node, Integer ID, Data data){
+        NodeKnowledge old = nodeKnowledgeMap.get(node);
+        old.addData(ID, data);
+        nodeKnowledgeMap.replace(node, old);
+    }
+
     public Set<NetworkNode.TYPE> getSetOfSystemWithAcess(){
         Set<NetworkNode.TYPE> nodesWithAcess = new HashSet<>();
         for(NetworkNode.TYPE node : this.getNodeKnowledgeMap().keySet()){
@@ -156,11 +167,23 @@ public class State implements Serializable {
         return false;
     }
 
+    //TODO naming is bad since it returns both without any access and root access
     public Set<NetworkNode.TYPE> getNodesWithoutSystemAccess(){
         Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
         Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
         for (NetworkNode.TYPE node: nodes){
             if (!nodeKnowledgeMap.get(node).hasAccessLevelUser()){
+                needsAccess.add(node);
+            }
+        }
+        return needsAccess;
+    }
+
+    public Set<NetworkNode.TYPE> getNodesWithAnyNodeAccess(){
+        Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
+        Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
+        for (NetworkNode.TYPE node: nodes){
+            if (nodeKnowledgeMap.get(node).hasAccessLevelUser() || nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
                 needsAccess.add(node);
             }
         }

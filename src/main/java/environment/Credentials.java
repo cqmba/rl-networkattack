@@ -27,6 +27,14 @@ public class Credentials implements Serializable {
         this.node = node;
     }
 
+    public TYPE getType() {
+        return type;
+    }
+
+    public String getUseInSW() {
+        return useInSW;
+    }
+
     public NetworkNode.TYPE getNode() {
         return node;
     }

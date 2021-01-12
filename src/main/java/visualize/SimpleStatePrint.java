@@ -1,12 +1,15 @@
 package visualize;
 
 import core.State;
+import environment.Credentials;
+import environment.Data;
 import environment.NetworkNode;
 import environment.Vulnerability;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 
+import java.util.Map;
 import java.util.Set;
 
 public class SimpleStatePrint {
@@ -20,10 +23,14 @@ public class SimpleStatePrint {
         printNetworkKnowledge(state.getNetworkKnowledge());
         for (NetworkNode.TYPE node:state.getNodeKnowledgeMap().keySet()){
             System.out.println("\tNode Detail: "+node.toString());
-            printNodeKnowledge(state.getNodeKnowledgeMap().get(node));
+            NodeKnowledge nodeKnowledge = state.getNodeKnowledgeMap().get(node);
+            printNodeKnowledge(nodeKnowledge);
             if (state.getSoftwareKnowledgeMap().containsKey(node)){
                 System.out.println("\t\tSoftware:");
                 printNodeSoftwareKnowledge(state.getSoftwareKnowledgeMap().get(node));
+            }
+            if (!nodeKnowledge.getKnownData().isEmpty()){
+                printDataKnowledge(nodeKnowledge.getKnownData());
             }
         }
     }
@@ -40,6 +47,18 @@ public class SimpleStatePrint {
                     System.out.println("\t\t\t\t"+vuln.getType());
                 }
             }
+        }
+    }
+
+    private static void printDataKnowledge(Map<Integer, Data> dataMap){
+        System.out.println("\t\tData found: "+dataMap.keySet().size());
+        for (Integer ID : dataMap.keySet()){
+            String line = "\t\t\tID "+ID;
+            if (dataMap.get(ID).containsCredentials()){
+                Credentials creds = dataMap.get(ID).getCredentials();
+                line = line.concat("\t\t\t\tCredentials found! Type: "+creds.getType()+" Software: "+creds.getUseInSW()+ " On: "+creds.getNode()+" Access: "+creds.getAccessGrantLevel());
+            }
+            System.out.println(line);
         }
     }
 

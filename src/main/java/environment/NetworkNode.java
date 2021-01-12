@@ -12,7 +12,7 @@ public class NetworkNode{
     private String osVersion = "";
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
-    private Set<Data> dataSet;
+    private Map<Integer, Data> dataSet;
     private ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
@@ -33,7 +33,7 @@ public class NetworkNode{
         ROOT
     }
 
-    public NetworkNode(NetworkNode.TYPE type, String pub_ip, String priv_ip, String hostname, String operatingSystem, String osVersion, Set<Software> remoteSoftware, Set<Software> localSoftware, Set<Data> dataSet) {
+    public NetworkNode(NetworkNode.TYPE type, String pub_ip, String priv_ip, String hostname, String operatingSystem, String osVersion, Set<Software> remoteSoftware, Set<Software> localSoftware, Map<Integer, Data> dataSet) {
         this.type = type;
         this.pub_ip = pub_ip;
         this.priv_ip = priv_ip;
@@ -73,12 +73,16 @@ public class NetworkNode{
         return localSoftware;
     }
 
-    public Set<Data> getDataSet() {
+    public Map<Integer, Data> getDataSet() {
         return dataSet;
     }
 
     public TYPE getType() {
         return type;
+    }
+
+    public void setLocalSoftware(Set<Software> localSoftware) {
+        this.localSoftware = localSoftware;
     }
 
     public Map<TYPE, Set<Software>> getRemotelyVisibleSWInNetwork() {

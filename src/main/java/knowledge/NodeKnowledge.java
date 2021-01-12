@@ -4,6 +4,7 @@ import environment.Data;
 import environment.NetworkNode;
 import knowledge.impl.NodeKnowledgeImpl;
 
+import java.util.Map;
 import java.util.Set;
 
 public interface NodeKnowledge {
@@ -27,17 +28,9 @@ public interface NodeKnowledge {
 
     boolean hasAccessLevelRoot();
 
-    boolean hasFoundData(Data data);
+    boolean hasFoundData(Integer ID);
 
-    //Set<SoftwareKnowledge> getLocalSoftwareKnowledge();
-
-    //Set<SoftwareKnowledge> getRemoteSoftwareKnowledge();
-
-    Set<Data> getKnownData();
-
-    //boolean isRemoteServiceKnown(String software);
-
-    Set<DataKnowledge> getDataKnowledge();
+    Map<Integer, Data> getKnownData();
 
     void addPubIp(String pubIp);
 
@@ -51,10 +44,5 @@ public interface NodeKnowledge {
 
     void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
 
-    void addData(Data data);
-
-    //NodeKnowledge addNewLocalSoftware(String sw);
-
-    //NodeKnowledge addNewRemoteSoftware(String sw);
-
+    void addData(Integer ID, Data data);
 }
