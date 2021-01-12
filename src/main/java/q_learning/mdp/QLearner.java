@@ -75,7 +75,7 @@ public class QLearner<S, A extends Action> {
 
     /**
      * Runs the QLearningAgent "iterations" times.
-     * @param iterations
+     * @param iterations The number of iterations to run
      */
     public void runIterations(int iterations) {
         if (iterations <= 0)
