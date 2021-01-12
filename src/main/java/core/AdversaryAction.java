@@ -428,8 +428,6 @@ public enum AdversaryAction {
                 // new data
                 if(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){
                   newState.addNodeData(target, ID, actualDataMap.get(ID));
-                  //only add one
-                  break;
                 }
             }
             return newState;

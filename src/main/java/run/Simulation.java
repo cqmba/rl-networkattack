@@ -45,7 +45,7 @@ public class Simulation {
         setupWorld();
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        //Set<State> states = State.computeListOfPossibleStates(state);
+        Set<State> states = State.computeListOfPossibleStates(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
         //for now do this manually
@@ -70,10 +70,8 @@ public class Simulation {
         targets.add(6, NetworkNode.TYPE.ROUTER);
         actions.add(7, AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
         targets.add(7, NetworkNode.TYPE.WEBSERVER);
-        for (int a=8; a<18;a++){
-            actions.add(a,AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
-            targets.add(a, NetworkNode.TYPE.WEBSERVER);
-        }
+        actions.add(8,AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
+        targets.add(8, NetworkNode.TYPE.WEBSERVER);
         for (int i=0; i<actions.size();i++){
             AdversaryAction action = actions.get(i);
             //Assume we have Webserver root control
