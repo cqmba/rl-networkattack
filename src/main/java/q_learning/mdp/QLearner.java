@@ -33,8 +33,9 @@ public class QLearner<S, A extends Action> {
      *      information is used. A learning rate of 1 overrides all previous data, while a learning rate of 0
      *      ignores new information. A learning rate of 0.01 to 0.1 is recommended.
      * @param discountFactor
-     *      The discount factor, which has to be between 0 and 1.
-     *      (numbers smaller than 1 currently generate false results)
+     *      The discount factor, which has to be between 0 and 1. A high discount factor lets the agent be far sighted
+     *      while a low factor makes it consider early rewards more. In some cases a discount factor of or near 1
+     *      can result in divergence or instabilities.
      * @param actionEpsilon
      *      The epsilon value used for action determination, which must be between 0 and 1. Usually the action with
      *      the highest reward is used as the next action, however with a probability of epsilon a random action is
