@@ -1,20 +1,19 @@
-package q_learning;
+package q_learning.mdp;
 
 import aima.core.probability.mdp.ActionsFunction;
+import org.junit.Test;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
 import q_learning.interfaces.StateReward;
-import q_learning.mdp.MDP;
-import q_learning.mdp.QActionsFunction;
-import q_learning.mdp.QLearner;
-import q_learning.mdp.QStateTransition;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+
+import static org.junit.Assert.*;
 
 /**
  * This class runs and initializes the Q-Learning Agent.
@@ -56,8 +55,8 @@ import java.util.logging.Logger;
  * the best final state is. So he wanders randomly around until he reaches the final state 2.0. This is expected
  * behaviour and not a bug. It could be changed by giving each action done a penalty.
  */
-public class MainLearning {
-    private static final Logger LOGGER = Logger.getLogger(MainLearning.class.getName());
+public class QLearnerTest {
+    private static final Logger LOGGER = Logger.getLogger(QLearnerTest.class.getName());
 
     /*
      * Learning Rate determines how much new information is used instead of old and is between 0 and 1. A learning rate
@@ -98,15 +97,13 @@ public class MainLearning {
     // Should be the highest (or higher than that) reward possible
     private static final double R_PLUS = 2.0;
 
-
     /**
-     * Main Function, which initializes the MDP and runs the Q Learning Agent. It prints each run, starting from a
-     * random state to an end state, which actions where taken at which state. At the end it prints for each state
-     * the learned expected utility it will return.
-     * @param args arguments
+     * The validity of the QLearner and QLearningAgent is tested using an example case.
+     * If the test is successful the utilities calculated should be roughly 2.0, except for one state, which
+     * has a fixed utility of 1.0.
      */
-    public static void main(String[] args) {
-
+    @Test
+    public void runIterations_happyPath() {
         // generate states, actions and MDP
         Map<CellState, StateReward<CellState, CellAction>> states = generateStates();
         ActionsFunction<CellState, CellAction> actions = generateActions(states);
@@ -131,9 +128,17 @@ public class MainLearning {
                         entry.getKey().getY(), util.get(entry.getKey())));
             }
         }
+
+        for (Map.Entry<CellState, Double> entry : util.entrySet()) {
+            if (entry.getKey().getX() == 5 && entry.getKey().getY() == 2) {
+                assertEquals(1.0, entry.getValue(), 10e-10);
+            } else {
+                assertEquals(2.0, entry.getValue(), 10e-10);
+            }
+        }
     }
 
-    // ###################################### The following is setting up the environment
+// ###################################### The following is setting up the environment
 
     /**
      * Initializes the states
@@ -144,7 +149,7 @@ public class MainLearning {
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
                 if (!(x == 3 && y == 0) && !(x == 0 && y == 1) && !(x == 1 && y ==1) && !(x == 3 && y == 1) &&
-                !(x == 1 && y == 3) && !(x == 2 && y == 3) && !(x == 3 && y == 3)) {
+                        !(x == 1 && y == 3) && !(x == 2 && y == 3) && !(x == 3 && y == 3)) {
                     double reward = 0.0;
                     if (x == 5 && y == 2)
                         reward = 1.0;

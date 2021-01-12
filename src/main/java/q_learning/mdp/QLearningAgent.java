@@ -267,7 +267,6 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
      * probability epsilon.
      * Also in case multiple actions share the same utility, a random action from the actions with maximum utility
      * is selected.
-     * TODO Test this
      */
     private A argmaxAPrime(S sPrime) {
         A a = null;
