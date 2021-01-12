@@ -18,10 +18,17 @@ public enum AdversaryAction {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
+            Set<NetworkNode.TYPE> scannableNodes = new HashSet<>();
             if (currentState.isStartState()){
-                return Set.of(NetworkNode.TYPE.ROUTER);
+                scannableNodes.add(NetworkNode.TYPE.ROUTER);
+            }else {
+                scannableNodes.addAll(getViewableNodes(currentActor));
             }
-            return getViewableNodes(currentActor);
+            Map<NetworkNode.TYPE, NodeKnowledge> knowledgeMap = currentState.getNodeKnowledgeMap();
+            Predicate<NetworkNode.TYPE> isNewScannable = node -> !knowledgeMap.containsKey(node)
+                    || !knowledgeMap.get(node).hasPubIp()
+                    || (knowledgeMap.containsKey(node) && Simulation.getSimWorld().getInternalNodes().contains(currentActor) && !knowledgeMap.get(node).hasPrivIp());
+            return scannableNodes.stream().filter(isNewScannable).collect(Collectors.toSet());
         }
 
         @Override
@@ -52,9 +59,9 @@ public enum AdversaryAction {
                     }
                 }
             }
+            Set<NetworkNode.TYPE> internal = Simulation.getSimWorld().getInternalNodes();
             //Get all the visible remote software FROM the node, where the scan was executed from
             Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
-            Set<NetworkNode.TYPE> internal = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE);
             //when scanning on router from outside, get port forwarded sw only
             if (target.equals(NetworkNode.TYPE.ROUTER) && newState.getNodeKnowledgeMap().get(NetworkNode.TYPE.ROUTER).hasPrivIp()){
                 return newState;

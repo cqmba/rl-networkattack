@@ -9,6 +9,11 @@ public class NetworkWorld {
 
     private Set<NetworkNode> nodes = new LinkedHashSet<>();
     private Map<Integer, Data> sniffableData = new HashMap<>();
+    private final Set<NetworkNode.TYPE> internal = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE);
+
+    public Set<NetworkNode.TYPE> getInternalNodes() {
+        return internal;
+    }
 
     public NetworkWorld() {
     }
