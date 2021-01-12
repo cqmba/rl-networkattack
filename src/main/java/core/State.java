@@ -116,6 +116,10 @@ public class State implements Serializable {
         nodeKnowledgeMap.replace(node, old);
     }
 
+    public void addNetworkData(Data data){
+        networkKnowledge.addSniffedData(data);
+    }
+
     public Set<NetworkNode.TYPE> getSetOfSystemWithAcess(){
         Set<NetworkNode.TYPE> nodesWithAcess = new HashSet<>();
         for(NetworkNode.TYPE node : this.getNodeKnowledgeMap().keySet()){

@@ -362,7 +362,7 @@ public enum AdversaryAction {
                     continue;
                 }
                 // new data
-                newState.addNodeData(target, ID, actualDataMap.get(ID));
+                newState.addNetworkData(actualDataMap.get(ID));
                 break;
             }
             return newState;
