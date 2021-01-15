@@ -1,5 +1,7 @@
 package q_learning.env_cells;
 
+import java.util.Objects;
+
 /**
  * A simple implementation of a state.
  * The Scenario is a cellworld. Each state is therefore a cell with x and y coordinates, where 0,0 is the top left.
@@ -39,7 +41,7 @@ public class CellState {
 
     @Override
     public int hashCode() {
-        return (100 * x) + y;
+        return Objects.hash(x, y);
     }
 
     @Override

@@ -1,7 +1,11 @@
 package q_learning.mdp;
 
 import aima.core.agent.Action;
+import aima.core.probability.mdp.ActionsFunction;
+import q_learning.Pair;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Random;
 import java.util.logging.Level;
@@ -76,8 +80,9 @@ public class QLearner<S, A extends Action> {
     /**
      * Runs the QLearningAgent "iterations" times.
      * @param iterations The number of iterations to run
+     * @param initialIterations The number of iterations run (in addition) starting from the initial state set by the mdp.
      */
-    public void runIterations(int iterations) {
+    public void runIterations(int iterations, int initialIterations) {
         if (iterations <= 0)
             throw new IllegalArgumentException("Iterations must be greater 0");
 
@@ -97,20 +102,31 @@ public class QLearner<S, A extends Action> {
                 counter++;
             }
 
-            // run the simulation from curState until we reach a final state
-            A curAction;
-            if (i % 100 == 0 && LOGGER.isLoggable(Level.INFO))
-                LOGGER.info(String.format("Running iteration %d...%n", i));
-            do {
-                // get next action using q learning
-                curAction = agent.execute(curState, mdp);
-
-                // Do the action and set the new state
-                if (curAction != null)
-                    curState = mdp.stateTransition(curState, curAction);
-
-            } while (curAction != null);
+            runSingleIteration(curState, i);
         }
+
+        for (int i = 0; i < initialIterations; i++) {
+            S curState = mdp.getInitialState();
+
+            runSingleIteration(curState, i);
+        }
+    }
+
+    private void runSingleIteration(S initialState, int iteration) {
+        S curState = initialState;
+        // run the simulation from curState until we reach a final state
+        A curAction;
+        if (iteration % 100 == 0 && LOGGER.isLoggable(Level.INFO))
+            LOGGER.info(String.format("Running iteration %d...%n", iteration));
+        do {
+            // get next action using q learning
+            curAction = agent.execute(curState, mdp);
+
+            // Do the action and set the new state
+            if (curAction != null)
+                curState = mdp.stateTransition(curState, curAction);
+
+        } while (curAction != null);
     }
 
     /**
@@ -120,5 +136,76 @@ public class QLearner<S, A extends Action> {
      */
     public Map<S, Double> getUtility() {
         return agent.getUtility();
+    }
+
+    /**
+     * Returns the best action path that was learned.
+     * Might throw exceptions, if the learned values do not suffice to find a path (not every path was visited, since
+     * not enough iterations were run) or a loop is detected. Also this method might run infinitely long, if the
+     * loopSize is picked too small. A big loopSize might slow computation.
+     *
+     * @return The best path in a list of the current state and action. If an action is null, it was a finalState.
+     */
+    public List<Pair<S, A>> getPreferredPath(int loopSize) throws Exception {
+        List<Pair<S, A>> actionStates = new ArrayList<>();
+        S curState = mdp.getInitialState();
+        A curAction;
+        Map<Pair<S, A>, Double> Q = agent.getQ();
+
+        do {
+            curAction = maxAPrime(curState, mdp.getActionsFunction(), Q, mdp);
+            actionStates.add(new Pair<>(curState, curAction));
+
+            if (curAction != null) {
+                curState = mdp.stateTransition(curState, curAction);
+            } else {
+                if (!mdp.isFinalState(curState))
+                    throw new Exception("Not learned enough to generate full path");
+            }
+
+            for (int i = 0; i < loopSize; i++) {
+                if (actionStates.size() - (i + 1) < 0)
+                    break;
+
+                Pair<S, A> past = actionStates.get(actionStates.size() - (i + 1));
+                if (past.getA().equals(curState))
+                    throw new Exception("Loop detected. Cancelling computation");
+            }
+        } while (curAction != null);
+
+        return actionStates;
+    }
+
+    /**
+     * This method is originally from the LearningAgent and was programmed by the aima-team. The only
+     * change is that not the reward is returned, but the action itself.
+     *
+     * This method returns the action with the highest value, which would be chosen from the given state.
+     * @param sPrime The state from which the best action should be returned
+     * @param actionsFunction All possible actions
+     * @param Q The utility Map from the QLearningAgent
+     * @return The action which would be chosen
+     */
+    private A maxAPrime(S sPrime, ActionsFunction<S, A> actionsFunction, Map<Pair<S, A>, Double> Q, MDP<S, A> mdp) {
+        double max = Double.NEGATIVE_INFINITY;
+        A action = null;
+        if (mdp.isFinalState(sPrime)) {
+            // a terminal state
+            max = Q.get(new Pair<>(sPrime, null));
+        } else {
+            for (A aPrime : actionsFunction.actions(sPrime)) {
+                Double Q_sPrimeAPrime = Q.get(new Pair<>(sPrime, aPrime));
+                if (null != Q_sPrimeAPrime && Q_sPrimeAPrime > max) {
+                    max = Q_sPrimeAPrime;
+                    action = aPrime;
+                }
+            }
+        }
+        if (max == Double.NEGATIVE_INFINITY) {
+            // Assign 0 as the mimics Q being initialized to 0 up front.
+            max = 0.0;
+            action = null;
+        }
+        return action;
     }
 }

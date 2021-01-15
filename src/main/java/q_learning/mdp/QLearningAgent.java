@@ -147,7 +147,7 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
                 Q_sa = 0.0;
             }
             Q.put(sa, Q_sa + alpha(Nsa, s, a)
-                    * (r + gamma * maxAPrime(sPrime) - Q_sa));
+                    * (r + gamma * maxAPrime(sPrime, mdp) - Q_sa));
         }
         // if s'.TERMINAL? then s,a,r <- null else
         // s,a,r <- s',argmax<sub>a'</sub>f(Q[s',a'],N<sub>sa</sub>[s',a']),r'
@@ -189,6 +189,10 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         }
 
         return U;
+    }
+
+    public Map<Pair<S, A>, Double> getQ() {
+        return Q;
     }
 
     //
@@ -241,9 +245,9 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         return u;
     }
 
-    private double maxAPrime(S sPrime) {
+    private double maxAPrime(S sPrime, MDP<S, A> mdp) {
         double max = Double.NEGATIVE_INFINITY;
-        if (actionsFunction.actions(sPrime).size() == 0) {
+        if (mdp.isFinalState(sPrime)) {
             // a terminal state
             max = Q.get(new Pair<>(sPrime, null));
         } else {

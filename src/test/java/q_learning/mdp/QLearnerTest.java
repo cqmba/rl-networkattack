@@ -2,6 +2,7 @@ package q_learning.mdp;
 
 import aima.core.probability.mdp.ActionsFunction;
 import org.junit.Test;
+import q_learning.Pair;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
@@ -9,6 +10,7 @@ import q_learning.interfaces.StateReward;
 
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -115,7 +117,7 @@ public class QLearnerTest {
 
         QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
-        learner.runIterations(20000);
+        learner.runIterations(20000, 20);
 
         // print the learned results.
         // Prints each states calculated utility
@@ -135,6 +137,16 @@ public class QLearnerTest {
             } else {
                 assertEquals(2.0, entry.getValue(), 10e-10);
             }
+        }
+
+        try {
+            List<Pair<CellState, CellAction>> path = learner.getPreferredPath(0);
+            for (Pair<CellState, CellAction> pair : path) {
+                LOGGER.info(String.format("State: x=%d, y=%d", pair.getA().getX(), pair.getA().getY()));
+                LOGGER.info(String.format("\tAction: %s", pair.getB()));
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 

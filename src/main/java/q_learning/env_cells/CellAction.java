@@ -2,6 +2,8 @@ package q_learning.env_cells;
 
 import aima.core.agent.Action;
 
+import java.util.Objects;
+
 /**
  * A simple implementation of an Action.
  * The Scenario is a cellworld. The Actions are moving Up, Down, Left and Right.
@@ -41,7 +43,7 @@ public class CellAction implements Action {
 
     @Override
     public int hashCode() {
-        return direction;
+        return Objects.hash(direction);
     }
 
     @Override
