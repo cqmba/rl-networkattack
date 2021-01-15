@@ -40,12 +40,14 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
         return sniffedData;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+        if (!(o instanceof NetworkKnowledgeImpl)) return false;
         NetworkKnowledgeImpl that = (NetworkKnowledgeImpl) o;
-        return Objects.equals(nodes, that.nodes);
+        return Objects.equals(sniffedData, that.sniffedData) &&
+                Objects.equals(nodes, that.nodes);
     }
 
     @Override

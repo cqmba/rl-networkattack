@@ -52,6 +52,10 @@ public class NodeAction implements Action {
         return allPossibleActionsWithChangeState;
     }
 
+    static State performNodeAction(NodeAction action,State state){
+        return action.action.executePostConditionOnTarget(action.target,state,action.currentActor);
+    }
+
     @Override
     public boolean isNoOp() {
         return false;

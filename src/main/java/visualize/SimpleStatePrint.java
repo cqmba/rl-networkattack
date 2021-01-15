@@ -33,6 +33,19 @@ public class SimpleStatePrint {
                 printDataKnowledge(nodeKnowledge.getKnownData());
             }
         }
+        printNetworkDataKnowledge(state.getNetworkKnowledge().getSniffedDataMap());
+    }
+
+    private static void printNetworkDataKnowledge(Map<Integer, Data> dataMap){
+        System.out.println("\tNetwork Data:");
+        for (Integer ID : dataMap.keySet()){
+            String line = "\t\t\t\tID "+ID;
+            if (dataMap.get(ID).containsCredentials()){
+                Credentials creds = dataMap.get(ID).getCredentials();
+                line = line.concat("\t\tCredentials found! Type: "+creds.getType()+" Software: "+creds.getUseInSW()+ " On: "+creds.getNode()+" Access: "+creds.getAccessGrantLevel());
+            }
+            System.out.println(line);
+        }
     }
 
     private static void printNodeSoftwareKnowledge(Set<SoftwareKnowledge> softwareKnowledges) {
