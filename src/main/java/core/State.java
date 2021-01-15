@@ -7,11 +7,18 @@ import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import knowledge.impl.NetworkKnowledgeImpl;
+import run.Simulation;
 
 import java.io.*;
 import java.util.*;
 
 public class State implements Serializable {
+    //for this goal, only root rights on the admin pc must be achieved
+    public static final int CONFIG_ROOT_ONLY = 0;
+    //for this goal, achieve everything of goal 1 and read all database entries
+    public static final int CONFIG_ROOT_DB = 1;
+    //for this goal, gain root access on all systems, read db and create a new acc on admin pc
+    public static final int CONFIG_ROOT_DB_ACC = 2;
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
     private Boolean startState = false;
 
@@ -192,6 +199,54 @@ public class State implements Serializable {
             }
         }
         return needsAccess;
+    }
+
+    public Boolean isFinalState(int config){
+        Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>();
+        switch (config){
+            case CONFIG_ROOT_ONLY:{
+                expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
+                return hasRootOnRequiredNodes(expectedRootNodes);
+            }
+            case CONFIG_ROOT_DB:{
+                expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
+                return hasRootOnRequiredNodes(expectedRootNodes) && hasReadDatabase();
+            }
+            case CONFIG_ROOT_DB_ACC:{
+                expectedRootNodes.addAll(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
+                return  hasRootOnRequiredNodes(expectedRootNodes) &&
+                        hasReadDatabase() && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC);
+            }
+            default: return false;
+        }
+    }
+
+    private Boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
+        return (nodeKnowledgeMap.containsKey(node) &&
+                nodeKnowledgeMap.get(node).getKnownData().containsKey(AdversaryAction.CREATE_ACC_ID));
+    }
+
+    private Boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
+        for (NetworkNode.TYPE node : required){
+            if (!nodeKnowledgeMap.containsKey(node) || !nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private Boolean hasReadDatabase(){
+        Set<Integer> expectedIDs = Simulation.getNodeByType(NetworkNode.TYPE.DATABASE).getDataSet().keySet();
+        if (nodeKnowledgeMap.containsKey(NetworkNode.TYPE.DATABASE)){
+            Map<Integer, Data> knowledge = nodeKnowledgeMap.get(NetworkNode.TYPE.DATABASE).getKnownData();
+            for (Integer ID: expectedIDs){
+                if (!knowledge.containsKey(ID)){
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     public Boolean isStartState(){

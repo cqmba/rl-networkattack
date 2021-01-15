@@ -300,15 +300,14 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            int cred_id = 9999;
             //create new credentials
-            Data data = new Data(cred_id, new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
+            Data data = new Data(CREATE_ACC_ID, new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
             NetworkNode node = Simulation.getNodeByType(target);
             //add credentials to node
             //TODO this changes the environment! is that ok?
-            node.getDataSet().put(cred_id, data);
+            node.getDataSet().put(CREATE_ACC_ID, data);
             //add credentials to node knowledge
-            newState.getNodeKnowledgeMap().get(target).getKnownData().put(cred_id, data);
+            newState.getNodeKnowledgeMap().get(target).getKnownData().put(CREATE_ACC_ID, data);
             return newState;
         }
     },
@@ -452,6 +451,8 @@ public enum AdversaryAction {
         _actions.add(MAN_IN_THE_MIDDLE);
         _actions.add(SOFTWARE_DISCOVERY);
     }
+
+    public static final int CREATE_ACC_ID = 9999;
 
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor);
     public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
