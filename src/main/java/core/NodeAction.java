@@ -40,7 +40,7 @@ public class NodeAction implements Action {
         return allPossibleActions;
     }
 
-    static Set<NodeAction> getAllActionPossibleWithChangeState(State currentState){
+    public static Set<NodeAction> getAllActionPossibleWithChangeState(State currentState){
         Set<NodeAction> allPossibleActionsWithChangeState = new HashSet<>();
         Set<NodeAction> allPossibleActions = getAllActionPossible(currentState);
         for(NodeAction nodeAction : allPossibleActions){
@@ -52,13 +52,22 @@ public class NodeAction implements Action {
         return allPossibleActionsWithChangeState;
     }
 
-    static State performNodeAction(NodeAction action,State state){
+    public static State performNodeAction(NodeAction action,State state){
         return action.action.executePostConditionOnTarget(action.target,state,action.currentActor);
     }
 
     @Override
     public boolean isNoOp() {
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return "NodeAction{" +
+                "target=" + target +
+                ", currentActor=" + currentActor +
+                ", action=" + action +
+                '}';
     }
 }
 

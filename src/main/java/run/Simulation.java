@@ -7,6 +7,8 @@ import visualize.SimpleActionsPrint;
 import visualize.SimpleNetworkPrint;
 import visualize.SimpleStatePrint;
 
+
+import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -62,6 +64,18 @@ public class Simulation {
         }
         System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
                 +config_0+"\nAdmin Root and DB Read: "+config_1+"\nAll systems Root, DB Read and Admin Acc created: "+config_2);
+
+        
+        FileOutputStream fout = null;
+        try {
+            fout = new FileOutputStream("states.ser");
+            ObjectOutputStream oos = new ObjectOutputStream(fout);
+            oos.writeObject(states);
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
