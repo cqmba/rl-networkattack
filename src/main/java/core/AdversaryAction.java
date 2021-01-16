@@ -86,6 +86,7 @@ public enum AdversaryAction {
                 if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
                     newState.addNodePrivIp(target, node.getPriv_ip());
                 }
+                addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
             }else
             addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
             return newState;
@@ -178,7 +179,7 @@ public enum AdversaryAction {
                 }
             }
             //only keep those, which we actually need
-            attackableNodes.retainAll(currentState.getNodesWithoutSystemAccess());
+            attackableNodes.retainAll(currentState.getNodesWithoutAnyAccess());
             return attackableNodes;
         }
 
@@ -200,52 +201,95 @@ public enum AdversaryAction {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
-            //we can also use valid acc locally for priv esc (password file)
-            viewableNodes.add(currentActor);
             Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
             Map<NetworkNode.TYPE, NodeKnowledge> knownNodes = currentState.getNodeKnowledgeMap();
-            for(NetworkNode.TYPE node : knownNodes.keySet()){
-                Map<Integer, Data> dataKnowledge = knownNodes.get(node).getKnownData();
-                for(Integer ID:dataKnowledge.keySet()){
-                    Data data = dataKnowledge.get(ID);
-                    if (data.containsCredentials()){
-                        Credentials creds = data.getCredentials();
-                        NetworkNode.TYPE accessibleNode = creds.getNode();
-                        //changed to make privilege escalation possible
-                        if (viewableNodes.contains(accessibleNode) && knownNodes.containsKey(accessibleNode)
-                                && (currentState.getNodesWithoutSystemAccess().contains(accessibleNode)
-                                        || creds.getAccessGrantLevel().equals(Credentials.ACCESS_GRANT_LEVEL.ROOT))){
-                            nodesWithCredentials.add(accessibleNode);
+            //we use certain exploits
+            Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
+            for(NetworkNode.TYPE node: nodes){
+                //check if we could attack the node from our current location
+                if(viewableNodes.contains(node)) {
+                    for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
+                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
+                            if (v.getExploitType().equals(Exploit.TYPE.VALID_ACCOUNTS)) {
+                                //TODO no check if systemaccess achieved yet
+                                nodesWithCredentials.add(node);
+                            }
                         }
+                    }
+                }
+            }
+            //we can also use valid acc locally for priv esc (password file)
+            viewableNodes.add(currentActor);
+            //we can use found credentials
+            Map<Integer, Data> sniffedDataMap = currentState.getNetworkKnowledge().getSniffedDataMap();
+            Set<Data> knownData = new HashSet<>();
+            if (!sniffedDataMap.isEmpty()){
+                knownData.addAll(sniffedDataMap.values());
+            }
+            for(NetworkNode.TYPE node : knownNodes.keySet()) {
+                knownData.addAll(knownNodes.get(node).getKnownData().values());
+            }
+            Set<Credentials> credentials = getAllCredentialsFromData(knownData);
+            if (!credentials.isEmpty()){
+                for (Credentials creds: credentials){
+                    //debugging
+                    if (creds.getNode().equals(NetworkNode.TYPE.DATABASE)){
+                        System.out.println("");
+                    }
+                    NetworkNode.TYPE accessibleNode = creds.getNode();
+                    //changed to make privilege escalation possible
+                    //TODO will keep saying yes for nodes if root is already achieved, as long as creds give root
+                    if (viewableNodes.contains(accessibleNode) && knownNodes.containsKey(accessibleNode)
+                            && (currentState.getNodesWithoutAnyAccess().contains(accessibleNode)
+                            || creds.getAccessGrantLevel().equals(Credentials.ACCESS_GRANT_LEVEL.ROOT))){
+                        nodesWithCredentials.add(accessibleNode);
                     }
                 }
             }
             return nodesWithCredentials;
         }
 
+        private Set<Credentials> getAllCredentialsFromData(Set<Data> dataSet){
+            Set<Credentials> credentialsSet = new HashSet<>();
+            for (Data data: dataSet){
+                if (data.containsCredentials()){
+                    credentialsSet.add(data.getCredentials());
+                }
+            }
+            return credentialsSet;
+        }
+
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
-            for(NetworkNode.TYPE node : newState.getNodeKnowledgeMap().keySet()) {
-                Map<Integer, Data> dataKnowledge = newState.getNodeKnowledgeMap().get(node).getKnownData();
-                for (Integer ID:dataKnowledge.keySet()) {
-                    Data data = dataKnowledge.get(ID);
-                    if (data.containsCredentials()) {
-                        Credentials.ACCESS_GRANT_LEVEL access_grant_level = data.getCredentials().getAccessGrantLevel();
-                        if (!targetNodeKnowledge.hasAccessLevelRoot()) {
-                            if (access_grant_level == Credentials.ACCESS_GRANT_LEVEL.ROOT) {
-                                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                            } else {
-                                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
-                            }
-
-                        }
+            Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
+            NodeKnowledge targetNodeKnowledge = map.get(target);
+            //we can also use sniffed Data
+            Map<Integer, Data> sniffedDataMap = currentState.getNetworkKnowledge().getSniffedDataMap();
+            Set<Data> knownData = new HashSet<>();
+            if (!sniffedDataMap.isEmpty()){
+                knownData.addAll(sniffedDataMap.values());
+            }
+            for(NetworkNode.TYPE node : map.keySet()) {
+                knownData.addAll(map.get(node).getKnownData().values());
+            }
+            Set<Credentials> credentials = getAllCredentialsFromData(knownData);
+            for (Credentials creds : credentials) {
+                Credentials.ACCESS_GRANT_LEVEL acLevel = creds.getAccessGrantLevel();
+                if (!targetNodeKnowledge.hasAccessLevelRoot()) {
+                    if (acLevel == Credentials.ACCESS_GRANT_LEVEL.ROOT) {
+                        targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+                    } else {
+                        targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
                     }
                 }
             }
+            //or learned by auth bypass/credential leak
+            //TODO can/should DB ever get root through auth bypass/ cred leak
+            if(!targetNodeKnowledge.hasAccessLevelRoot())
+                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
             //learn own IP if new
-            if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+            if (!targetNodeKnowledge.hasPrivIp()){
                 newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
             }
             return newState;

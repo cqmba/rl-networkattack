@@ -43,9 +43,26 @@ public class Simulation {
     public static void main(String[] args) {
         System.out.println("Starting simulation");
         setupWorld();
-        SimpleNetworkPrint.print(simWorld);
-        SimpleStatePrint.print(state);
+        //SimpleNetworkPrint.print(simWorld);
+        //SimpleStatePrint.print(state);
+
         Set<State> states = State.computeListOfPossibleStates(state);
+        int states_nr = states.size();
+        int config_0 = 0;
+        int config_1 = 0;
+        int config_2 = 0;
+        for (State state: states){
+            if (state.isFinalState(State.CONFIG_ROOT_ONLY)){
+                config_0++;
+            }
+            if (state.isFinalState(State.CONFIG_ROOT_DB)){
+                config_1++;
+            }
+            if (state.isFinalState(State.CONFIG_ROOT_DB_ACC)){
+                config_2++;
+            }
+        }
+
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
         //for now do this manually
@@ -68,10 +85,10 @@ public class Simulation {
         targets.add(5, NetworkNode.TYPE.ROUTER);
         actions.add(6, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
         targets.add(6, NetworkNode.TYPE.ROUTER);
-        actions.add(7, AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
-        targets.add(7, NetworkNode.TYPE.WEBSERVER);
-        actions.add(8,AdversaryAction.DATA_FROM_LOCAL_SYSTEM);
-        targets.add(8, NetworkNode.TYPE.WEBSERVER);
+        actions.add(7, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(7, NetworkNode.TYPE.DATABASE);
+        actions.add(8,AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(8, NetworkNode.TYPE.DATABASE);
         for (int i=0; i<actions.size();i++){
             AdversaryAction action = actions.get(i);
             //Assume we have Webserver root control
@@ -81,7 +98,7 @@ public class Simulation {
             printPossibleActions(currentActor);
             printPerformAction(action, targets.get(i));
             state = State.performGivenAction(state, action, targets.get(i), currentActor);
-            SimpleStatePrint.print(state);
+            //SimpleStatePrint.print(state);
         }
 
         printPossibleActions(currentActor);
@@ -110,16 +127,15 @@ public class Simulation {
         Set<Software> remoteSW = new LinkedHashSet<>();
         //assume Webapp access with leaked credentials grants system access for now
         Software http = new Software(SERVICE_HTTP, "2");
-        http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
-        remoteSW.add(http);
         Software https = new Software(SERVICE_HTTPS, "1.3");
-        https.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
-        remoteSW.add(https);
-
         //vulnerable
         Software ssh = new Software(SERVICE_SSH, "7.3");
-        ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //https.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
+        remoteSW.add(http);
+        remoteSW.add(https);
         remoteSW.add(ssh);
 
         Software php = new Software(SERVICE_PHP, "7.1.19");
@@ -171,7 +187,7 @@ public class Simulation {
         remoteSW.add(telnetd);
         Software ssh = new Software(SERVICE_SSH, "7.3");
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
-        ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         remoteSW.add(ssh);
         return remoteSW;
     }
@@ -242,10 +258,13 @@ public class Simulation {
     }
 
     private static Map<Integer, Data> getNetworkData(){
+        Credentials db_cred = new Credentials(Credentials.TYPE.PASSWORD_FILE, Credentials.ACCESS_GRANT_LEVEL.ROOT, DB_PRIV_IP, SERVICE_MYSQL, NetworkNode.TYPE.DATABASE);
         Map<Integer, Data> networkData = new HashMap<>();
         //currently only DB password is sniffable
         //get 2 unique random IDs
         int db_pw_id = new Random().nextInt(MAX_DATA_PER_HOST-1);
+        Data cred_data = new Data(db_pw_id, db_cred, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.SNIFFED, Data.ACCESS_REQUIRED.ALL);
+        networkData.put(db_pw_id, cred_data);
         for (int i=0;i<MAX_DATA_PER_HOST; i++){
             if (i == db_pw_id){
                 //do nothing
