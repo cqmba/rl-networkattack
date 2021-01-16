@@ -35,8 +35,6 @@ public class Simulation {
     public static final String SERVICE_PHP = "PHP";
     public static final String SERVICE_NGINX = "nginx";
 
-    public static final int MAX_DATA_PER_HOST = 3;
-
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
@@ -62,6 +60,8 @@ public class Simulation {
                 config_2++;
             }
         }
+        System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
+                +config_0+"\nAdmin Root and DB Read: "+config_1+"\nAll systems Root, DB Read and Admin Acc created: "+config_2);
 
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
 
@@ -150,31 +150,13 @@ public class Simulation {
     }
 
     static Map<Integer, Data> setWebserverData(){
-        //get 2 unique random IDs
-        Random r = new Random();
-        int pass_id = r.nextInt(MAX_DATA_PER_HOST-1);
-        int ssh_id;
-        do {
-            ssh_id = r.nextInt(MAX_DATA_PER_HOST-1);
-        }
-        while (pass_id == ssh_id);
         //create some data that can be used for priv escalation on the webserver locally (for now uses software Ubuntu)
         Map<Integer, Data> wsData = new LinkedHashMap<>();
         Credentials passwordfile = new Credentials(Credentials.TYPE.PASSWORD_FILE, Credentials.ACCESS_GRANT_LEVEL.ROOT, WEBSERVER_PRIV_IP, NODE_OS, NetworkNode.TYPE.WEBSERVER);
-        wsData.put(pass_id, new Data(pass_id, passwordfile, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        wsData.put(0, new Data(0, passwordfile, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
         //create data for ssh access (key) to admin pc
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.ROOT, ADMINPC_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.ADMINPC);
-        wsData.put(ssh_id, new Data(ssh_id, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
-        //fill some less usefull data
-        for (int i=0;i<MAX_DATA_PER_HOST; i++){
-            if (i == pass_id || i == ssh_id){
-                //do nothing
-            }else if (i/2==0){
-                wsData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
-            } else {
-                wsData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.NONE, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
-            }
-        }
+        wsData.put(1, new Data(1, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
         return wsData;
     }
 
@@ -193,24 +175,12 @@ public class Simulation {
     }
 
     static Map<Integer, Data> setAdminPCData(){
-        //unique random IDs
-        int ssh_id = new Random().nextInt(MAX_DATA_PER_HOST-1);
+        int ssh_id = 0;
         //AdminPC contains mostly high value data
         Map<Integer, Data> adminData = new LinkedHashMap<>();
         //create data for ssh access (key) to webserver
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.USER, WEBSERVER_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.WEBSERVER);
         adminData.put(ssh_id, new Data(ssh_id, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-        //fill some additional data
-        for (int i=0;i<MAX_DATA_PER_HOST; i++){
-            if (i == ssh_id){
-                //do nothing
-            }
-            if (i/2==0){
-                adminData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            } else {
-               adminData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            }
-        }
         return adminData;
     }
 
@@ -226,13 +196,7 @@ public class Simulation {
     static Map<Integer, Data> setDBData(){
         //Database contains mostly high value data
         Map<Integer, Data> dbData = new LinkedHashMap<>();
-        for (int i=0;i<MAX_DATA_PER_HOST; i++){
-            if (i/2==0){
-                dbData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            } else {
-                dbData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            }
-        }
+        dbData.put(0, new Data(0, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
         return dbData;
     }
 
@@ -260,21 +224,9 @@ public class Simulation {
     private static Map<Integer, Data> getNetworkData(){
         Credentials db_cred = new Credentials(Credentials.TYPE.PASSWORD_FILE, Credentials.ACCESS_GRANT_LEVEL.ROOT, DB_PRIV_IP, SERVICE_MYSQL, NetworkNode.TYPE.DATABASE);
         Map<Integer, Data> networkData = new HashMap<>();
-        //currently only DB password is sniffable
-        //get 2 unique random IDs
-        int db_pw_id = new Random().nextInt(MAX_DATA_PER_HOST-1);
+        int db_pw_id = 0;
         Data cred_data = new Data(db_pw_id, db_cred, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.SNIFFED, Data.ACCESS_REQUIRED.ALL);
         networkData.put(db_pw_id, cred_data);
-        for (int i=0;i<MAX_DATA_PER_HOST; i++){
-            if (i == db_pw_id){
-                //do nothing
-            }
-            if (i/2==0){
-                networkData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            } else {
-                networkData.put(i, new Data(i, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
-            }
-        }
         return networkData;
     }
 }

@@ -395,18 +395,12 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            NetworkNode node = Simulation.getNodeByType(target);
             Set<Integer> knownSniffedData = currentState.getNetworkKnowledge().getSniffedDataMap().keySet();
             Map<Integer, Data> actualDataMap = Simulation.getSimWorld().getSniffableData();
-            List<Integer> randomisedData = new ArrayList<>(actualDataMap.keySet());
-            Collections.shuffle(randomisedData);
-            for (Integer ID: randomisedData){
-                if (knownSniffedData.contains(ID)){
-                    continue;
+            for (Integer ID: actualDataMap.keySet()){
+                if (!knownSniffedData.contains(ID)){
+                    newState.addNetworkData(actualDataMap.get(ID));
                 }
-                // new data
-                newState.addNetworkData(actualDataMap.get(ID));
-                break;
             }
             return newState;
         }
@@ -457,20 +451,17 @@ public enum AdversaryAction {
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
-            NetworkNode node = Simulation.getNodeByType(target);
             State newState = (State) deepCopy(currentState);
-            Set<Integer> knowndataSet = newState.getNodeKnowledgeMap().get(target).getKnownData().keySet();
+            NodeKnowledge targetKnowledge = newState.getNodeKnowledgeMap().get(target);
+            Set<Integer> knowndataSet = targetKnowledge.getKnownData().keySet();
             //assume ID always increases by one and starts with 0
-            Map<Integer, Data> actualDataMap = node.getDataSet();
-            List<Integer> randomisedData = new ArrayList<>(actualDataMap.keySet());
-            Collections.shuffle(randomisedData);
-            for(Integer ID : randomisedData){
-                if (knowndataSet.contains(ID)){
-                    continue;
-                }
-                // new data
-                if(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){
-                  newState.addNodeData(target, ID, actualDataMap.get(ID));
+            Map<Integer, Data> actualDataMap = Simulation.getNodeByType(target).getDataSet();
+            for(Integer ID : actualDataMap.keySet()){
+                if (!knowndataSet.contains(ID)){
+                    //should add if either root, or only user is required
+                    if(targetKnowledge.hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){
+                        newState.addNodeData(target, ID, actualDataMap.get(ID));
+                    }
                 }
             }
             return newState;
