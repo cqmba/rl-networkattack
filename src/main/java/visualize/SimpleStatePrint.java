@@ -38,7 +38,7 @@ public class SimpleStatePrint {
 
     private static void printNetworkDataKnowledge(Map<Integer, Data> dataMap){
         System.out.println("\tNetwork Data:");
-        for (Integer ID : dataMap.keySet()){
+        for (int ID : dataMap.keySet()){
             String line = "\t\t\t\tID "+ID;
             if (dataMap.get(ID).containsCredentials()){
                 Credentials creds = dataMap.get(ID).getCredentials();
@@ -65,7 +65,7 @@ public class SimpleStatePrint {
 
     private static void printDataKnowledge(Map<Integer, Data> dataMap){
         System.out.println("\t\tData found: "+dataMap.keySet().size());
-        for (Integer ID : dataMap.keySet()){
+        for (int ID : dataMap.keySet()){
             String line = "\t\t\tID "+ID;
             if (dataMap.get(ID).containsCredentials()){
                 Credentials creds = dataMap.get(ID).getCredentials();

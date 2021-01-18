@@ -51,7 +51,7 @@ public class ValidAccountsTest {
         assertTrue(attackableNodes.isEmpty());
         attackableNodes = AdversaryAction.VALID_ACCOUNTS.getTargetsWhichFulfillPrecondition(stateWithValidAccount,currentActor);
         assertTrue(attackableNodes.contains(target));
-        assertEquals(attackableNodes.size(),1);
+        assertEquals(1,attackableNodes.size());
 
     }
 

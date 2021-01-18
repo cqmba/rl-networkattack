@@ -1,28 +1,14 @@
 package q_learning;
 
 import aima.core.probability.mdp.ActionsFunction;
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
 
-
-import com.google.gson.reflect.TypeToken;
 import core.NodeAction;
 import core.State;
-import org.w3c.dom.Node;
-import q_learning.KnowledgeStateReward;
-import q_learning.Pair;
-import q_learning.env_cells.CellAction;
-import q_learning.env_cells.CellState;
-import q_learning.env_cells.CellStateReward;
 import q_learning.interfaces.StateReward;
 import q_learning.mdp.*;
 import run.Simulation;
 
 import java.io.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.logging.Logger;
 
@@ -85,12 +71,12 @@ public class QLearnerNetwork {
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
-        learner.runIterations(20000, 20);
+        learner.runIterations(200000, 20);
 
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
             for (Pair<State, NodeAction> pair : path) {
-                LOGGER.info(String.format("\tAction: %s", pair.getB().toString()));
+                LOGGER.info(String.format("\tAction: %s", pair.getB()));
             }
         } catch (Exception e) {
             e.printStackTrace();

@@ -44,11 +44,11 @@ public class Data implements Serializable {
         this.access = access;
     }
 
-    public Boolean containsCredentials() {
+    public boolean containsCredentials() {
         return containsCredentials;
     }
 
-    public Integer getID() {
+    public int getID() {
         return ID;
     }
 

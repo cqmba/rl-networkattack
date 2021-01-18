@@ -40,7 +40,7 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
         //SimpleNetworkPrint.print(simWorld);
@@ -67,14 +67,18 @@ public class Simulation {
 
         
         FileOutputStream fout = null;
+        ObjectOutputStream oos = null;
         try {
             fout = new FileOutputStream("states.ser");
-            ObjectOutputStream oos = new ObjectOutputStream(fout);
+            oos = new ObjectOutputStream(fout);
             oos.writeObject(states);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
         } catch (IOException e) {
             e.printStackTrace();
+        } finally {
+            if (fout != null)
+                fout.close();
+            if (oos != null)
+                oos.close();
         }
 
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;

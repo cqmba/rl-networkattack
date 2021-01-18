@@ -5,7 +5,6 @@ import environment.NetworkNode;
 import knowledge.impl.NodeKnowledgeImpl;
 
 import java.util.Map;
-import java.util.Set;
 
 public interface NodeKnowledge {
 
@@ -28,7 +27,7 @@ public interface NodeKnowledge {
 
     boolean hasAccessLevelRoot();
 
-    boolean hasFoundData(Integer ID);
+    boolean hasFoundData(int ID);
 
     Map<Integer, Data> getKnownData();
 
@@ -44,5 +43,5 @@ public interface NodeKnowledge {
 
     void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
 
-    void addData(Integer ID, Data data);
+    void addData(int ID, Data data);
 }

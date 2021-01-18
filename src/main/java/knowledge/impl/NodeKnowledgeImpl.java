@@ -34,7 +34,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         this.localSoftware = new HashSet<>();
         this.dataSet = new HashMap<>();
         this.sysAccess = NetworkNode.ACCESS_LEVEL.NONE;
-        this.remotelyVisibleSWInNetwork = new HashMap<>();
+        this.remotelyVisibleSWInNetwork = new EnumMap<>(NetworkNode.TYPE.class);
         //could also add new unknown type
         this.type = type;
     }
@@ -75,7 +75,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public boolean hasFoundData(Integer ID) {
+    public boolean hasFoundData(int ID) {
         return dataSet.containsKey(ID);
     }
 
@@ -115,7 +115,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public void addData(Integer ID, Data data) {
+    public void addData(int ID, Data data) {
         dataSet.put(ID, data);
     }
 

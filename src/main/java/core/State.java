@@ -6,7 +6,6 @@ import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
-import knowledge.impl.NetworkKnowledgeImpl;
 import run.Simulation;
 
 import java.io.*;
@@ -26,9 +25,9 @@ public class State implements Serializable {
     //used to determine which Node an Action is executed FROM in PostCondition Of Action
     //private NetworkNode.TYPE currentActor;
     //Map for the SoftwareKnowledge of the adversary for each NetworkNode
-    private Map<NetworkNode.TYPE,Set<SoftwareKnowledge>> softwareKnowledgeMap = new HashMap<>();
+    private Map<NetworkNode.TYPE,Set<SoftwareKnowledge>> softwareKnowledgeMap = new EnumMap<>(NetworkNode.TYPE.class);
 
-    public State(Boolean startState) {
+    public State(boolean startState) {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
@@ -50,7 +49,7 @@ public class State implements Serializable {
     //assumes next acting node was determined already, not sure when this actually happens
     public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current, NetworkNode.TYPE currentActor){
         //TODO
-        Map<AdversaryAction, Set<NetworkNode.TYPE>> targetsByAction = new HashMap<>();
+        Map<AdversaryAction, Set<NetworkNode.TYPE>> targetsByAction = new EnumMap<>(AdversaryAction.class);
         for (AdversaryAction action: AdversaryAction.values()){
             Set<NetworkNode.TYPE> targets = action.getTargetsWhichFulfillPrecondition(current,currentActor);
             if (!targets.isEmpty()){
@@ -101,7 +100,6 @@ public class State implements Serializable {
     }
 
     public void addNodeRemoteSoftwareName(NetworkNode.TYPE node, String swName, boolean remote){
-        NodeKnowledge old = nodeKnowledgeMap.get(node);
         //node already entered
         if(softwareKnowledgeMap.containsKey(node)) {
             Set<SoftwareKnowledge> softwareKnowledgeSet = softwareKnowledgeMap.get(node);
@@ -117,7 +115,7 @@ public class State implements Serializable {
         }
     }
 
-    public void addNodeData(NetworkNode.TYPE node, Integer ID, Data data){
+    public void addNodeData(NetworkNode.TYPE node, int ID, Data data){
         NodeKnowledge old = nodeKnowledgeMap.get(node);
         old.addData(ID, data);
         nodeKnowledgeMap.replace(node, old);
@@ -167,7 +165,7 @@ public class State implements Serializable {
         return states;
     }
 
-    Boolean softwareContainedInSet(String name , Set<SoftwareKnowledge> softwareKnowledgeSet){
+    boolean softwareContainedInSet(String name , Set<SoftwareKnowledge> softwareKnowledgeSet){
         for(SoftwareKnowledge s : softwareKnowledgeSet){
             if(s.getName().equals(name))
                 return true;
@@ -197,31 +195,28 @@ public class State implements Serializable {
         return needsAccess;
     }
 
-    public Boolean isFinalState(int config){
+    public boolean isFinalState(int config){
         Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>();
         switch (config){
-            case CONFIG_ROOT_ONLY:{
+            case CONFIG_ROOT_ONLY:
                 expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
                 return hasRootOnRequiredNodes(expectedRootNodes);
-            }
-            case CONFIG_ROOT_DB:{
+            case CONFIG_ROOT_DB:
                 expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
                 return hasRootOnRequiredNodes(expectedRootNodes) && hasReadDatabase();
-            }
-            case CONFIG_ROOT_DB_ACC:{
+            case CONFIG_ROOT_DB_ACC:
                 expectedRootNodes.addAll(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
                 return  hasRootOnRequiredNodes(expectedRootNodes) &&
                         hasReadDatabase() && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC);
-            }
             default: return false;
         }
     }
 
-    private Boolean hasFoundNetworkData(){
+    private boolean hasFoundNetworkData(){
         Map<Integer, Data> sniffableData = Simulation.getSimWorld().getSniffableData();
         if (!networkKnowledge.getSniffedDataMap().isEmpty()){
             Set<Integer> knowledge = networkKnowledge.getSniffedDataMap().keySet();
-            for (Integer ID : sniffableData.keySet()){
+            for (int ID : sniffableData.keySet()){
                 if (!knowledge.contains(ID)){
                     return false;
                 }
@@ -231,12 +226,12 @@ public class State implements Serializable {
         return false;
     }
 
-    private Boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
+    private boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
         return (nodeKnowledgeMap.containsKey(node) &&
                 nodeKnowledgeMap.get(node).getKnownData().containsKey(AdversaryAction.CREATE_ACC_ID));
     }
 
-    private Boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
+    private boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
         for (NetworkNode.TYPE node : required){
             if (!nodeKnowledgeMap.containsKey(node) || !nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
                 return false;
@@ -245,11 +240,11 @@ public class State implements Serializable {
         return true;
     }
 
-    private Boolean hasReadDatabase(){
+    private boolean hasReadDatabase(){
         Set<Integer> expectedIDs = Simulation.getNodeByType(NetworkNode.TYPE.DATABASE).getDataSet().keySet();
         if (nodeKnowledgeMap.containsKey(NetworkNode.TYPE.DATABASE)){
             Map<Integer, Data> knowledge = nodeKnowledgeMap.get(NetworkNode.TYPE.DATABASE).getKnownData();
-            for (Integer ID: expectedIDs){
+            for (int ID: expectedIDs){
                 if (!knowledge.containsKey(ID)){
                     return false;
                 }
@@ -259,7 +254,7 @@ public class State implements Serializable {
         return false;
     }
 
-    public Boolean isStartState(){
+    public boolean isStartState(){
         return startState;
     }
 

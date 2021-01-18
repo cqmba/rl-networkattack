@@ -3,7 +3,6 @@ package q_learning;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
-import knowledge.NodeKnowledge;
 import q_learning.interfaces.StateReward;
 
 public class KnowledgeStateReward implements StateReward<State, NodeAction> {
@@ -14,7 +13,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
     public KnowledgeStateReward(State state, double reward) {
         this.state = state;
         this.reward = reward;
-        }
+    }
 
     @Override
     public double reward(NodeAction action, State targetState) {
@@ -42,7 +41,5 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
     public State state() {
             return state;
         }
-
-
 }
 

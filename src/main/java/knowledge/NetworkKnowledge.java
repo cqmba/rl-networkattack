@@ -2,10 +2,8 @@ package knowledge;
 
 import environment.Data;
 import environment.NetworkNode;
-import environment.Software;
 import knowledge.impl.NetworkKnowledgeImpl;
 
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 

@@ -1,7 +1,6 @@
 package core;
 
 import environment.*;
-import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import run.Simulation;
@@ -87,8 +86,10 @@ public enum AdversaryAction {
                     newState.addNodePrivIp(target, node.getPriv_ip());
                 }
                 addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
-            }else
-            addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
+            }else {
+                addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
+            }
+
             return newState;
         }
 
@@ -107,7 +108,7 @@ public enum AdversaryAction {
             for (NetworkNode.TYPE host: currentState.getNetworkKnowledge().getKnownNodes()){
                 //software has to beknown of the host and it has to be remote (currently ROUTER wont be a target, but WS & AdminPC
                 if (currentState.getSoftwareKnowledgeMap().containsKey(host)
-                        && currentState.getSoftwareKnowledgeMap().get(host).stream().anyMatch(sw -> sw.isRemote())){
+                        && currentState.getSoftwareKnowledgeMap().get(host).stream().anyMatch(SoftwareKnowledge::isRemote)){
                     targets.add(host);
                 }
             }
@@ -397,7 +398,7 @@ public enum AdversaryAction {
             State newState = (State) deepCopy(currentState);
             Set<Integer> knownSniffedData = currentState.getNetworkKnowledge().getSniffedDataMap().keySet();
             Map<Integer, Data> actualDataMap = Simulation.getSimWorld().getSniffableData();
-            for (Integer ID: actualDataMap.keySet()){
+            for (int ID: actualDataMap.keySet()){
                 if (!knownSniffedData.contains(ID)){
                     newState.addNetworkData(actualDataMap.get(ID));
                 }
@@ -456,7 +457,7 @@ public enum AdversaryAction {
             Set<Integer> knowndataSet = targetKnowledge.getKnownData().keySet();
             //assume ID always increases by one and starts with 0
             Map<Integer, Data> actualDataMap = Simulation.getNodeByType(target).getDataSet();
-            for(Integer ID : actualDataMap.keySet()){
+            for(int ID : actualDataMap.keySet()){
                 if (!knowndataSet.contains(ID)){
                     //should add if either root, or only user is required
                     if(targetKnowledge.hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){

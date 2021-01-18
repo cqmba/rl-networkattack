@@ -73,7 +73,7 @@ public class SoftwareDiscoveryTest {
     public void testAttackableNodes(){
         Set<NetworkNode.TYPE> attackableNodes = AdversaryAction.SOFTWARE_DISCOVERY.getTargetsWhichFulfillPrecondition(state,currentActor);
         assertTrue(attackableNodes.contains(target));
-        assertEquals(attackableNodes.size(),1);
+        assertEquals(1, attackableNodes.size());
     }
 
 }

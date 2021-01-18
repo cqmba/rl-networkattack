@@ -41,7 +41,7 @@ public class NetworkTopology{
 
     //this implements inner & outer firewall behaviour
     public static Map<NetworkNode.TYPE, Set<Software>> getRemoteSWMapByScanningNode(NetworkNode.TYPE scanning){
-        Map<NetworkNode.TYPE, Set<Software>> visibleSoftware = new HashMap<>();
+        Map<NetworkNode.TYPE, Set<Software>> visibleSoftware = new EnumMap<>(NetworkNode.TYPE.class);
         //from all possible nodes, only check those who are actually connected
         Predicate<NetworkNode> isConnected = node -> getConnectedHosts(scanning).contains(node.getType());
         Set<NetworkNode> viewableNodes = Simulation.getSimWorld().getNodes().stream().filter(isConnected).collect(Collectors.toSet());

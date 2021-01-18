@@ -50,7 +50,7 @@ public class CreateAccountTest {
         assertTrue(attackableNodes.isEmpty());
         attackableNodes = AdversaryAction.CREATE_ACCOUNT.getTargetsWhichFulfillPrecondition(stateWithRootAcess,currentActor);
         assertTrue(attackableNodes.contains(target));
-        assertEquals(attackableNodes.size(),1);
+        assertEquals(1, attackableNodes.size());
 
     }
 

@@ -41,7 +41,7 @@ public class DataFromLocalSystemTest {
     @Test
     public void testPostCondition(){
         Map<Integer, Data> DataKnowledgeSetBeforeAction = state.getNodeKnowledgeMap().get(target).getKnownData();
-        for(Integer ID : dataOnWebserver.keySet()){
+        for(int ID : dataOnWebserver.keySet()){
             assertFalse(DataKnowledgeSetBeforeAction.containsKey(ID));
         }
 
@@ -50,7 +50,7 @@ public class DataFromLocalSystemTest {
         State newState = AdversaryAction.DATA_FROM_LOCAL_SYSTEM.executePostConditionOnTarget(target,state,currentActor);
 
         Map<Integer, Data> DataKnowledgeSetAfterAction = newState.getNodeKnowledgeMap().get(target).getKnownData();
-        for(Integer ID : dataOnWebserver.keySet()){
+        for(int ID : dataOnWebserver.keySet()){
             assertTrue(DataKnowledgeSetAfterAction.containsKey(ID));
         }
 
@@ -61,7 +61,7 @@ public class DataFromLocalSystemTest {
     public void testAttackableNodes(){
         Set<NetworkNode.TYPE> attackableNodes = AdversaryAction.DATA_FROM_LOCAL_SYSTEM.getTargetsWhichFulfillPrecondition(state,currentActor);
         assertTrue(attackableNodes.contains(target));
-        assertEquals(attackableNodes.size(),1);
+        assertEquals(1, attackableNodes.size());
     }
 
 }

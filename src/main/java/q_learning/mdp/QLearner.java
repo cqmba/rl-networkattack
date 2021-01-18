@@ -203,7 +203,6 @@ public class QLearner<S, A extends Action> {
         }
         if (max == Double.NEGATIVE_INFINITY) {
             // Assign 0 as the mimics Q being initialized to 0 up front.
-            max = 0.0;
             action = null;
         }
         return action;

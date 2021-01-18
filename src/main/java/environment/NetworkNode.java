@@ -1,5 +1,6 @@
 package environment;
 
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -13,9 +14,8 @@ public class NetworkNode{
     private Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
     private Map<Integer, Data> dataSet;
-    private ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
-    private Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = new HashMap<>();
+    private Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = new EnumMap<>(TYPE.class);
     //could be hidden
     private TYPE type;
 
