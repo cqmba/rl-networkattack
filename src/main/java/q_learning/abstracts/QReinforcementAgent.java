@@ -36,17 +36,9 @@ public abstract class QReinforcementAgent<S, A extends Action> extends AbstractA
 
     @Override
     public Action execute(Percept p) {
-        // needed to be commented out, since the execute(PerceptStateReward) no longer exists and this code would
+        // needed to remove this, since the execute(PerceptStateReward) no longer exists and this code would
         // create an infinity loop.
-        /*if (p instanceof PerceptStateReward<?>) {
-            Action a = execute(p);
-            if (null == a) {
-                a = NoOpAction.NO_OP;
-                setAlive(false);
-            }
-            return a;
-        }*/
         throw new IllegalArgumentException(
-                "Percept passed in must be a PerceptStateReward");
+                "Not supported");
     }
 }
