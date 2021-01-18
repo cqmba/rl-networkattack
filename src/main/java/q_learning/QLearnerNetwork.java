@@ -88,15 +88,18 @@ public class QLearnerNetwork {
      * @return The states of the MDP
      */
     private static Map<State, StateReward<State, NodeAction>> generateStates() throws IOException {
+        FileInputStream streamIn = null;
         ObjectInputStream objectinputstream = null;
         Set<State> stateSet = null;
         try {
-            FileInputStream streamIn = new FileInputStream("states.ser");
+            streamIn = new FileInputStream("states.ser");
             objectinputstream = new ObjectInputStream(streamIn);
             stateSet = (Set<State>) objectinputstream.readObject();
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
+            if (streamIn != null)
+                streamIn.close();
             if(objectinputstream != null){
                 objectinputstream .close();
             }
