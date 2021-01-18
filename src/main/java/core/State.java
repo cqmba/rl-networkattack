@@ -20,7 +20,7 @@ public class State implements Serializable {
     //for this goal, gain root access on all systems, read db and create a new acc on admin pc
     public static final int CONFIG_ROOT_DB_ACC = 2;
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
-    private Boolean startState = false;
+    private boolean startState = false;
 
     private NetworkKnowledge networkKnowledge;
     //used to determine which Node an Action is executed FROM in PostCondition Of Action

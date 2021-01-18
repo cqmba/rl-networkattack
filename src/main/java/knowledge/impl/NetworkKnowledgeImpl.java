@@ -53,6 +53,6 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     @Override
     public int hashCode() {
 
-        return Objects.hash(nodes);
+        return Objects.hash(nodes, sniffedData);
     }
 }

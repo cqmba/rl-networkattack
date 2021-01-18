@@ -138,8 +138,8 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
                 Objects.equals(remoteSoftware, that.remoteSoftware) &&
                 Objects.equals(localSoftware, that.localSoftware) &&
                 Objects.equals(dataSet, that.dataSet) &&
-                sysAccess == that.sysAccess &&
+                Objects.equals(sysAccess, that.sysAccess) &&
                 Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
-                type == that.type;
+                Objects.equals(type, that.type);
     }
 }

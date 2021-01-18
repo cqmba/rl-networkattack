@@ -5,12 +5,12 @@ import java.util.Objects;
 
 public class Data implements Serializable {
     //private NetworkNode source;
-    private Boolean containsCredentials;
+    private boolean containsCredentials;
     private GAINED_KNOWLEDGE gain;
     private ORIGIN origin;
     private ACCESS_REQUIRED access;
     private Credentials credentials = null;
-    private Integer ID;
+    private int ID;
     public enum GAINED_KNOWLEDGE{
         NONE,
         LOW,
@@ -27,7 +27,7 @@ public class Data implements Serializable {
         ALL
     }
 
-    public Data(Integer ID, GAINED_KNOWLEDGE gain, ORIGIN origin, ACCESS_REQUIRED access) {
+    public Data(int ID, GAINED_KNOWLEDGE gain, ORIGIN origin, ACCESS_REQUIRED access) {
         this.ID = ID;
         this.containsCredentials = false;
         this.gain = gain;
@@ -35,7 +35,7 @@ public class Data implements Serializable {
         this.access = access;
     }
 
-    public Data(Integer ID, Credentials credentials, GAINED_KNOWLEDGE gain, ORIGIN origin, ACCESS_REQUIRED access){
+    public Data(int ID, Credentials credentials, GAINED_KNOWLEDGE gain, ORIGIN origin, ACCESS_REQUIRED access){
         this.ID = ID;
         this.containsCredentials = true;
         this.credentials = credentials;
@@ -91,9 +91,9 @@ public class Data implements Serializable {
         Data data = (Data) o;
         return Objects.equals(containsCredentials, data.containsCredentials) &&
                 Objects.equals(ID, data.ID) &&
-                gain == data.gain &&
-                origin == data.origin &&
-                access == data.access &&
+                Objects.equals(gain, data.gain) &&
+                Objects.equals(origin, data.origin) &&
+                Objects.equals(access, data.access) &&
                 Objects.equals(credentials, data.credentials);
     }
 

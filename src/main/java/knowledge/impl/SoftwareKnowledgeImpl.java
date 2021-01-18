@@ -68,7 +68,7 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
         if (this == o) return true;
         if (!(o instanceof SoftwareKnowledgeImpl)) return false;
         SoftwareKnowledgeImpl that = (SoftwareKnowledgeImpl) o;
-        return remote == that.remote &&
+        return Objects.equals(remote, that.remote) &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(version, that.version) &&
                 Objects.equals(vulnerabilities, that.vulnerabilities);

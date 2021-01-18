@@ -52,11 +52,11 @@ public class Credentials implements Serializable {
         if (this == o) return true;
         if (!(o instanceof Credentials)) return false;
         Credentials that = (Credentials) o;
-        return type == that.type &&
-                accessGrantLevel == that.accessGrantLevel &&
+        return Objects.equals(type, that.type) &&
+                Objects.equals(accessGrantLevel, that.accessGrantLevel) &&
                 Objects.equals(useForPrivIP, that.useForPrivIP) &&
                 Objects.equals(useInSW, that.useInSW) &&
-                node == that.node;
+                Objects.equals(node, that.node);
     }
 
     @Override
