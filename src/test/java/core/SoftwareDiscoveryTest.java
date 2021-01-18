@@ -29,7 +29,7 @@ public class SoftwareDiscoveryTest {
         Simulation.setupWorld();
         // add  some local software to node
         Software http = new Software(Simulation.SERVICE_HTTP, "2");
-        http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         sw.add(http);
         SoftwareKnowledge httpKnowledge = new SoftwareKnowledgeImpl(http.getName(),false);
         httpKnowledge.addVersion(http.getVersion());
@@ -37,7 +37,7 @@ public class SoftwareDiscoveryTest {
         softwareKnowledgeSet.add(httpKnowledge);
 
         Software https = new Software(Simulation.SERVICE_HTTPS, "1.3");
-        https.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
+        //https.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         sw.add(https);
         SoftwareKnowledge httpsKnowledge = new SoftwareKnowledgeImpl(https.getName(),false);
         httpsKnowledge.addVersion(https.getVersion());

@@ -144,8 +144,6 @@ public class State implements Serializable {
         return nodeKnowledgeMap;
     }
 
-
-
     public Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> getSoftwareKnowledgeMap() {
         return softwareKnowledgeMap;
     }
@@ -169,7 +167,6 @@ public class State implements Serializable {
         return states;
     }
 
-
     Boolean softwareContainedInSet(String name , Set<SoftwareKnowledge> softwareKnowledgeSet){
         for(SoftwareKnowledge s : softwareKnowledgeSet){
             if(s.getName().equals(name))
@@ -178,12 +175,11 @@ public class State implements Serializable {
         return false;
     }
 
-    //TODO naming is bad since it returns both without any access and root access
-    public Set<NetworkNode.TYPE> getNodesWithoutSystemAccess(){
+    public Set<NetworkNode.TYPE> getNodesWithoutAnyAccess(){
         Set<NetworkNode.TYPE> needsAccess = new HashSet<>();
         Set<NetworkNode.TYPE> nodes = nodeKnowledgeMap.keySet();
         for (NetworkNode.TYPE node: nodes){
-            if (!nodeKnowledgeMap.get(node).hasAccessLevelUser()){
+            if (!nodeKnowledgeMap.get(node).hasAccessLevelUser() && !nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
                 needsAccess.add(node);
             }
         }
@@ -219,6 +215,20 @@ public class State implements Serializable {
             }
             default: return false;
         }
+    }
+
+    private Boolean hasFoundNetworkData(){
+        Map<Integer, Data> sniffableData = Simulation.getSimWorld().getSniffableData();
+        if (!networkKnowledge.getSniffedDataMap().isEmpty()){
+            Set<Integer> knowledge = networkKnowledge.getSniffedDataMap().keySet();
+            for (Integer ID : sniffableData.keySet()){
+                if (!knowledge.contains(ID)){
+                    return false;
+                }
+            }
+            return true;
+        }
+        return false;
     }
 
     private Boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
