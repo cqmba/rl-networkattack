@@ -232,10 +232,6 @@ public enum AdversaryAction {
             Set<Credentials> credentials = getAllCredentialsFromData(knownData);
             if (!credentials.isEmpty()){
                 for (Credentials creds: credentials){
-                    //debugging
-                    if (creds.getNode().equals(NetworkNode.TYPE.DATABASE)){
-                        System.out.println("");
-                    }
                     NetworkNode.TYPE accessibleNode = creds.getNode();
                     //changed to make privilege escalation possible
                     //TODO will keep saying yes for nodes if root is already achieved, as long as creds give root
