@@ -26,7 +26,7 @@ public class SoftwareDiscoveryTest {
 
     @BeforeClass
     public static void setUp(){
-        Simulation.setupWorld();
+        Simulation.setupWorld(true);
         // add  some local software to node
         Software http = new Software(Simulation.SERVICE_HTTP, "2");
         //http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));

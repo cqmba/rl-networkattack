@@ -23,11 +23,21 @@ public enum AdversaryAction {
             }else {
                 scannableNodes.addAll(getViewableNodes(currentActor));
             }
-            Map<NetworkNode.TYPE, NodeKnowledge> knowledgeMap = currentState.getNodeKnowledgeMap();
-            Predicate<NetworkNode.TYPE> isNewScannable = node -> !knowledgeMap.containsKey(node)
-                    || !knowledgeMap.get(node).hasPubIp()
-                    || (knowledgeMap.containsKey(node) && Simulation.getSimWorld().getInternalNodes().contains(currentActor) && !knowledgeMap.get(node).hasPrivIp());
-            return scannableNodes.stream().filter(isNewScannable).collect(Collectors.toSet());
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return scannableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(scannableNodes, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -105,17 +115,33 @@ public enum AdversaryAction {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> targets = new HashSet<>();
-            for (NetworkNode.TYPE host: currentState.getNetworkKnowledge().getKnownNodes()){
+            Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
+            Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> currentSWKnowledge = currentState.getSoftwareKnowledgeMap();
+            for (NetworkNode.TYPE host: knownNodes){
                 //software has to beknown of the host and it has to be remote (currently ROUTER wont be a target, but WS & AdminPC
-                if (currentState.getSoftwareKnowledgeMap().containsKey(host)
-                        && currentState.getSoftwareKnowledgeMap().get(host).stream().anyMatch(SoftwareKnowledge::isRemote)){
+                if (currentSWKnowledge.containsKey(host)
+                        && currentSWKnowledge.get(host).stream().anyMatch(SoftwareKnowledge::isRemote)){
                     targets.add(host);
                 }
             }
             if (!currentState.isStartState()){
                 targets.add(NetworkNode.TYPE.ROUTER);
             }
-            return targets;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return targets;
+            }
+            return getTargetsWhereActionResultsInStateChange(targets, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -123,20 +149,14 @@ public enum AdversaryAction {
             State newState = (State) deepCopy(currentState);
             NetworkNode actualTarget = Simulation.getNodeByType(target);
             NodeKnowledge knownNode = newState.getNodeKnowledgeMap().get(target);
-            //TODO Router OS info can be read, but actual software scanning is bypassed for now and doesnt work as relay
-            if (target.equals(NetworkNode.TYPE.ROUTER)){
-                if (!knownNode.hasOperatingSystem()){
-                    newState.addNodeOS(target, actualTarget.getOperatingSystem());
-                }
-                if (!knownNode.hasOSVersion()){
-                    newState.addNodeOSVersion(target, actualTarget.getOsVersion());
-                }
-                return newState;
+            //TODO scanning for Router(no SW) and from WS to DB (inner firewall) is disabled
+            if (!target.equals(NetworkNode.TYPE.ROUTER)
+                    && !(target.equals(NetworkNode.TYPE.DATABASE) && currentActor.equals(NetworkNode.TYPE.WEBSERVER))){
+                Set<SoftwareKnowledge> knownSoftware = newState.getSoftwareKnowledgeMap().get(target);
+                // add to every software we know the version and the vulnerabilities
+                addVersionAndVulnerabilities(actualTarget.getLocalSoftware(), knownSoftware);
+                addVersionAndVulnerabilities(actualTarget.getRemoteSoftware(), knownSoftware);
             }
-            Set<SoftwareKnowledge> knownSoftware = newState.getSoftwareKnowledgeMap().get(target);
-            // add to every software we know the version and the vulnerabilities
-            addVersionAndVulnerabilities(actualTarget.getLocalSoftware(), knownSoftware);
-            addVersionAndVulnerabilities(actualTarget.getRemoteSoftware(), knownSoftware);
             if (!knownNode.hasOperatingSystem()){
                 newState.addNodeOS(target, actualTarget.getOperatingSystem());
             }
@@ -181,29 +201,46 @@ public enum AdversaryAction {
             }
             //only keep those, which we actually need
             attackableNodes.retainAll(currentState.getNodesWithoutAnyAccess());
-            return attackableNodes;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             // check if we have not root access so we do not override it
-            if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot())
+            if(!newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot()) {
                 newState.getNodeKnowledgeMap().get(target).addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
-            //learn own IP if new
-            if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
-                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+                //learn own IP if new
+                if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
+                    newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+                }
+                //gets detected by Antivirus/IDS
+                if (target.equals(NetworkNode.TYPE.ADMINPC)){
+                    newState.setFailedState(true);
+                }
             }
-
             return newState;
         }
     },
-    VALID_ACCOUNTS {
+    VALID_ACCOUNTS_VULN {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
             Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
-            Map<NetworkNode.TYPE, NodeKnowledge> knownNodes = currentState.getNodeKnowledgeMap();
             //we use certain exploits
             Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
             for(NetworkNode.TYPE node: nodes){
@@ -211,7 +248,7 @@ public enum AdversaryAction {
                 if(viewableNodes.contains(node)) {
                     for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
                         for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            if (v.getExploitType().equals(Exploit.TYPE.VALID_ACCOUNTS)) {
+                            if (v.getExploitType().equals(Exploit.TYPE.VALID_ACCOUNTS_VULN)) {
                                 //TODO no check if systemaccess achieved yet
                                 nodesWithCredentials.add(node);
                             }
@@ -219,18 +256,54 @@ public enum AdversaryAction {
                     }
                 }
             }
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return nodesWithCredentials;
+            }
+            return getTargetsWhereActionResultsInStateChange(nodesWithCredentials, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
+        }
+
+        @Override
+        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
+            State newState = (State) deepCopy(currentState);
+            Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
+            NodeKnowledge targetNodeKnowledge = map.get(target);
+            //or learned by auth bypass (DB and Admin)
+            //TODO AUTH BYPASS
+            if(!targetNodeKnowledge.hasAccessLevelRoot()){
+                if (target.equals(NetworkNode.TYPE.ADMINPC)){
+                    newState.setZerodayUsed(true);
+                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+                }else if (target.equals(NetworkNode.TYPE.DATABASE)){
+                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
+                }
+            }
+            //learn own IP if new
+            if (!targetNodeKnowledge.hasPrivIp()){
+                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
+            }
+            return newState;
+        }
+    },
+    VALID_ACCOUNTS_CRED{
+        @Override
+        public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
+            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
+            Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
+            Map<NetworkNode.TYPE, NodeKnowledge> knownNodes = currentState.getNodeKnowledgeMap();
             //we can also use valid acc locally for priv esc (password file)
             viewableNodes.add(currentActor);
-            //we can use found credentials
-            Map<Integer, Data> sniffedDataMap = currentState.getNetworkKnowledge().getSniffedDataMap();
-            Set<Data> knownData = new HashSet<>();
-            if (!sniffedDataMap.isEmpty()){
-                knownData.addAll(sniffedDataMap.values());
-            }
-            for(NetworkNode.TYPE node : knownNodes.keySet()) {
-                knownData.addAll(knownNodes.get(node).getKnownData().values());
-            }
-            Set<Credentials> credentials = getAllCredentialsFromData(knownData);
+            Set<Credentials> credentials = getAllCredentialsFromData(knownNodes, currentState.getNetworkKnowledge().getSniffedDataMap());
             if (!credentials.isEmpty()){
                 for (Credentials creds: credentials){
                     NetworkNode.TYPE accessibleNode = creds.getNode();
@@ -243,12 +316,33 @@ public enum AdversaryAction {
                     }
                 }
             }
-            return nodesWithCredentials;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return nodesWithCredentials;
+            }
+            return getTargetsWhereActionResultsInStateChange(nodesWithCredentials, currentState, currentActor);
         }
 
-        private Set<Credentials> getAllCredentialsFromData(Set<Data> dataSet){
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
+        }
+
+        private Set<Credentials> getAllCredentialsFromData(Map<NetworkNode.TYPE, NodeKnowledge> knownNodes, Map<Integer, Data> sniffedDataMap){
+            Set<Data> knownData = new HashSet<>();
+            if (!sniffedDataMap.isEmpty()){
+                knownData.addAll(sniffedDataMap.values());
+            }
+            for(NetworkNode.TYPE node : knownNodes.keySet()) {
+                knownData.addAll(knownNodes.get(node).getKnownData().values());
+            }
             Set<Credentials> credentialsSet = new HashSet<>();
-            for (Data data: dataSet){
+            for (Data data: knownData){
                 if (data.containsCredentials()){
                     credentialsSet.add(data.getCredentials());
                 }
@@ -261,16 +355,7 @@ public enum AdversaryAction {
             State newState = (State) deepCopy(currentState);
             Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
             NodeKnowledge targetNodeKnowledge = map.get(target);
-            //we can also use sniffed Data
-            Map<Integer, Data> sniffedDataMap = currentState.getNetworkKnowledge().getSniffedDataMap();
-            Set<Data> knownData = new HashSet<>();
-            if (!sniffedDataMap.isEmpty()){
-                knownData.addAll(sniffedDataMap.values());
-            }
-            for(NetworkNode.TYPE node : map.keySet()) {
-                knownData.addAll(map.get(node).getKnownData().values());
-            }
-            Set<Credentials> credentials = getAllCredentialsFromData(knownData);
+            Set<Credentials> credentials = getAllCredentialsFromData(map, currentState.getNetworkKnowledge().getSniffedDataMap());
             for (Credentials creds : credentials) {
                 Credentials.ACCESS_GRANT_LEVEL acLevel = creds.getAccessGrantLevel();
                 if (!targetNodeKnowledge.hasAccessLevelRoot()) {
@@ -280,14 +365,6 @@ public enum AdversaryAction {
                         targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
                     }
                 }
-            }
-            //or learned by auth bypass/credential leak
-            //TODO can/should DB ever get root through auth bypass/ cred leak
-            if(!targetNodeKnowledge.hasAccessLevelRoot())
-                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.USER);
-            //learn own IP if new
-            if (!targetNodeKnowledge.hasPrivIp()){
-                newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
             }
             return newState;
         }
@@ -309,7 +386,21 @@ public enum AdversaryAction {
                     }
                 }
             }
-            return attackableNodes;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -335,7 +426,21 @@ public enum AdversaryAction {
                     attackableNodes.add(node);
                 }
             }
-            return attackableNodes;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -370,7 +475,21 @@ public enum AdversaryAction {
                     }
                 }
             }
-            return attackableNodes;
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -385,8 +504,22 @@ public enum AdversaryAction {
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
             //define that node has to selftarget here
             if (currentState.getNodesWithAnyNodeAccess().contains(currentActor) && !currentActor.equals(NetworkNode.TYPE.ADVERSARY)){
-                return Set.of(currentActor);
+                if (!Simulation.isPreconditionFilterEnabled()){
+                    return Set.of(currentActor);
+                }
+                return getTargetsWhereActionResultsInStateChange(Set.of(currentActor), currentState, currentActor);
             }else return new HashSet<>();
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -405,8 +538,23 @@ public enum AdversaryAction {
     SOFTWARE_DISCOVERY {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            return getAttackableNodesOnSysAccess(currentState, currentActor);
+            Set<NetworkNode.TYPE> attackableNodes = getAttackableNodesOnSysAccess(currentState, currentActor);
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes,currentState, currentActor);
         }
+
+            private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+                Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+                for (NetworkNode.TYPE target : targets){
+                    State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                    if (simulatedNewState.equals(currentState)){
+                        usefulTargets.remove(target);
+                    }
+                }
+                return usefulTargets;
+            }
 
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
@@ -443,7 +591,22 @@ public enum AdversaryAction {
     DATA_FROM_LOCAL_SYSTEM {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            return getAttackableNodesOnSysAccess(currentState, currentActor);
+            Set<NetworkNode.TYPE> attackableNodes = getAttackableNodesOnSysAccess(currentState, currentActor);
+            if (!Simulation.isPreconditionFilterEnabled()){
+                return attackableNodes;
+            }
+            return getTargetsWhereActionResultsInStateChange(attackableNodes,currentState, currentActor);
+        }
+
+        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
+            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target : targets){
+                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
+                if (simulatedNewState.equals(currentState)){
+                    usefulTargets.remove(target);
+                }
+            }
+            return usefulTargets;
         }
 
         @Override
@@ -456,7 +619,9 @@ public enum AdversaryAction {
             for(int ID : actualDataMap.keySet()){
                 if (!knowndataSet.contains(ID)){
                     //should add if either root, or only user is required
-                    if(targetKnowledge.hasAccessLevelRoot() || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)){
+                    if(targetKnowledge.hasAccessLevelRoot()
+                            || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.USER)
+                            || actualDataMap.get(ID).getAccess().equals(Data.ACCESS_REQUIRED.ALL)){
                         newState.addNodeData(target, ID, actualDataMap.get(ID));
                     }
                 }
@@ -477,7 +642,8 @@ public enum AdversaryAction {
         _actions.add(EXPLOIT_PUBLIC_FACING_APPLICATION);
         _actions.add(EXPLOIT_FOR_CLIENT_EXECUTION);
         _actions.add(EXPLOIT_FOR_PRIVILEGE_ESCALATION);
-        _actions.add(VALID_ACCOUNTS);
+        _actions.add(VALID_ACCOUNTS_VULN);
+        _actions.add(VALID_ACCOUNTS_CRED);
         _actions.add(DATA_FROM_LOCAL_SYSTEM);
         _actions.add(CREATE_ACCOUNT);
         _actions.add(MAN_IN_THE_MIDDLE);

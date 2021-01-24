@@ -24,7 +24,7 @@ public class ActiveScanningIPTest {
 
     @BeforeClass
     public static void setUp() {
-        Simulation.setupWorld();
+        Simulation.setupWorld(true);
         startState.addNodeKnowledge(target);
     }
 

@@ -23,7 +23,7 @@ public class ValidAccountsTest {
 
     @BeforeClass
     public static void setUp(){
-        Simulation.setupWorld();
+        Simulation.setupWorld(true);
         NetworkNode actualTarget = Simulation.getNodeByType(target);
         stateWithValidAccount.addNodeKnowledge(target);
         stateWithValidAccount.addNodePubIp(target, actualTarget.getPub_ip());
@@ -41,15 +41,15 @@ public class ValidAccountsTest {
 
     @Test
     public void testPostCondition(){
-        State newState = AdversaryAction.VALID_ACCOUNTS.executePostConditionOnTarget(target,stateWithValidAccount,currentActor);
+        State newState = AdversaryAction.VALID_ACCOUNTS_CRED.executePostConditionOnTarget(target,stateWithValidAccount,currentActor);
         assertTrue(newState.getNodeKnowledgeMap().get(target).hasAccessLevelRoot());
     }
 
     @Test
     public void testAttackableNodes(){
-        Set<NetworkNode.TYPE> attackableNodes = AdversaryAction.VALID_ACCOUNTS.getTargetsWhichFulfillPrecondition(withOutValidAccount,currentActor);
+        Set<NetworkNode.TYPE> attackableNodes = AdversaryAction.VALID_ACCOUNTS_CRED.getTargetsWhichFulfillPrecondition(withOutValidAccount,currentActor);
         assertTrue(attackableNodes.isEmpty());
-        attackableNodes = AdversaryAction.VALID_ACCOUNTS.getTargetsWhichFulfillPrecondition(stateWithValidAccount,currentActor);
+        attackableNodes = AdversaryAction.VALID_ACCOUNTS_CRED.getTargetsWhichFulfillPrecondition(stateWithValidAccount,currentActor);
         assertTrue(attackableNodes.contains(target));
         assertEquals(1,attackableNodes.size());
 
