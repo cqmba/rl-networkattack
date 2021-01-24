@@ -22,7 +22,7 @@ public class CreateAccountTest {
 
     @BeforeClass
     public static void setUp() {
-        Simulation.setupWorld();
+        Simulation.setupWorld(true);
         NetworkNode actualTarget = Simulation.getNodeByType(target);
         stateWithRootAcess.addNodeKnowledge(target);
         stateWithRootAcess.addNodePubIp(target, actualTarget.getPub_ip());

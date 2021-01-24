@@ -57,7 +57,10 @@ public class QLearnerNetwork {
 
 
     public static void main(String[] args) {
-        Simulation.setupWorld();
+        //use this boolean to toggle precondition filtering;
+        // true = allow only actions as possible actions, which result in state change
+        // false = allow transitions, that dont change the state
+        Simulation.setupWorld(true);
         Map<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
@@ -201,7 +204,7 @@ public class QLearnerNetwork {
     private static Set<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states){
         Set<State> finalStates = new HashSet<>();
         for (State state : states.keySet()) {
-            if(state.isFinalState(0)){
+            if(state.isFinalState()){
                 finalStates.add(state);
             }
         }

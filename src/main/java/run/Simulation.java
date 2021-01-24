@@ -40,30 +40,54 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
+    private static boolean preconditionFilterEnabled;
+
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
-        setupWorld();
+        setupWorld(true);
         //SimpleNetworkPrint.print(simWorld);
         //SimpleStatePrint.print(state);
 
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
-        int config_1 = 0;
-        int config_2 = 0;
+        int failed = 0;
+        int rootNodes= 0;
+        int knownNetw = 0;
+        int createdAdmin = 0;
+        int createdDB = 0;
+        int readDB = 0;
+        int zerodayUsed = 0;
         for (State state: states){
-            if (state.isFinalState(State.CONFIG_ROOT_ONLY)){
+            if (state.isFinalState()){
                 config_0++;
             }
-            if (state.isFinalState(State.CONFIG_ROOT_DB)){
-                config_1++;
+            if (state.isFailedState()){
+                failed++;
             }
-            if (state.isFinalState(State.CONFIG_ROOT_DB_ACC)){
-                config_2++;
+            if (state.knowsNetwork()){
+                knownNetw++;
+            }
+            if (state.hasRootOnRequiredNodes(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE))){
+                rootNodes++;
+            }
+            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)){
+                createdAdmin++;
+            }
+            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)){
+                createdDB++;
+            }
+            if (state.hasReadDatabase()){
+                readDB++;
+            }
+            if (state.isZerodayUsed()){
+                zerodayUsed++;
             }
         }
         System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
-                +config_0+"\nAdmin Root and DB Read: "+config_1+"\nAll systems Root, DB Read and Admin Acc created: "+config_2);
+                +config_0+"\nFailed States: "+failed+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
+                +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB
+                +"\nZeroday Used: "+zerodayUsed);
 
         
         FileOutputStream fout = null;
@@ -122,19 +146,20 @@ public class Simulation {
         printPossibleActions(currentActor);
     }
 
-    public static void setupWorld(){
+    public static void setupWorld(boolean filterEnabled){
+        preconditionFilterEnabled = filterEnabled;
         //add Router, currently no Software
-        Map<Integer, Data> routerData = new LinkedHashMap<>();
-        Set<Software> routerSW = new LinkedHashSet<>();
+        Map<Integer, Data> routerData = new HashMap<>();
+        Set<Software> routerSW = new HashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ROUTER, PUB_IP, ROUTER_PRIV_IP, ROUTER_HOSTNAME,ROUTER_OS, ROUTER_OS_VERSION, routerSW, routerSW, routerData));
         //add Webserver
-        Set<Software> wsSWLocal = new LinkedHashSet<>();
+        Set<Software> wsSWLocal = new HashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.WEBSERVER, PUB_IP, WEBSERVER_PRIV_IP, WEBSERVER_HOSTNAME, NODE_OS, NODE_OS_VERSION, setWebserverRemoteSW(), wsSWLocal, setWebserverData()));
         //add Admin PC
-        Set<Software> adminSWLocal = new LinkedHashSet<>();
+        Set<Software> adminSWLocal = new HashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.ADMINPC, PUB_IP, ADMINPC_PRIV_IP, ADMINPC_HOSTNAME, NODE_OS, NODE_OS_VERSION, setAdminPCRemoteSW(), adminSWLocal, setAdminPCData()));
         //add Database
-        Set<Software> dbSWLocal = new LinkedHashSet<>();
+        Set<Software> dbSWLocal = new HashSet<>();
         simWorld.addNode(new NetworkNode(NetworkNode.TYPE.DATABASE, PUB_IP, DB_PRIV_IP, DB_HOSTNAME, NODE_OS, NODE_OS_VERSION, setDBRemoteSW(), dbSWLocal, setDBData()));
         //should add data here that can be sniffed in the network
         simWorld.initializeNetworkTopology();
@@ -142,7 +167,7 @@ public class Simulation {
     }
 
     static Set<Software> setWebserverRemoteSW(){
-        Set<Software> remoteSW = new LinkedHashSet<>();
+        Set<Software> remoteSW = new HashSet<>();
         //assume Webapp access with leaked credentials grants system access for now
         Software http = new Software(SERVICE_HTTP, "2");
         Software https = new Software(SERVICE_HTTPS, "1.3");
@@ -169,24 +194,25 @@ public class Simulation {
 
     static Map<Integer, Data> setWebserverData(){
         //create some data that can be used for priv escalation on the webserver locally (for now uses software Ubuntu)
-        Map<Integer, Data> wsData = new LinkedHashMap<>();
+        Map<Integer, Data> wsData = new HashMap<>();
         Credentials passwordfile = new Credentials(Credentials.TYPE.PASSWORD_FILE, Credentials.ACCESS_GRANT_LEVEL.ROOT, WEBSERVER_PRIV_IP, NODE_OS, NetworkNode.TYPE.WEBSERVER);
         wsData.put(0, new Data(0, passwordfile, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
         //create data for ssh access (key) to admin pc
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.ROOT, ADMINPC_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.ADMINPC);
-        wsData.put(1, new Data(1, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.USER));
+        wsData.put(1, new Data(1, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
         return wsData;
     }
 
     static Set<Software> setAdminPCRemoteSW(){
-        Set<Software> remoteSW = new LinkedHashSet<>();
+        Set<Software> remoteSW = new HashSet<>();
         Software telnetd = new Software(SERVICE_TELNET, "0.17");
         telnetd.addVulnerability(new Vulnerability("CVE-2020-10188", Vulnerability.TYPE.REMOTE_CODE_EXECUTION, false));
         //add zeroday because why not
-        telnetd.addVulnerability(new Vulnerability("", Vulnerability.TYPE.REMOTE_CODE_EXECUTION, true));
+        //telnetd.addVulnerability(new Vulnerability("", Vulnerability.TYPE.REMOTE_CODE_EXECUTION, true));
         remoteSW.add(telnetd);
         Software ssh = new Software(SERVICE_SSH, "7.3");
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
+        ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.BYPASS_AUTHORIZATION, true));
         //ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         remoteSW.add(ssh);
         return remoteSW;
@@ -195,7 +221,7 @@ public class Simulation {
     static Map<Integer, Data> setAdminPCData(){
         int ssh_id = 0;
         //AdminPC contains mostly high value data
-        Map<Integer, Data> adminData = new LinkedHashMap<>();
+        Map<Integer, Data> adminData = new HashMap<>();
         //create data for ssh access (key) to webserver
         Credentials ssh_key = new Credentials(Credentials.TYPE.KEY, Credentials.ACCESS_GRANT_LEVEL.USER, WEBSERVER_PRIV_IP, SERVICE_SSH, NetworkNode.TYPE.WEBSERVER);
         adminData.put(ssh_id, new Data(ssh_id, ssh_key, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
@@ -204,7 +230,7 @@ public class Simulation {
 
     static Set<Software> setDBRemoteSW(){
         //TODO need to define behaviour of authorization bypass, since currently its mapped to VALID_ACCOUNT exploit
-        Set<Software> remoteSW = new LinkedHashSet<>();
+        Set<Software> remoteSW = new HashSet<>();
         Software mySQL = new Software(SERVICE_MYSQL, "8.0.13");
         mySQL.addVulnerability(new Vulnerability("CVE-2019-2534", Vulnerability.TYPE.BYPASS_AUTHORIZATION, false));
         remoteSW.add(mySQL);
@@ -213,7 +239,7 @@ public class Simulation {
 
     static Map<Integer, Data> setDBData(){
         //Database contains mostly high value data
-        Map<Integer, Data> dbData = new LinkedHashMap<>();
+        Map<Integer, Data> dbData = new HashMap<>();
         dbData.put(0, new Data(0, Data.GAINED_KNOWLEDGE.LOW, Data.ORIGIN.LOCAL, Data.ACCESS_REQUIRED.ROOT));
         return dbData;
     }
@@ -246,5 +272,9 @@ public class Simulation {
         Data cred_data = new Data(db_pw_id, db_cred, Data.GAINED_KNOWLEDGE.HIGH, Data.ORIGIN.SNIFFED, Data.ACCESS_REQUIRED.ALL);
         networkData.put(db_pw_id, cred_data);
         return networkData;
+    }
+
+    public static boolean isPreconditionFilterEnabled() {
+        return preconditionFilterEnabled;
     }
 }

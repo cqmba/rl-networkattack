@@ -12,14 +12,10 @@ import java.io.*;
 import java.util.*;
 
 public class State implements Serializable {
-    //for this goal, only root rights on the admin pc must be achieved
-    public static final int CONFIG_ROOT_ONLY = 0;
-    //for this goal, achieve everything of goal 1 and read all database entries
-    public static final int CONFIG_ROOT_DB = 1;
-    //for this goal, gain root access on all systems, read db and create a new acc on admin pc
-    public static final int CONFIG_ROOT_DB_ACC = 2;
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
-    private boolean startState = false;
+    private boolean startState;
+    private boolean failedState;
+    private boolean zerodayUsed;
 
     private NetworkKnowledge networkKnowledge;
     //used to determine which Node an Action is executed FROM in PostCondition Of Action
@@ -31,6 +27,8 @@ public class State implements Serializable {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
+        this.zerodayUsed = false;
+        this.failedState = false;
     }
 
     public static State getStartState(){
@@ -44,6 +42,14 @@ public class State implements Serializable {
 
     public void setStartState(boolean startState){
         this.startState = startState;
+    }
+
+    public boolean isFailedState() {
+        return failedState;
+    }
+
+    public void setFailedState(boolean failedState) {
+        this.failedState = failedState;
     }
 
     //assumes next acting node was determined already, not sure when this actually happens
@@ -195,21 +201,27 @@ public class State implements Serializable {
         return needsAccess;
     }
 
-    public boolean isFinalState(int config){
-        Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>();
-        switch (config){
-            case CONFIG_ROOT_ONLY:
-                expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
-                return hasRootOnRequiredNodes(expectedRootNodes);
-            case CONFIG_ROOT_DB:
-                expectedRootNodes.add(NetworkNode.TYPE.ADMINPC);
-                return hasRootOnRequiredNodes(expectedRootNodes) && hasReadDatabase();
-            case CONFIG_ROOT_DB_ACC:
-                expectedRootNodes.addAll(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
-                return  hasRootOnRequiredNodes(expectedRootNodes) &&
-                        hasReadDatabase() && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC);
-            default: return false;
+    public boolean isFinalState(){
+        Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
+        return hasRootOnRequiredNodes(expectedRootNodes)
+                && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)
+                && hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)
+                && hasReadDatabase()
+                && knowsNetwork()
+                && !failedState;
+    }
+
+    //could extend to software knowledge aswell
+    public boolean knowsNetwork(){
+        Set<NetworkNode.TYPE> nodes = Set.of(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.DATABASE);
+        for (NetworkNode.TYPE node: nodes){
+            if (!nodeKnowledgeMap.containsKey(node) || !nodeKnowledgeMap.get(node).hasPrivIp()
+                    || !nodeKnowledgeMap.get(node).hasHostname() || !nodeKnowledgeMap.get(node).hasPubIp()
+                    || !nodeKnowledgeMap.get(node).hasOperatingSystem()){
+                return false;
+            }
         }
+        return true;
     }
 
     private boolean hasFoundNetworkData(){
@@ -226,12 +238,12 @@ public class State implements Serializable {
         return false;
     }
 
-    private boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
+    public boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
         return (nodeKnowledgeMap.containsKey(node) &&
                 nodeKnowledgeMap.get(node).getKnownData().containsKey(AdversaryAction.CREATE_ACC_ID));
     }
 
-    private boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
+    public boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
         for (NetworkNode.TYPE node : required){
             if (!nodeKnowledgeMap.containsKey(node) || !nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
                 return false;
@@ -240,7 +252,7 @@ public class State implements Serializable {
         return true;
     }
 
-    private boolean hasReadDatabase(){
+    public boolean hasReadDatabase(){
         Set<Integer> expectedIDs = Simulation.getNodeByType(NetworkNode.TYPE.DATABASE).getDataSet().keySet();
         if (nodeKnowledgeMap.containsKey(NetworkNode.TYPE.DATABASE)){
             Map<Integer, Data> knowledge = nodeKnowledgeMap.get(NetworkNode.TYPE.DATABASE).getKnownData();
@@ -258,6 +270,14 @@ public class State implements Serializable {
         return startState;
     }
 
+    public boolean isZerodayUsed() {
+        return zerodayUsed;
+    }
+
+    public void setZerodayUsed(boolean zerodayUsed) {
+        this.zerodayUsed = zerodayUsed;
+    }
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -265,13 +285,15 @@ public class State implements Serializable {
         State state = (State) o;
         return Objects.equals(nodeKnowledgeMap, state.nodeKnowledgeMap) &&
                 Objects.equals(networkKnowledge, state.networkKnowledge) &&
-                Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap);
+                Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap) &&
+                Objects.equals(zerodayUsed, state.zerodayUsed) &&
+                Objects.equals(failedState, state.failedState);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap);
+        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap, zerodayUsed, failedState);
     }
 
     /**
