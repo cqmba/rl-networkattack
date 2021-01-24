@@ -114,9 +114,11 @@ public class QLearner<S, A extends Action> {
      * @param iterations The number of iterations to run
      * @param initialIterations The number of iterations run (in addition) starting from the initial state set by the mdp.
      */
-    public void runIterations(int iterations, int initialIterations) {
+    public List<Pair<Integer, Double>> runIterations(int iterations, int initialIterations) {
         if (iterations <= 0)
             throw new IllegalArgumentException("Iterations must be greater 0");
+
+        List<Pair<Integer, Double>> accumulatedRewards = new ArrayList<>();
 
         // run the q learning agent
         // Each run is started from a random state and run until a final state is reached.
@@ -134,31 +136,51 @@ public class QLearner<S, A extends Action> {
                 counter++;
             }
 
-            runSingleIteration(curState, i);
+            List<Double> curRewards = runSingleIteration(curState, i);
+            double sum = 0;
+            for (Double r : curRewards)
+                sum += r != null ? r : 0;
+            accumulatedRewards.add(new Pair<>(i, sum));
         }
 
         for (int i = 0; i < initialIterations; i++) {
             S curState = mdp.getInitialState();
 
-            runSingleIteration(curState, i);
+            List<Double> curRewards = runSingleIteration(curState, i);
+            double sum = 0;
+            for (Double r : curRewards)
+                sum += r != null ? r : 0;
+            accumulatedRewards.add(new Pair<>(i, sum));
         }
+
+        return accumulatedRewards;
     }
 
-    private void runSingleIteration(S initialState, int iteration) {
+    private List<Double> runSingleIteration(S initialState, int iteration) {
         S curState = initialState;
         // run the simulation from curState until we reach a final state
         A curAction;
+
+        List<Double> rewards = new ArrayList<>();
         if (iteration % 100 == 0 && LOGGER.isLoggable(Level.INFO))
             LOGGER.info(String.format("Running iteration %d...%n", iteration));
+
         do {
             // get next action using q learning
             curAction = agent.execute(curState, mdp);
 
+            S nextState = null;
             // Do the action and set the new state
             if (curAction != null)
-                curState = mdp.stateTransition(curState, curAction);
+                nextState = mdp.stateTransition(curState, curAction);
+
+            rewards.add(mdp.reward(curState, curAction, nextState));
+
+            curState = nextState;
 
         } while (curAction != null);
+
+        return rewards;
     }
 
     /**

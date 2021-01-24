@@ -60,6 +60,8 @@ import static org.junit.Assert.*;
 public class QLearnerTest {
     private static final Logger LOGGER = Logger.getLogger(QLearnerTest.class.getName());
 
+    private static final Level LEVEL = Level.ALL;
+
     /*
      * Learning Rate determines how much new information is used instead of old and is between 0 and 1. A learning rate
      * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
@@ -106,6 +108,8 @@ public class QLearnerTest {
      */
     @Test
     public void runIterations_happyPath() {
+        LOGGER.setLevel(LEVEL);
+
         // generate states, actions and MDP
         Map<CellState, StateReward<CellState, CellAction>> states = generateStates();
         ActionsFunction<CellState, CellAction> actions = generateActions(states);
@@ -117,16 +121,23 @@ public class QLearnerTest {
 
         QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
-        learner.runIterations(20000, 20);
+        List<Pair<Integer, Double>> rewards = learner.runIterations(20000, 20);
+
+        if (LOGGER.isLoggable(Level.FINER)) {
+            LOGGER.finer("Accumulated rewards per run");
+            for (Pair<Integer, Double> r : rewards) {
+                LOGGER.finer(String.format("Reward for iteration %d: %f", r.getA(), r.getB()));
+            }
+        }
 
         // print the learned results.
         // Prints each states calculated utility
         // The actual actions taken in each state will be implemented later
-        LOGGER.info("Expected utility per state:");
         Map<CellState, Double> util = learner.getUtility();
-        if (LOGGER.isLoggable(Level.INFO)) {
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.fine("Expected utility per state:");
             for (Map.Entry<CellState, Double> entry : util.entrySet()) {
-                LOGGER.info(String.format("\tState: x=%d, y=%d \tUtiliy: %.16f", entry.getKey().getX(),
+                LOGGER.fine(String.format("\tState: x=%d, y=%d \tUtiliy: %.16f", entry.getKey().getX(),
                         entry.getKey().getY(), util.get(entry.getKey())));
             }
         }
