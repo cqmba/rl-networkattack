@@ -114,8 +114,14 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
     }
 
     //##########################################################################
-    //              SETTERS FOR PARAMETERS
+    //              SETTERS
     //##########################################################################
+
+    // Setters not included and the reasons are:
+    //  ActionsFunctions: The actions should not change during learning
+    //  Rplus: The rewards should not change during learning
+    //  errorEpsilon: Why should two values be not equal suddenly, when they where before?
+    //  seed: There isn't a reason why the random generator should change. It should always return random values anyways
 
     public void setAlpha(double alpha) {
         this.alpha = alpha;
@@ -133,13 +139,11 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         this.Ne = ne;
     }
 
-    public void setRplus(double rplus) {
-        this.Rplus = rplus;
-    }
-
     //##########################################################################
     //              RENAMED SETTERS FOR BETTER UNDERSTANDING
     //##########################################################################
+
+    // The setters here are renamed versions of the setters declared above for easier understanding
 
     public void setLearningRate(double alpha) {
         setAlpha(alpha);
