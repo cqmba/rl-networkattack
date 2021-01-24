@@ -45,9 +45,88 @@ public class Simulation {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld(true);
+        computeStates();
+        //chooseRandomStatesUntilEnd();
+    }
+
+    private static void chooseRandomStatesUntilEnd(){
+        List<Choice> choiceList = new ArrayList<>();
+        while (!state.isFinalState() && !state.isFailedState()){
+            for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
+                Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
+                for (AdversaryAction action: actions.keySet()){
+                    for (NetworkNode.TYPE target: actions.get(action)){
+                        choiceList.add(new Choice(target, actor, action));
+                    }
+                }
+            }
+            Collections.shuffle(choiceList);
+            //execute random Action
+            Choice randomChoice = choiceList.get(0);
+            state = State.performGivenAction(Simulation.state, randomChoice.action, randomChoice.target, randomChoice.actor);
+            choiceList.clear();
+            System.out.println("........Actor: "+randomChoice.actor+" Performing ACTION "+randomChoice.action+" on "+randomChoice.target+"..........");
+        }
+        System.out.println("Is failed state "+state.isFailedState());
+        System.out.println("Is final state "+state.isFinalState());
+    }
+
+    static class Choice{
+        public NetworkNode.TYPE target;
+        public NetworkNode.TYPE actor;
+        public AdversaryAction action;
+
+        public Choice (NetworkNode.TYPE target, NetworkNode.TYPE actor, AdversaryAction action){
+            this.target = target;
+            this.actor = actor;
+            this.action = action;
+        }
+    }
+
+    private static void choseStatesManually(){
         //SimpleNetworkPrint.print(simWorld);
         //SimpleStatePrint.print(state);
+        NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
+        //for now do this manually
+        List<NetworkNode.TYPE> targets = new ArrayList<>();
+        List<AdversaryAction> actions = new ArrayList<>();
+        actions.add(0, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(0, NetworkNode.TYPE.ROUTER);
+        actions.add(1, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(1, NetworkNode.TYPE.WEBSERVER);
+        actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(2, NetworkNode.TYPE.ADMINPC);
+        //actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
+        //targets.add(3, NetworkNode.TYPE.WEBSERVER);
+        actions.add(3, AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION);
+        targets.add(3, NetworkNode.TYPE.WEBSERVER);
+        actions.add(4, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
+        targets.add(4, NetworkNode.TYPE.WEBSERVER);
+        //now from Webserver
+        actions.add(5, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(5, NetworkNode.TYPE.ROUTER);
+        actions.add(6, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(6, NetworkNode.TYPE.ROUTER);
+        actions.add(7, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(7, NetworkNode.TYPE.DATABASE);
+        actions.add(8,AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(8, NetworkNode.TYPE.DATABASE);
+        for (int i=0; i<actions.size();i++){
+            AdversaryAction action = actions.get(i);
+            //Assume we have Webserver root control
+            if (i>=5){
+                currentActor = NetworkNode.TYPE.WEBSERVER;
+            }
+            printPossibleActions(currentActor);
+            printPerformAction(action, targets.get(i));
+            state = State.performGivenAction(state, action, targets.get(i), currentActor);
+            //SimpleStatePrint.print(state);
+        }
 
+        printPossibleActions(currentActor);
+    }
+
+    private static void computeStates() throws IOException {
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
@@ -89,7 +168,7 @@ public class Simulation {
                 +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB
                 +"\nZeroday Used: "+zerodayUsed);
 
-        
+
         FileOutputStream fout = null;
         ObjectOutputStream oos = null;
         try {
@@ -104,46 +183,6 @@ public class Simulation {
             if (oos != null)
                 oos.close();
         }
-
-        NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
-
-        //for now do this manually
-        List<NetworkNode.TYPE> targets = new ArrayList<>();
-        List<AdversaryAction> actions = new ArrayList<>();
-        actions.add(0, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(0, NetworkNode.TYPE.ROUTER);
-        actions.add(1, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(1, NetworkNode.TYPE.WEBSERVER);
-        actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(2, NetworkNode.TYPE.ADMINPC);
-        //actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
-        //targets.add(3, NetworkNode.TYPE.WEBSERVER);
-        actions.add(3, AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION);
-        targets.add(3, NetworkNode.TYPE.WEBSERVER);
-        actions.add(4, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
-        targets.add(4, NetworkNode.TYPE.WEBSERVER);
-        //now from Webserver
-        actions.add(5, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(5, NetworkNode.TYPE.ROUTER);
-        actions.add(6, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(6, NetworkNode.TYPE.ROUTER);
-        actions.add(7, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(7, NetworkNode.TYPE.DATABASE);
-        actions.add(8,AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(8, NetworkNode.TYPE.DATABASE);
-        for (int i=0; i<actions.size();i++){
-            AdversaryAction action = actions.get(i);
-            //Assume we have Webserver root control
-            if (i>=5){
-                currentActor = NetworkNode.TYPE.WEBSERVER;
-            }
-            printPossibleActions(currentActor);
-            printPerformAction(action, targets.get(i));
-            state = State.performGivenAction(state, action, targets.get(i), currentActor);
-            //SimpleStatePrint.print(state);
-        }
-
-        printPossibleActions(currentActor);
     }
 
     public static void setupWorld(boolean filterEnabled){
