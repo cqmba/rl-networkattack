@@ -84,6 +84,59 @@ public class QLearnerNetwork {
     }
 
     /**
+     * Calculates the Root Mean Squared Error for each state and returns it.
+     * @param runs Number of runs of the whole Q Learning to do
+     * @param iterationsPerRun Number of iterations to run per run
+     * @param initialIterationsPerRun Number of iterations on the initial state to run per run
+     * @param expectedUtil A Map, which maps each state with an expected utility
+     * @return The RMSE, the average error for each state
+     */
+    private Map<State, Double> RMSE(int runs, int iterationsPerRun, int initialIterationsPerRun,
+                                    Map<State, Double> expectedUtil) {
+        // This is a thing to show how to calculate the RMS Error.
+
+        // First set up the environment as usual
+        Simulation.setupWorld();
+        Map<State, StateReward<State, NodeAction>> states = null;
+        try {
+            states = generateStates();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        ActionsFunction<State, NodeAction> actions = generateActions(states);
+        QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
+        Set<State> finalStates = getFinalStates(states);
+        MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
+
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
+
+        // now calculate the rms error
+
+        // run the learner and get the utilities
+        List<Map<State, Double>> utilities = new ArrayList<>();
+        for (int i = 0; i < runs; i++) {
+            learner.runIterations(iterationsPerRun, initialIterationsPerRun);
+            utilities.add(learner.getUtility());
+            learner.reset();
+        }
+
+        // now calculate the rmse over all states and runs
+        Map<State, Double> rmse = new HashMap<>();
+        for (State curState : mdp.states()) {
+            double meanSquared = 0;
+            for (Map<State, Double> util : utilities) {
+                Double utilOfState = util.get(curState);
+                if (utilOfState == null)
+                    throw new RuntimeException("Utility for state not found..");
+
+                meanSquared += Math.pow(expectedUtil.get(curState) - utilOfState, 2);
+            }
+            rmse.put(curState, Math.sqrt(meanSquared / utilities.size()));
+        }
+        return rmse;
+    }
+
+    /**
      * Initializes the states
      * @return The states of the MDP
      */

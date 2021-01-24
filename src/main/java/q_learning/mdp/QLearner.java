@@ -231,6 +231,16 @@ public class QLearner<S, A extends Action> {
     }
 
     /**
+     * Resets the QLearningAgent to starting values.
+     * The random generator is not reset!!!
+     * This is due to this method being called for the RMS-Error. It would be meaningless to run the q learner
+     * with the same values again, as it would result in the same output. So the random generator is not reset.
+     */
+    public void reset() {
+        agent.reset();
+    }
+
+    /**
      * This method is originally from the LearningAgent and was programmed by the aima-team. The only
      * change is that not the reward is returned, but the action itself.
      *

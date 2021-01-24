@@ -81,7 +81,7 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
     private double gamma;
     private double epsilon;
     private int Ne;
-    private double Rplus;
+    private final double Rplus;
 
     private final Random random;
     private final double errorEpsilon;
