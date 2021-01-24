@@ -99,7 +99,7 @@ public class QLearnerNetwork {
         // This is a thing to show how to calculate the RMS Error.
 
         // First set up the environment as usual
-        Simulation.setupWorld();
+        Simulation.setupWorld(false);
         Map<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
