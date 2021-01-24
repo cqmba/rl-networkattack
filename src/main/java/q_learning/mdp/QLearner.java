@@ -105,10 +105,6 @@ public class QLearner<S, A extends Action> {
         agent.setNe(ne);
     }
 
-    public void setRPlus(double rPlus) {
-        agent.setRplus(rPlus);
-    }
-
     //##########################################################################
     //              FUNCTIONALITY
     //##########################################################################
