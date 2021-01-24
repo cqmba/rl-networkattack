@@ -21,7 +21,7 @@ public class QLearnerNetwork {
      * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
      * (0.01 to 0.1), so that jumping over the perfect value (which should be learned) is prevented.
      */
-    private static final double LEARNING_RATE = 0.2;
+    private static final double LEARNING_RATE = 0.05;
 
     /*
      * In q-learning an action is selected and the value of that action is calculated. For that the best action after
@@ -29,7 +29,7 @@ public class QLearnerNetwork {
      * 0 and 1. A low value is considered short-sighted, while a high value looks further into the future.
      * Due to problems when the discount factor is near 1, it is advised to use a smaller value.
      */
-    private static final double DISCOUNT_FACTOR = 1.0;
+    private static final double DISCOUNT_FACTOR = 0.5;
 
     /*
      * In order to select the next action, the q-learning agent will select either the best action by utility for
@@ -71,7 +71,7 @@ public class QLearnerNetwork {
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
-        learner.runIterations(200000, 20);
+        learner.runIterations(5000000, 100);
 
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);

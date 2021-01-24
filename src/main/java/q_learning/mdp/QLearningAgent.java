@@ -77,11 +77,11 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
     private Double r = null;
     //
     private final ActionsFunction<S, A> actionsFunction;
-    private final double alpha;
-    private final double gamma;
-    private final double epsilon;
-    private final int Ne;
-    private final double Rplus;
+    private double alpha;
+    private double gamma;
+    private double epsilon;
+    private int Ne;
+    private double Rplus;
 
     private final Random random;
     private final double errorEpsilon;
@@ -112,6 +112,50 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         this.random = new Random(seed);
         this.errorEpsilon = errorEpsilon;
     }
+
+    //##########################################################################
+    //              SETTERS FOR PARAMETERS
+    //##########################################################################
+
+    public void setAlpha(double alpha) {
+        this.alpha = alpha;
+    }
+
+    public void setGamma(double gamma) {
+        this.gamma = gamma;
+    }
+
+    public void setEpsilon(double epsilon) {
+        this.epsilon = epsilon;
+    }
+
+    public void setNe(int ne) {
+        this.Ne = ne;
+    }
+
+    public void setRplus(double rplus) {
+        this.Rplus = rplus;
+    }
+
+    //##########################################################################
+    //              RENAMED SETTERS FOR BETTER UNDERSTANDING
+    //##########################################################################
+
+    public void setLearningRate(double alpha) {
+        setAlpha(alpha);
+    }
+
+    public void setDiscountFactor(double gamma) {
+        setGamma(gamma);
+    }
+
+    public void setRandomness(double epsilon) {
+        setEpsilon(epsilon);
+    }
+
+    //##########################################################################
+    //              FUNCTIONALITY
+    //##########################################################################
 
     /**
      * An exploratory Q-learning agent. It is an active learner that learns the
@@ -195,9 +239,9 @@ public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, 
         return Q;
     }
 
-    //
-    // PROTECTED METHODS
-    //
+    //##########################################################################
+    //              Private/Protected methods
+    //##########################################################################
 
     /**
      * AIMA3e pg. 836 'if we change &alpha; from a fixed parameter to a function

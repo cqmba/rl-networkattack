@@ -77,6 +77,42 @@ public class QLearner<S, A extends Action> {
         this.random = new Random(seed);
     }
 
+    //##########################################################################
+    //              SETTERS FOR PARAMETERS
+    //##########################################################################
+
+    public void setLearningRate(double learningRate) {
+        if (learningRate < 0 || learningRate > 1)
+            throw new IllegalArgumentException("Learning Rate must be in 0<=LearningRate<=1");
+        agent.setLearningRate(learningRate);
+    }
+
+    public void setDiscountFactor(double discountFactor) {
+        if (discountFactor < 0 || discountFactor > 1)
+            throw new IllegalArgumentException("Discount factor must be in 0<=DiscountFactor<=1");
+        agent.setDiscountFactor(discountFactor);
+    }
+
+    public void setActionEpsilon(double actionEpsilon) {
+        if (actionEpsilon < 0 || actionEpsilon > 1)
+            throw new IllegalArgumentException("Action epsilon must be in 0<=ActionEpsilon<=1");
+        agent.setRandomness(actionEpsilon);
+    }
+
+    public void setNe(int ne) {
+        if (ne <= 0)
+            throw new IllegalArgumentException("Ne must be greater 0");
+        agent.setNe(ne);
+    }
+
+    public void setRPlus(double rPlus) {
+        agent.setRplus(rPlus);
+    }
+
+    //##########################################################################
+    //              FUNCTIONALITY
+    //##########################################################################
+
     /**
      * Runs the QLearningAgent "iterations" times.
      * @param iterations The number of iterations to run
