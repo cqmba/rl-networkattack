@@ -48,58 +48,32 @@ public enum AdversaryAction {
                 newState.setStartState(false);
             }
             Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
-            if (!knownNodes.contains(target)){
-                newState.addNodeKnowledge(target);
-            }
-            if (!newState.getNodeKnowledgeMap().get(target).hasPubIp()){
-                newState.addNodePubIp(target, node.getPub_ip());
-            }
-            if (!newState.getNodeKnowledgeMap().get(target).hasHostname()){
-                newState.addNodeHostname(target, node.getHostname());
-            }
+            addIPKnowledge(newState, knownNodes, target);
             //implement router port forwarding
             if (target.equals(NetworkNode.TYPE.ROUTER)){
-                for (NetworkNode.TYPE relayTargets: Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC)){
-                    if (!knownNodes.contains(relayTargets)){
-                        newState.addNodeKnowledge(relayTargets);
-                        newState.addNodePubIp(relayTargets, node.getPub_ip());
-                        //I dont think we see private IP on an IP Scan, only if we get system access
-                        newState.addNodeHostname(relayTargets, node.getHostname());
-                    }
+                for (NetworkNode.TYPE relayTarget: Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC)){
+                    addIPKnowledge(newState, knownNodes, relayTarget);
                 }
             }
             Set<NetworkNode.TYPE> internal = Simulation.getSimWorld().getInternalNodes();
             //Get all the visible remote software FROM the node, where the scan was executed from
             Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
-            //when scanning on router from outside, get port forwarded sw only
-            if (target.equals(NetworkNode.TYPE.ROUTER) && newState.getNodeKnowledgeMap().get(NetworkNode.TYPE.ROUTER).hasPrivIp()){
-                return newState;
-            }else if (target.equals(NetworkNode.TYPE.ROUTER)){
-                if (internal.contains(currentActor)){
-                    if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
-                        newState.addNodePrivIp(target, node.getPriv_ip());
-                    }
-                    return newState;
-                }
-                if (!internal.contains(currentActor)){
-                    Set<NetworkNode.TYPE> targets = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC);
-                    for (NetworkNode.TYPE scanned:targets){
-                        for (Software software:remotelyVisibleSWInNetwork.get(scanned)){
-                            //TODO no check if sw is new
-                            newState.addNodeRemoteSoftwareName(scanned, software.getName(), true);
-                        }
-                    }
-                    return newState;
-                }
-            }else if(internal.contains(currentActor)){
+            //internal scans also reveal Priv IP
+            if (internal.contains(currentActor)){
                 if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
                     newState.addNodePrivIp(target, node.getPriv_ip());
                 }
                 addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
+            } else if (!internal.contains(currentActor) && target.equals(NetworkNode.TYPE.ROUTER)){
+                //for ROUTER we relay
+                Set<NetworkNode.TYPE> targets = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC);
+                for (NetworkNode.TYPE scanned:targets){
+                    addRemoteSw(remotelyVisibleSWInNetwork, scanned, newState);
+                }
             }else {
+                //from outside against WS/ADMIN PC
                 addRemoteSw(remotelyVisibleSWInNetwork, target, newState);
             }
-
             return newState;
         }
 
@@ -108,6 +82,18 @@ public enum AdversaryAction {
                 if (!newState.getSoftwareKnowledgeMap().containsKey(target) || !newState.softwareContainedInSet(sw.getName(), newState.getSoftwareKnowledgeMap().get(target))){
                     newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
                 }
+            }
+        }
+
+        private void addIPKnowledge(State newState, Set<NetworkNode.TYPE> knownNodes, NetworkNode.TYPE target){
+            if (!knownNodes.contains(target)){
+                newState.addNodeKnowledge(target);
+            }
+            if (!newState.getNodeKnowledgeMap().get(target).hasPubIp()){
+                newState.addNodePubIp(target, Simulation.getNodeByType(target).getPub_ip());
+            }
+            if (!newState.getNodeKnowledgeMap().get(target).hasHostname()){
+                newState.addNodeHostname(target, Simulation.getNodeByType(target).getHostname());
             }
         }
     },

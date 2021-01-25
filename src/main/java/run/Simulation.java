@@ -45,8 +45,9 @@ public class Simulation {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld(true);
-        computeStates();
+        //computeStates();
         //chooseRandomStatesUntilEnd();
+        choseStatesManually();
     }
 
     private static void chooseRandomStatesUntilEnd(){
@@ -96,26 +97,27 @@ public class Simulation {
         targets.add(1, NetworkNode.TYPE.WEBSERVER);
         actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
         targets.add(2, NetworkNode.TYPE.ADMINPC);
-        //actions.add(3, AdversaryAction.EXPLOIT_PUBLIC_FACING_APPLICATION);
-        //targets.add(3, NetworkNode.TYPE.WEBSERVER);
         actions.add(3, AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION);
         targets.add(3, NetworkNode.TYPE.WEBSERVER);
-        actions.add(4, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
-        targets.add(4, NetworkNode.TYPE.WEBSERVER);
+        //currentActor = NetworkNode.TYPE.WEBSERVER;
+        actions.add(4, AdversaryAction.ACTIVE_SCAN_IP_PORT);
+        targets.add(4, NetworkNode.TYPE.ADMINPC);
+        //currentActor = NetworkNode.TYPE.ADVERSARY;
         //now from Webserver
-        actions.add(5, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(5, NetworkNode.TYPE.ROUTER);
+        actions.add(5, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
+        targets.add(5, NetworkNode.TYPE.WEBSERVER);
+        //currentActor = NetworkNode.TYPE.WEBSERVER;
         actions.add(6, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(6, NetworkNode.TYPE.ROUTER);
-        actions.add(7, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(7, NetworkNode.TYPE.DATABASE);
-        actions.add(8,AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(8, NetworkNode.TYPE.DATABASE);
+        targets.add(6, NetworkNode.TYPE.ADMINPC);
+        actions.add(7, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
+        targets.add(7, NetworkNode.TYPE.ADMINPC);
         for (int i=0; i<actions.size();i++){
             AdversaryAction action = actions.get(i);
             //Assume we have Webserver root control
-            if (i>=5){
+            if (i==4 || i>=6){
                 currentActor = NetworkNode.TYPE.WEBSERVER;
+            }else {
+                currentActor = NetworkNode.TYPE.ADVERSARY;
             }
             printPossibleActions(currentActor);
             printPerformAction(action, targets.get(i));
