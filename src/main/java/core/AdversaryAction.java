@@ -78,6 +78,9 @@ public enum AdversaryAction {
         }
 
         private void addRemoteSw(Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork, NetworkNode.TYPE target, State newState){
+            if (!remotelyVisibleSWInNetwork.containsKey(target)){
+                return;
+            }
             for (Software sw: remotelyVisibleSWInNetwork.get(target)){
                 if (!newState.getSoftwareKnowledgeMap().containsKey(target) || !newState.softwareContainedInSet(sw.getName(), newState.getSoftwareKnowledgeMap().get(target))){
                     newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
