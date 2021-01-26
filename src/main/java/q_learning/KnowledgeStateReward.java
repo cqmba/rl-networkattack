@@ -1,14 +1,19 @@
 package q_learning;
 
+import core.AdversaryAction;
+
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
 import q_learning.interfaces.StateReward;
 
+import static core.AdversaryAction.ACTIVE_SCAN_VULNERABILITY;
+
 public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     private final State state;
     private final double reward;
+
 
     public KnowledgeStateReward(State state, double reward) {
         this.state = state;
@@ -17,23 +22,60 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     @Override
     public double reward(NodeAction action, State targetState) {
-            double reward =0;
+            if(targetState==null||action==null)
+                return -0.1;
+            double actionCost =0.1;
+            double finalStateBonus = 2.0;
+            double zeroDayPenality = 1.0;
+
+            switch (action.getAction()){
+                case ACTIVE_SCAN_VULNERABILITY :
+                    actionCost =0.1;
+                case ACTIVE_SCAN_IP_PORT :
+                    actionCost =0.1;
+                case EXPLOIT_FOR_PRIVILEGE_ESCALATION:
+                    actionCost =0.3;
+                case EXPLOIT_FOR_CLIENT_EXECUTION:
+                    actionCost =0.3;
+                case CREATE_ACCOUNT:
+                    actionCost =0.1;
+                case VALID_ACCOUNTS_CRED:
+                    actionCost =0.1;
+                case EXPLOIT_PUBLIC_FACING_APPLICATION:
+                    actionCost =0.3;
+                case SOFTWARE_DISCOVERY:
+                    actionCost =0.1;
+                case DATA_FROM_LOCAL_SYSTEM:
+                    actionCost =0.1;
+                case MAN_IN_THE_MIDDLE:
+                    actionCost =0.2;
+                case VALID_ACCOUNTS_VULN:
+                    actionCost =0.3;
+            }
+
+
             double stateValue =0;
             double targetStateValue=0;
-            double actionCost =0.1;
-            if(targetState==null)
-                return -0.1;
+
+            if(!state.isZerodayUsed()||targetState.isZerodayUsed()){
+                actionCost+= zeroDayPenality;
+            }
+
+            if(state.isFinalState()&&!state.isFailedState()){
+                stateValue+= finalStateBonus;
+            }
+
             for(NetworkNode.TYPE node :state.getNodeKnowledgeMap().keySet()){
                 if(state.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
                     stateValue +=1.0;
                 }
             }
-        for(NetworkNode.TYPE node :targetState.getNodeKnowledgeMap().keySet()){
-            if(targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                stateValue +=1.0;
+            for(NetworkNode.TYPE node :targetState.getNodeKnowledgeMap().keySet()){
+                if(targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
+                    stateValue +=1.0;
+                }
             }
-        }
-            reward = targetStateValue - stateValue -actionCost;
+            double reward = targetStateValue - stateValue -actionCost;
             return reward;
         }
 

@@ -63,12 +63,13 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
         return remote;
     }
 
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (!(o instanceof SoftwareKnowledgeImpl)) return false;
         SoftwareKnowledgeImpl that = (SoftwareKnowledgeImpl) o;
-        return Objects.equals(remote, that.remote) &&
+        return remote == that.remote &&
                 Objects.equals(name, that.name) &&
                 Objects.equals(version, that.version) &&
                 Objects.equals(vulnerabilities, that.vulnerabilities);
@@ -77,6 +78,6 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, version, vulnerabilities, remote);
+        return Objects.hash(name, remote);
     }
 }

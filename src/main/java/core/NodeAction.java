@@ -56,6 +56,10 @@ public class NodeAction implements Action {
         return action.action.executePostConditionOnTarget(action.target,state,action.currentActor);
     }
 
+    public AdversaryAction getAction() {
+        return action;
+    }
+
     @Override
     public boolean isNoOp() {
         return false;

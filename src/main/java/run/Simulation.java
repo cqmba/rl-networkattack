@@ -45,7 +45,7 @@ public class Simulation {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld(true);
-        //computeStates();
+        computeStates();
         //chooseRandomStatesUntilEnd();
         choseStatesManually();
     }
@@ -89,6 +89,7 @@ public class Simulation {
         //SimpleStatePrint.print(state);
         NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
         //for now do this manually
+
         List<NetworkNode.TYPE> targets = new ArrayList<>();
         List<AdversaryAction> actions = new ArrayList<>();
         actions.add(0, AdversaryAction.ACTIVE_SCAN_IP_PORT);
