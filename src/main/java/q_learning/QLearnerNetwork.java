@@ -204,7 +204,7 @@ public class QLearnerNetwork {
     private static Set<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states){
         Set<State> finalStates = new HashSet<>();
         for (State state : states.keySet()) {
-            if(state.isFinalState()){
+            if(state.isFinalState()||state.isFailedState()){
                 finalStates.add(state);
             }
         }
