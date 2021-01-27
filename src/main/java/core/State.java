@@ -14,7 +14,7 @@ import java.util.*;
 public class State implements Serializable {
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
     private boolean startState;
-    private boolean failedState;
+    //private boolean failedState;
     private boolean zerodayUsed;
 
     private NetworkKnowledge networkKnowledge;
@@ -28,7 +28,7 @@ public class State implements Serializable {
         this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
         this.zerodayUsed = false;
-        this.failedState = false;
+        //this.failedState = false;
     }
 
     public static State getStartState(){
@@ -43,7 +43,7 @@ public class State implements Serializable {
     public void setStartState(boolean startState){
         this.startState = startState;
     }
-
+    /*
     public boolean isFailedState() {
         return failedState;
     }
@@ -51,6 +51,8 @@ public class State implements Serializable {
     public void setFailedState(boolean failedState) {
         this.failedState = failedState;
     }
+
+     */
 
     //assumes next acting node was determined already, not sure when this actually happens
     public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current, NetworkNode.TYPE currentActor){
@@ -207,8 +209,8 @@ public class State implements Serializable {
                 && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)
                 && hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)
                 && hasReadDatabase()
-                && knowsNetwork()
-                && !failedState;
+                && knowsNetwork();
+               // && !failedState;
     }
 
     //could extend to software knowledge aswell
@@ -286,14 +288,13 @@ public class State implements Serializable {
         return Objects.equals(nodeKnowledgeMap, state.nodeKnowledgeMap) &&
                 Objects.equals(networkKnowledge, state.networkKnowledge) &&
                 Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap) &&
-                Objects.equals(zerodayUsed, state.zerodayUsed) &&
-                Objects.equals(failedState, state.failedState);
+                Objects.equals(zerodayUsed, state.zerodayUsed);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap, zerodayUsed, failedState);
+        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap, zerodayUsed);
     }
 
     /**

@@ -1,23 +1,23 @@
 package q_learning;
 
-import core.AdversaryAction;
-
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
 import q_learning.interfaces.StateReward;
 
-import static core.AdversaryAction.ACTIVE_SCAN_VULNERABILITY;
+import java.util.Set;
 
 public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     private final State state;
     private final double reward;
+    private Set<NodeAction> actionsIntoFailedState;
 
 
-    public KnowledgeStateReward(State state, double reward) {
+    public KnowledgeStateReward(State state, double reward, Set<NodeAction> actionsIntoFailedState) {
         this.state = state;
         this.reward = reward;
+        this.actionsIntoFailedState = actionsIntoFailedState;
     }
 
     @Override
@@ -65,10 +65,14 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             if(state.isFinalState()){
                 targetStateValue+= finalStateBonus;
             }
+            /*
             if(state.isFailedState()){
                 targetStateValue-= failedStatePenality;
             }
-
+             */
+            if (actionsIntoFailedState.contains(action)){
+                targetStateValue-= failedStatePenality;
+            }
 
 
         for(NetworkNode.TYPE node :state.getNodeKnowledgeMap().keySet()){

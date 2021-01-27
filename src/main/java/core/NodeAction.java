@@ -12,7 +12,7 @@ public class NodeAction implements Action {
     NetworkNode.TYPE currentActor;
     AdversaryAction action;
 
-    NodeAction (NetworkNode.TYPE target, NetworkNode.TYPE currentActor, AdversaryAction action){
+    public NodeAction (NetworkNode.TYPE target, NetworkNode.TYPE currentActor, AdversaryAction action){
         this.target = target;
         this.currentActor = currentActor;
         this.action = action;
@@ -58,6 +58,14 @@ public class NodeAction implements Action {
 
     public AdversaryAction getAction() {
         return action;
+    }
+
+    public NetworkNode.TYPE getTarget() {
+        return target;
+    }
+
+    public NetworkNode.TYPE getCurrentActor() {
+        return currentActor;
     }
 
     @Override

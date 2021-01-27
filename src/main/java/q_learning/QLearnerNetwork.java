@@ -2,14 +2,17 @@ package q_learning;
 
 import aima.core.probability.mdp.ActionsFunction;
 
+import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
+import environment.NetworkNode;
 import q_learning.interfaces.StateReward;
 import q_learning.mdp.*;
 import run.Simulation;
 
 import java.io.*;
 import java.util.*;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class QLearnerNetwork {
@@ -55,12 +58,20 @@ public class QLearnerNetwork {
     // Should be the highest (or higher than that) reward possible
     private static final double R_PLUS = 4.0;
 
+    private static boolean failedStateEnabled = true;
+
+    //set these values to include a honeypot
+    private static Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
+    private static NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
+    private static AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
+
 
     public static void main(String[] args) {
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
         Simulation.setupWorld(true);
+
         Map<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
@@ -69,7 +80,7 @@ public class QLearnerNetwork {
         }
         ActionsFunction<State, NodeAction> actions = generateActions(states);
         QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
-        Set<State> finalStates = getFinalStates(states);
+        Set<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
@@ -108,7 +119,7 @@ public class QLearnerNetwork {
         }
         ActionsFunction<State, NodeAction> actions = generateActions(states);
         QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
-        Set<State> finalStates = getFinalStates(states);
+        Set<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
@@ -165,7 +176,7 @@ public class QLearnerNetwork {
 
         for(State s : stateSet){
             double reward = 0.0;
-            states.put(s, new KnowledgeStateReward(s, reward));
+            states.put(s, new KnowledgeStateReward(s, reward, getFailedNodeActions()));
         }
 
         return states;
@@ -176,11 +187,8 @@ public class QLearnerNetwork {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<State, NodeAction> generateActions(
-            Map<State, StateReward<State, NodeAction>> states) {
+    private static ActionsFunction<State, NodeAction> generateActions(Map<State, StateReward<State, NodeAction>> states) {
         QActionsFunction<State, NodeAction> actions = new QActionsFunction(states);
-
-
         for (State state : states.keySet()) {
             for (NodeAction nodeAction : NodeAction.getAllActionPossibleWithChangeState(state)) {
                 actions.addAction(state, nodeAction);
@@ -188,8 +196,6 @@ public class QLearnerNetwork {
         }
         return actions;
     }
-
-
 
     private static QStateTransition<State, NodeAction> generateTransitions(Map<State,StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions) {
             QStateTransition<State, NodeAction> transition = new QStateTransition<>();
@@ -201,16 +207,46 @@ public class QLearnerNetwork {
             return transition;
         }
 
-    private static Set<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states){
+    private static Set<State> getFailedStates(Map<State,StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions){
+        Set<State> failedStates = new HashSet<>();
+        Set<NodeAction> failedNodeActions = getFailedNodeActions();
+        for (State state : states.keySet()) {
+            for (NodeAction action : actions.actions(state)) {
+                /*
+                if (action.getAction().equals(failedAction) && action.getTarget().equals(targetFailedTransition)
+                        && actorsFailedTransition.contains(action.getCurrentActor())){
+                    //next State should be marked as failed
+                    failedStates.add(NodeAction.performNodeAction(action, state));
+                }
+
+                 */
+                if (failedNodeActions.contains(action)){
+                    failedStates.add(NodeAction.performNodeAction(action, state));
+                }
+            }
+        }
+        return failedStates;
+    }
+
+    private static Set<NodeAction> getFailedNodeActions(){
+        Set<NodeAction> possibleFailedTransitions = new HashSet<>();
+        for (NetworkNode.TYPE actor : actorsFailedTransition){
+            possibleFailedTransitions.add(new NodeAction(targetFailedTransition, actor, failedAction));
+        }
+        return possibleFailedTransitions;
+    }
+
+    private static Set<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions){
         Set<State> finalStates = new HashSet<>();
         for (State state : states.keySet()) {
-            if(state.isFinalState()||state.isFailedState()){
+            if(state.isFinalState()){//||state.isFailedState()
                 finalStates.add(state);
             }
         }
+        if (failedStateEnabled){
+            finalStates.addAll(getFailedStates(states, actions));
+        }
         return finalStates;
     }
-
-
 
 }

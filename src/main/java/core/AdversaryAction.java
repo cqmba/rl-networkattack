@@ -206,9 +206,12 @@ public enum AdversaryAction {
                     newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
                 }
                 //gets detected by Antivirus/IDS
+                /*
                 if (target.equals(NetworkNode.TYPE.ADMINPC)){
                     newState.setFailedState(true);
                 }
+
+                 */
             }
             return newState;
         }
