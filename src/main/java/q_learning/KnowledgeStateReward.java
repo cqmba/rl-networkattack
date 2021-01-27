@@ -70,7 +70,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
                 targetStateValue-= failedStatePenality;
             }
              */
-            if (actionsIntoFailedState.contains(action)){
+            if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)){
                 targetStateValue-= failedStatePenality;
             }
 

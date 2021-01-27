@@ -58,7 +58,7 @@ public class QLearnerNetwork {
     // Should be the highest (or higher than that) reward possible
     private static final double R_PLUS = 4.0;
 
-    private static boolean failedStateEnabled = true;
+    public static boolean failedStateEnabled = true;
 
     //set these values to include a honeypot
     private static Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
