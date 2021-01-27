@@ -27,7 +27,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             double actionCost =0.1;
             double finalStateBonus = 2.0;
             double zeroDayPenality = 1.0;
-            double failedStatePenality = 2.0;
+            double failedStatePenality = 4.0;
 
             switch (action.getAction()){
                 case ACTIVE_SCAN_VULNERABILITY :
@@ -63,10 +63,10 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             }
 
             if(state.isFinalState()){
-                stateValue+= finalStateBonus;
+                targetStateValue+= finalStateBonus;
             }
             if(state.isFailedState()){
-                stateValue-= failedStatePenality;
+                targetStateValue-= failedStatePenality;
             }
 
 
