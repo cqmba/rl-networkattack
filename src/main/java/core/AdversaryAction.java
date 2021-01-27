@@ -138,13 +138,15 @@ public enum AdversaryAction {
             State newState = (State) deepCopy(currentState);
             NetworkNode actualTarget = Simulation.getNodeByType(target);
             NodeKnowledge knownNode = newState.getNodeKnowledgeMap().get(target);
-            //TODO scanning for Router(no SW) and from WS to DB (inner firewall) is disabled
+            //scanning for Router(no SW) and from WS to DB (inner firewall) is disabled
             if (!target.equals(NetworkNode.TYPE.ROUTER)
                     && !(target.equals(NetworkNode.TYPE.DATABASE) && currentActor.equals(NetworkNode.TYPE.WEBSERVER))){
                 Set<SoftwareKnowledge> knownSoftware = newState.getSoftwareKnowledgeMap().get(target);
-                // add to every software we know the version and the vulnerabilities
-                addVersionAndVulnerabilities(actualTarget.getLocalSoftware(), knownSoftware);
-                addVersionAndVulnerabilities(actualTarget.getRemoteSoftware(), knownSoftware);
+                Map<NetworkNode.TYPE, Set<Software>> remoteSW = NetworkTopology.getRemoteSWMapByScanningNode(currentActor);
+                if (remoteSW.containsKey(target)){
+                    // add to every software we know the version and the vulnerabilities
+                    addVersionAndVulnerabilities(remoteSW.get(target), knownSoftware);
+                }
             }
             if (!knownNode.hasOperatingSystem()){
                 newState.addNodeOS(target, actualTarget.getOperatingSystem());
@@ -173,27 +175,13 @@ public enum AdversaryAction {
     EXPLOIT_PUBLIC_FACING_APPLICATION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
-            Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
-            for(NetworkNode.TYPE node: nodes){
-                //check if we could attack the node from our current location
-                if(viewableNodes.contains(node)) {
-                    for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_PUBLIC_FACING_APPLICATION)) {
-                                attackableNodes.add(node);
-                            }
-                        }
-                    }
-                }
-            }
+            Set<NetworkNode.TYPE> targets = getTargetsForExploitType(currentState.getSoftwareKnowledgeMap(), currentActor, Exploit.TYPE.EXPLOIT_PUBLIC_FACING_APPLICATION);
             //only keep those, which we actually need
-            attackableNodes.retainAll(currentState.getNodesWithoutAnyAccess());
+            targets.retainAll(currentState.getNodesWithoutAnyAccess());
             if (!Simulation.isPreconditionFilterEnabled()){
-                return attackableNodes;
+                return targets;
             }
-            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+            return getTargetsWhereActionResultsInStateChange(targets, currentState, currentActor);
         }
 
         private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
@@ -228,27 +216,14 @@ public enum AdversaryAction {
     VALID_ACCOUNTS_VULN {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
-            Set<NetworkNode.TYPE> nodesWithCredentials = new HashSet<>();
-            //we use certain exploits
-            Set<NetworkNode.TYPE> nodes = currentState.getSoftwareKnowledgeMap().keySet();
-            for(NetworkNode.TYPE node: nodes){
-                //check if we could attack the node from our current location
-                if(viewableNodes.contains(node)) {
-                    for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            if (v.getExploitType().equals(Exploit.TYPE.VALID_ACCOUNTS_VULN)) {
-                                //TODO no check if systemaccess achieved yet
-                                nodesWithCredentials.add(node);
-                            }
-                        }
-                    }
-                }
+            Set<NetworkNode.TYPE> targets = getTargetsForExploitType(currentState.getSoftwareKnowledgeMap(), currentActor, Exploit.TYPE.VALID_ACCOUNTS_VULN);
+            if (currentActor.equals(NetworkNode.TYPE.WEBSERVER) && targets.contains(NetworkNode.TYPE.DATABASE)){
+                targets.remove(NetworkNode.TYPE.DATABASE);
             }
             if (!Simulation.isPreconditionFilterEnabled()){
-                return nodesWithCredentials;
+                return targets;
             }
-            return getTargetsWhereActionResultsInStateChange(nodesWithCredentials, currentState, currentActor);
+            return getTargetsWhereActionResultsInStateChange(targets, currentState, currentActor);
         }
 
         private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
@@ -265,10 +240,8 @@ public enum AdversaryAction {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
-            NodeKnowledge targetNodeKnowledge = map.get(target);
+            NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
             //or learned by auth bypass (DB and Admin)
-            //TODO AUTH BYPASS
             if(!targetNodeKnowledge.hasAccessLevelRoot()){
                 if (target.equals(NetworkNode.TYPE.ADMINPC)){
                     newState.setZerodayUsed(true);
@@ -297,7 +270,6 @@ public enum AdversaryAction {
                 for (Credentials creds: credentials){
                     NetworkNode.TYPE accessibleNode = creds.getNode();
                     //changed to make privilege escalation possible
-                    //TODO will keep saying yes for nodes if root is already achieved, as long as creds give root
                     if (viewableNodes.contains(accessibleNode) && knownNodes.containsKey(accessibleNode)
                             && (currentState.getNodesWithoutAnyAccess().contains(accessibleNode)
                             || creds.getAccessGrantLevel().equals(Credentials.ACCESS_GRANT_LEVEL.ROOT))){
@@ -361,24 +333,11 @@ public enum AdversaryAction {
     EXPLOIT_FOR_CLIENT_EXECUTION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
-            Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node: currentState.getSoftwareKnowledgeMap().keySet()){
-                //check if we could attack the node from our current location
-                if(viewableNodes.contains(node)) {
-                    for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_FOR_CLIENT_EXECUTION)) {
-                                attackableNodes.add(node);
-                            }
-                        }
-                    }
-                }
-            }
+            Set<NetworkNode.TYPE> targets = getTargetsForExploitType(currentState.getSoftwareKnowledgeMap(), currentActor, Exploit.TYPE.EXPLOIT_FOR_CLIENT_EXECUTION);
             if (!Simulation.isPreconditionFilterEnabled()){
-                return attackableNodes;
+                return targets;
             }
-            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+            return getTargetsWhereActionResultsInStateChange(targets, currentState, currentActor);
         }
 
         private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
@@ -449,25 +408,19 @@ public enum AdversaryAction {
     EXPLOIT_FOR_PRIVILEGE_ESCALATION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> viewableNodes = getViewableNodes(currentActor);
-            Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node: currentState.getSoftwareKnowledgeMap().keySet()){
-                //check if we could attack the node from our current location
-                if(viewableNodes.contains(node)) {
-                    for (SoftwareKnowledge softwareKnowledge : currentState.getSoftwareKnowledgeMap().get(node)) {
-                        for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
-                            //check if we have user access on the node
-                            if (v.getExploitType().equals(Exploit.TYPE.EXPLOIT_FOR_PRIVILEGE_ESCALATION) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelUser()) {
-                                attackableNodes.add(node);
-                            }
-                        }
-                    }
+            Set<NetworkNode.TYPE> targets = getTargetsForExploitType(currentState.getSoftwareKnowledgeMap(), currentActor, Exploit.TYPE.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
+            Set<NetworkNode.TYPE> actualTargets = new HashSet<>(targets);
+            for (NetworkNode.TYPE target: targets){
+                Map<NetworkNode.TYPE, NodeKnowledge> map = currentState.getNodeKnowledgeMap();
+                if (!map.containsKey(target) || !map.get(target).hasAccessLevelUser()){
+                    actualTargets.remove(target);
                 }
             }
+
             if (!Simulation.isPreconditionFilterEnabled()){
-                return attackableNodes;
+                return actualTargets;
             }
-            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
+            return getTargetsWhereActionResultsInStateChange(actualTargets, currentState, currentActor);
         }
 
         private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
@@ -672,6 +625,23 @@ public enum AdversaryAction {
             viewableNodeTypes.add(n.getType());
         }
         return viewableNodeTypes;
+    }
+
+    private static Set<NetworkNode.TYPE> getTargetsForExploitType(Map<NetworkNode.TYPE, Set<SoftwareKnowledge>> swMap, NetworkNode.TYPE currentActor, Exploit.TYPE exploit){
+        Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
+        for(NetworkNode.TYPE node: swMap.keySet()){
+            //check if we could attack the node from our current location
+            if(getViewableNodes(currentActor).contains(node)) {
+                for (SoftwareKnowledge softwareKnowledge : swMap.get(node)) {
+                    for (Vulnerability v : softwareKnowledge.getVulnerabilities()) {
+                        if (v.getExploitType().equals(exploit)) {
+                            attackableNodes.add(node);
+                        }
+                    }
+                }
+            }
+        }
+        return attackableNodes;
     }
 
     private static Set<NetworkNode.TYPE> getAttackableNodesOnSysAccess(State currentState, NetworkNode.TYPE currentActor) {
