@@ -13,6 +13,7 @@ import run.Simulation;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class QLearnerNetwork {
@@ -67,36 +68,62 @@ public class QLearnerNetwork {
 
 
     public static void main(String[] args) {
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Setting up environment...");
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
         Simulation.setupWorld(true);
 
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Generating states...");
         Map<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Generating Actions...");
         ActionsFunction<State, NodeAction> actions = generateActions(states);
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Generating Transitions...");
         QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Generating final states...");
         Set<State> finalStates = getFinalStates(states, actions);
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Creating Q Learning agent...");
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
 
-        //learner.loadQ("q.ser");
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Loading learning values...");
+        learner.loadQ("q.ser");
 
-        List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Learning...");
+        //List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
 
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Saving learning values...");
         learner.saveQ("q.ser");
 
-        try {
-            new Gson().toJson(rewards, new FileWriter("rewards.json"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Saving rewards...");
+//        try {
+//            new Gson().toJson(rewards, new FileWriter("rewards.json"));
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Printing best path from initial state...");
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
             for (Pair<State, NodeAction> pair : path) {
@@ -132,7 +159,7 @@ public class QLearnerNetwork {
         Set<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
 
         // now calculate the rms error
 

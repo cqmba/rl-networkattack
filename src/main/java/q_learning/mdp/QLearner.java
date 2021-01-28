@@ -25,6 +25,8 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
     private final Random random;
 
+    private final int loggingCount;
+
     /**
      * This constructor initializes a QLearningAgent given the MDP it should base on and a number of parameters
      * used for the learning process.
@@ -54,9 +56,11 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
      * @param seed
      *      A seed for a random number generator used to determine random next actions in case it cannot be decided by
      *      reward.
+     * @param loggingCount
+     *      Every loggingCount'th iteration the logger will print the current iteration to the console.
      */
     public QLearner(MDP<S, A> mdp, double learningRate, double discountFactor, double actionEpsilon,
-                    double errorEpsilon, int ne, double rPlus, int seed) {
+                    double errorEpsilon, int ne, double rPlus, int seed, int loggingCount) {
         // Check if Values are chosen in possible range
         if (learningRate < 0 || learningRate > 1)
             throw new IllegalArgumentException("Learning Rate must be in 0<=LearningRate<=1");
@@ -68,12 +72,15 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             throw new IllegalArgumentException("Error epsilon must be greater 0");
         if (ne <= 0)
             throw new IllegalArgumentException("Ne must be greater 0");
+        if (loggingCount <= 0)
+            throw new IllegalArgumentException("Logging count must be greater 0");
 
         this.mdp = mdp;
         this.agent = new QLearningAgent<>(mdp.getActionsFunction(), learningRate, discountFactor, actionEpsilon,
                 ne, rPlus, seed, errorEpsilon);
 
         this.random = new Random(seed);
+        this.loggingCount = loggingCount;
     }
 
     //##########################################################################
@@ -161,7 +168,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         A curAction;
 
         List<Double> rewards = new ArrayList<>();
-        if (iteration % 100 == 0 && LOGGER.isLoggable(Level.INFO))
+        if (iteration % loggingCount == 0 && LOGGER.isLoggable(Level.INFO))
             LOGGER.info(String.format("Running iteration %d...%n", iteration));
 
         do {

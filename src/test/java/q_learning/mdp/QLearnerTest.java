@@ -119,7 +119,7 @@ public class QLearnerTest {
         finalStates.add(new CellState(1, 4));
         MDP<CellState, CellAction> mdp = new MDP<>(states, new CellState(0, 0), actions, transitions, finalStates);
 
-        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
+        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 100);
 
         List<Pair<Integer, Double>> rewards = learner.runIterations(20000, 20);
 
