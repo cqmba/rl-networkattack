@@ -102,13 +102,13 @@ public class QLearnerNetwork {
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
 
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Loading learning values...");
-        learner.loadQ("q.ser");
+//        if (LOGGER.isLoggable(Level.INFO))
+//            LOGGER.info("Loading learning values...");
+//        learner.loadQ("q.ser");
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        //List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
+        List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
@@ -116,11 +116,11 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving rewards...");
-//        try {
-//            new Gson().toJson(rewards, new FileWriter("rewards.json"));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            new Gson().toJson(rewards, new FileWriter("rewards.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Printing best path from initial state...");
