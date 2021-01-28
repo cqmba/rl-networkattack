@@ -244,6 +244,13 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         return Q;
     }
 
+    public void setQ(Map<Pair<S, A>, Double> Q) {
+        this.Q.clear();
+        for (Map.Entry<Pair<S, A>, Double> entry : Q.entrySet()) {
+            this.Q.put(entry.getKey(), entry.getValue());
+        }
+    }
+
     //##########################################################################
     //              Private/Protected methods
     //##########################################################################

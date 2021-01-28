@@ -2,12 +2,10 @@ package q_learning.mdp;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
+import core.State;
 import q_learning.Pair;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.ObjectOutputStream;
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -241,11 +239,25 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         agent.reset();
     }
 
-    public void saveQ() {
-        try (FileOutputStream fout = new FileOutputStream("q.ser"); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
+    public void saveQ(String filename) {
+        try (FileOutputStream fout = new FileOutputStream(filename); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
             oos.writeObject((HashMap)agent.getQ());
         } catch (IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void loadQ(String filename) {
+        Map<Pair<S, A>, Double> q = null;
+        try (FileInputStream streamIn = new FileInputStream(filename); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+            q = (HashMap<Pair<S, A>, Double>) objectinputstream.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (q != null) {
+            agent.setQ(q);
+        } else {
+            LOGGER.severe(String.format("Could not load Q with filename %s.", filename));
         }
     }
 

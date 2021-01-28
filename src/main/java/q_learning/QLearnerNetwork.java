@@ -2,6 +2,7 @@ package q_learning;
 
 import aima.core.probability.mdp.ActionsFunction;
 
+import com.google.gson.Gson;
 import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
@@ -12,7 +13,6 @@ import run.Simulation;
 
 import java.io.*;
 import java.util.*;
-import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 public class QLearnerNetwork {
@@ -85,9 +85,17 @@ public class QLearnerNetwork {
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED);
 
-        learner.runIterations(5000000, 100);
+        //learner.loadQ("q.ser");
 
-        learner.saveQ();
+        List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
+
+        learner.saveQ("q.ser");
+
+        try {
+            new Gson().toJson(rewards, new FileWriter("rewards.json"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
