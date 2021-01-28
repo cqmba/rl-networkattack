@@ -142,7 +142,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             accumulatedRewards.add(new Pair<>(i, sum));
         }
 
-        for (int i = 0; i < initialIterations; i++) {
+        for (int i = iterations; i < iterations + initialIterations; i++) {
             S curState = mdp.getInitialState();
 
             List<Double> curRewards = runSingleIteration(curState, i);
