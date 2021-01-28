@@ -108,7 +108,7 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
+        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
@@ -117,7 +117,14 @@ public class QLearnerNetwork {
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving rewards...");
         try {
-            new Gson().toJson(rewards, new FileWriter("rewards.json"));
+            String filename = "rewards";
+            boolean exists;
+            int counter = 0;
+            do {
+                counter++;
+                exists = new File(String.format("%s%03d.json", filename, counter)).exists();
+            } while (exists);
+            new Gson().toJson(rewards, new FileWriter(String.format("%s%03d.json", filename, counter)));
         } catch (IOException e) {
             e.printStackTrace();
         }
