@@ -87,6 +87,8 @@ public class QLearnerNetwork {
 
         learner.runIterations(5000000, 100);
 
+        learner.saveQ();
+
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
             for (Pair<State, NodeAction> pair : path) {

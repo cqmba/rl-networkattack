@@ -2,13 +2,14 @@ package q_learning.env_cells;
 
 import aima.core.agent.Action;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A simple implementation of an Action.
  * The Scenario is a cellworld. The Actions are moving Up, Down, Left and Right.
  */
-public class CellAction implements Action {
+public class CellAction implements Action, Serializable {
     private final int direction;
 
     /**

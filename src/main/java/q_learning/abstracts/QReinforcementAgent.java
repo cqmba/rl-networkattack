@@ -6,6 +6,7 @@ import aima.core.agent.impl.*;
 import aima.core.learning.reinforcement.PerceptStateReward;
 import q_learning.mdp.MDP;
 
+import java.io.Serializable;
 import java.util.Map;
 
 /**
@@ -24,7 +25,7 @@ import java.util.Map;
  * @author Ciaran O'Reilly
  * @author Ravi Mohan
  */
-public abstract class QReinforcementAgent<S, A extends Action> extends AbstractAgent {
+public abstract class QReinforcementAgent<S extends Serializable, A extends Action & Serializable> extends AbstractAgent {
     protected QReinforcementAgent() {
     }
 

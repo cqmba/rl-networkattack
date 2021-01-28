@@ -5,13 +5,14 @@ import aima.core.probability.mdp.ActionsFunction;
 import q_learning.interfaces.QMarkovDecisionProcess;
 import q_learning.interfaces.StateReward;
 
+import java.io.Serializable;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * A simple implementation of a Markov Decision Process
  */
-public class MDP<S, A extends Action> implements QMarkovDecisionProcess<S, A> {
+public class MDP<S extends Serializable, A extends Action & Serializable> implements QMarkovDecisionProcess<S, A> {
     // Save state and reward
     private final Map<S, StateReward<S, A>> states;
 

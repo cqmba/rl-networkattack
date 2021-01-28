@@ -5,15 +5,12 @@ import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
 import run.Simulation;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public enum AdversaryAction {
+public enum AdversaryAction implements Serializable {
     ACTIVE_SCAN_IP_PORT{
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {

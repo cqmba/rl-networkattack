@@ -1,5 +1,6 @@
 package q_learning;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
@@ -8,7 +9,7 @@ import java.util.Objects;
  * @param <A> The first Value
  * @param <B> The second Value
  */
-public class Pair<A, B> {
+public class Pair<A extends Serializable, B extends Serializable> implements Serializable {
     private final A a;
     private final B b;
 

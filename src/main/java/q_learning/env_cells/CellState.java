@@ -1,12 +1,13 @@
 package q_learning.env_cells;
 
+import java.io.Serializable;
 import java.util.Objects;
 
 /**
  * A simple implementation of a state.
  * The Scenario is a cellworld. Each state is therefore a cell with x and y coordinates, where 0,0 is the top left.
  */
-public class CellState {
+public class CellState implements Serializable {
     private final int x;
     private final int y;
 

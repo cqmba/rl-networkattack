@@ -3,11 +3,12 @@ package core;
 import aima.core.agent.Action;
 import environment.NetworkNode;
 
+import java.io.Serializable;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-public class NodeAction implements Action {
+public class NodeAction implements Action, Serializable {
     NetworkNode.TYPE target;
     NetworkNode.TYPE currentActor;
     AdversaryAction action;

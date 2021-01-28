@@ -45,7 +45,7 @@ public class Simulation {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld(true);
-        //computeStates();
+        computeStates();
         chooseRandomStatesUntilEnd();
         //choseStatesManually();
     }

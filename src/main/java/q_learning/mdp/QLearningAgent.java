@@ -1,5 +1,6 @@
 package q_learning.mdp;
 
+import java.io.Serializable;
 import java.util.*;
 
 import aima.core.agent.Action;
@@ -64,7 +65,7 @@ import q_learning.abstracts.QReinforcementAgent;
  * @author Ruediger Lunde
  *
  */
-public class QLearningAgent<S, A extends Action> extends QReinforcementAgent<S, A> {
+public class QLearningAgent<S extends Serializable, A extends Action & Serializable> extends QReinforcementAgent<S, A> {
     // persistent: Q, a table of action values indexed by state and action,
     // initially zero
     private final Map<Pair<S, A>, Double> Q = new HashMap<>();

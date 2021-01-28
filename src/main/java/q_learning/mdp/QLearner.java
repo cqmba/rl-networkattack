@@ -4,10 +4,11 @@ import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import q_learning.Pair;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Random;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
@@ -17,7 +18,7 @@ import java.util.logging.Logger;
  * @param <S> The state class
  * @param <A> The action class
  */
-public class QLearner<S, A extends Action> {
+public class QLearner<S extends Serializable, A extends Action & Serializable> {
     private static final Logger LOGGER = Logger.getLogger(QLearner.class.getName());
 
     private final MDP<S, A> mdp;
@@ -238,6 +239,14 @@ public class QLearner<S, A extends Action> {
      */
     public void reset() {
         agent.reset();
+    }
+
+    public void saveQ() {
+        try (FileOutputStream fout = new FileOutputStream("q.ser"); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
+            oos.writeObject((HashMap)agent.getQ());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     /**
