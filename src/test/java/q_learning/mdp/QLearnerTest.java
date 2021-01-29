@@ -121,14 +121,7 @@ public class QLearnerTest {
 
         QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 100);
 
-        List<Pair<Integer, Double>> rewards = learner.runIterations(20000, 20);
-
-        if (LOGGER.isLoggable(Level.FINER)) {
-            LOGGER.finer("Accumulated rewards per run");
-            for (Pair<Integer, Double> r : rewards) {
-                LOGGER.finer(String.format("Reward for iteration %d: %f", r.getA(), r.getB()));
-            }
-        }
+        learner.runIterations(20000, 20, "");
 
         // print the learned results.
         // Prints each states calculated utility

@@ -159,6 +159,22 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
     }
 
     //##########################################################################
+    //              GETTERS
+    //##########################################################################
+
+    public double getAlpha() { return alpha; }
+
+    public double getGamma() { return gamma; }
+
+    public double getEpsilon() { return epsilon; }
+
+    public int getNe() { return Ne; }
+
+    public double getRPlus() { return Rplus; }
+
+    public double getErrorEpsilon() { return errorEpsilon; }
+
+    //##########################################################################
     //              FUNCTIONALITY
     //##########################################################################
 

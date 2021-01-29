@@ -60,6 +60,10 @@ public class QLearnerNetwork {
     private static final double R_PLUS = 4.0;
 
     public static boolean failedStateEnabled = true;
+    private static final boolean DISALLOW_SELF_TRANSITIONS = true;
+
+    private static final int ITERATIONS = 500000;
+    private static final int INITIAL_STATE_ITERATIONS = 1000;
 
     //set these values to include a honeypot
     private static Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
@@ -73,7 +77,7 @@ public class QLearnerNetwork {
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
-        Simulation.setupWorld(true);
+        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating states...");
@@ -104,30 +108,16 @@ public class QLearnerNetwork {
 
 //        if (LOGGER.isLoggable(Level.INFO))
 //            LOGGER.info("Loading learning values...");
-//        learner.loadQ("q.ser");
+//        learner.loadData("runData.json");
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100);
+        learner.runIterations(ITERATIONS, INITIAL_STATE_ITERATIONS,
+                String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", failedStateEnabled, DISALLOW_SELF_TRANSITIONS));
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
-        learner.saveQ("q.ser");
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Saving rewards...");
-        try {
-            String filename = "rewards";
-            boolean exists;
-            int counter = 0;
-            do {
-                counter++;
-                exists = new File(String.format("%s%03d.json", filename, counter)).exists();
-            } while (exists);
-            new Gson().toJson(rewards, new FileWriter(String.format("%s%03d.json", filename, counter)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        learner.saveData("runData.json");
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Printing best path from initial state...");
@@ -154,7 +144,7 @@ public class QLearnerNetwork {
         // This is a thing to show how to calculate the RMS Error.
 
         // First set up the environment as usual
-        Simulation.setupWorld(false);
+        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
         Map<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
@@ -173,7 +163,7 @@ public class QLearnerNetwork {
         // run the learner and get the utilities
         List<Map<State, Double>> utilities = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
-            learner.runIterations(iterationsPerRun, initialIterationsPerRun);
+            learner.runIterations(iterationsPerRun, initialIterationsPerRun, "");
             utilities.add(learner.getUtility());
             learner.reset();
         }

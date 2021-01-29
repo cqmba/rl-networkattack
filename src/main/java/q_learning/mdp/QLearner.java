@@ -2,7 +2,10 @@ package q_learning.mdp;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import core.State;
+import q_learning.FullRun;
 import q_learning.Pair;
 
 import java.io.*;
@@ -24,8 +27,11 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     private final QLearningAgent<S, A> agent;
 
     private final Random random;
+    private final int seed;
 
     private final int loggingCount;
+
+    private final List<FullRun> runData = new ArrayList<>();
 
     /**
      * This constructor initializes a QLearningAgent given the MDP it should base on and a number of parameters
@@ -80,6 +86,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
                 ne, rPlus, seed, errorEpsilon);
 
         this.random = new Random(seed);
+        this.seed = seed;
         this.loggingCount = loggingCount;
     }
 
@@ -119,8 +126,9 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
      * Runs the QLearningAgent "iterations" times.
      * @param iterations The number of iterations to run
      * @param initialIterations The number of iterations run (in addition) starting from the initial state set by the mdp.
+     * @param additionalInformation additional information which should be saved in a file for this run.
      */
-    public List<Pair<Integer, Double>> runIterations(int iterations, int initialIterations) {
+    public void runIterations(int iterations, int initialIterations, String additionalInformation) {
         if (iterations <= 0)
             throw new IllegalArgumentException("Iterations must be greater 0");
 
@@ -159,7 +167,17 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             accumulatedRewards.add(new Pair<>(i, sum));
         }
 
-        return accumulatedRewards;
+        byte[] q = null;
+        try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bout)) {
+            oos.writeObject((HashMap)agent.getQ());
+            q = bout.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        runData.add(new FullRun(agent.getAlpha(), agent.getGamma(), agent.getEpsilon(), seed,
+                agent.getErrorEpsilon(), agent.getNe(), agent.getRPlus(), iterations, initialIterations,
+                additionalInformation, accumulatedRewards, q));
     }
 
     private List<Double> runSingleIteration(S initialState, int iteration) {
@@ -246,17 +264,28 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         agent.reset();
     }
 
-    public void saveQ(String filename) {
-        try (FileOutputStream fout = new FileOutputStream(filename); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
-            oos.writeObject((HashMap)agent.getQ());
+    public void saveData(String filename) {
+        try {
+            new Gson().toJson(runData, new FileWriter(filename));
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    public void loadQ(String filename) {
+    public void loadData(String filename) {
+        List<FullRun> runData = null;
+        try {
+            runData = new Gson().fromJson(new FileReader(filename), new TypeToken<ArrayList<FullRun>>() {
+            }.getType());
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
+        if (runData == null)
+            LOGGER.severe(String.format("Could not load runData with filename %s.", filename));
+
         Map<Pair<S, A>, Double> q = null;
-        try (FileInputStream streamIn = new FileInputStream(filename); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+        try (ByteArrayInputStream streamIn = new ByteArrayInputStream(runData.get(runData.size() - 1).getQ()); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
             q = (HashMap<Pair<S, A>, Double>) objectinputstream.readObject();
         } catch (Exception e) {
             e.printStackTrace();
