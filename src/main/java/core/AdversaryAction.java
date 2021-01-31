@@ -113,6 +113,8 @@ public enum AdversaryAction implements Serializable {
             if (!currentState.isStartState()){
                 targets.add(NetworkNode.TYPE.ROUTER);
             }
+            //only targets that we can attack
+            targets.retainAll(NetworkTopology.getConnectedHosts(currentActor));
             if (!Simulation.isPreconditionFilterEnabled()){
                 return targets;
             }
@@ -502,10 +504,12 @@ public enum AdversaryAction implements Serializable {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             NetworkNode node = Simulation.getNodeByType(target);
+            Set<Software> swToFind = new HashSet<>(node.getLocalSoftware());
+            swToFind.addAll(node.getRemoteSoftware());
             // check if node is already in our software knowledge map
             if(newState.getSoftwareKnowledgeMap().containsKey(node.getType())) {
                 Set<SoftwareKnowledge> softwareKnowledgeSet = newState.getSoftwareKnowledgeMap().get(target);
-                for(Software s : node.getLocalSoftware()){
+                for(Software s : swToFind){
                     //get software knowledge if already exist for a specific softare
                     SoftwareKnowledge softwareKnowledge =AdversaryAction.findSoftwareByName(softwareKnowledgeSet, s.getName());
                     if(softwareKnowledge!=null){
@@ -519,7 +523,7 @@ public enum AdversaryAction implements Serializable {
                 }
             }else{
                 Set<SoftwareKnowledge> softwareKnowledgeSet = new HashSet<>();
-                for(Software s : node.getLocalSoftware()){
+                for(Software s : swToFind){
                     SoftwareKnowledge softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                     softwareKnowledge.addVersion(s.getVersion());
                     softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
