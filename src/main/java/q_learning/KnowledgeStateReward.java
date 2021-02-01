@@ -34,6 +34,16 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         double finalStateBonus = 7.0;
         double zeroDayPenality = 2.0;
         double failedStatePenality = 4.0;
+        double stateValue = 0;
+
+        if (targetState == null || action == null){
+            if (state.isFinalState()) {
+                stateValue += finalStateBonus;
+            } else if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)) {
+                stateValue -= failedStatePenality;
+            }
+            return stateValue;
+        }
 
         switch (action.getAction()) {
             case ACTIVE_SCAN_VULNERABILITY:
@@ -71,8 +81,6 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
                 break;
         }
 
-        double stateValue = 0;
-
         if (actionsIntoZerodayUsed.contains(action)) {
             actionCost += zeroDayPenality;
         }
@@ -87,20 +95,10 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             }
         }
 
-
         for (NetworkNode.TYPE node : map.keySet()) {
             if (!map.get(node).hasAccessLevelRoot() && targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()) {
                 stateValue += 1.0;
             }
-        }
-
-        if (targetState == null || action == null){
-            if (state.isFinalState()) {
-                stateValue += finalStateBonus;
-            } else if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)) {
-                stateValue -= failedStatePenality;
-            }
-            return stateValue;
         }
 
         double reward = stateValue - actionCost;
