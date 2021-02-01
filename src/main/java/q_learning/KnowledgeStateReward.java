@@ -1,11 +1,17 @@
 package q_learning;
 
+import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
+import environment.NetworkWorld;
+import knowledge.NodeKnowledge;
 import q_learning.interfaces.StateReward;
+import run.Simulation;
 
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Predicate;
 
 public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
@@ -24,72 +30,86 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     @Override
     public double reward(NodeAction action, State targetState) {
-            if(targetState==null||action==null)
-                return -0.1;
-            double actionCost =0.1;
-            double finalStateBonus = 2.0;
-            double zeroDayPenality = 2.0;
-            double failedStatePenality = 4.0;
+        double actionCost = 0.0;
+        double finalStateBonus = 7.0;
+        double zeroDayPenality = 2.0;
+        double failedStatePenality = 4.0;
 
-            switch (action.getAction()){
-                case ACTIVE_SCAN_VULNERABILITY :
-                    actionCost =0.1;
-                case ACTIVE_SCAN_IP_PORT :
-                    actionCost =0.1;
-                case EXPLOIT_FOR_PRIVILEGE_ESCALATION:
-                    actionCost =0.3;
-                case EXPLOIT_FOR_CLIENT_EXECUTION:
-                    actionCost =0.3;
-                case CREATE_ACCOUNT:
-                    actionCost =0.1;
-                case VALID_ACCOUNTS_CRED:
-                    actionCost =0.1;
-                case EXPLOIT_PUBLIC_FACING_APPLICATION:
-                    actionCost =0.3;
-                case SOFTWARE_DISCOVERY:
-                    actionCost =0.1;
-                case DATA_FROM_LOCAL_SYSTEM:
-                    actionCost =0.1;
-                case MAN_IN_THE_MIDDLE:
-                    actionCost =0.2;
-                case VALID_ACCOUNTS_VULN:
-                    actionCost =0.3;
-            }
-
-
-            double stateValue =0;
-            double targetStateValue=0;
-
-            if (actionsIntoZerodayUsed.contains(action)){
-                actionCost += zeroDayPenality;
-            }
-
-            if(state.isFinalState()){
-                targetStateValue+= finalStateBonus;
-            }
-
-            if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)){
-                targetStateValue-= failedStatePenality;
-            }
-
-
-        for(NetworkNode.TYPE node :state.getNodeKnowledgeMap().keySet()){
-                if(state.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    stateValue +=1.0;
-                }
-            }
-            for(NetworkNode.TYPE node :targetState.getNodeKnowledgeMap().keySet()){
-                if(targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    stateValue +=1.0;
-                }
-            }
-            double reward = targetStateValue - stateValue -actionCost;
-            return reward;
+        switch (action.getAction()) {
+            case ACTIVE_SCAN_VULNERABILITY:
+                actionCost = 0.1;
+                break;
+            case ACTIVE_SCAN_IP_PORT:
+                actionCost = 0.1;
+                break;
+            case EXPLOIT_FOR_PRIVILEGE_ESCALATION:
+                actionCost = 0.3;
+                break;
+            case EXPLOIT_FOR_CLIENT_EXECUTION:
+                actionCost = 0.3;
+                break;
+            case CREATE_ACCOUNT:
+                actionCost = 0.1;
+                break;
+            case VALID_ACCOUNTS_CRED:
+                actionCost = 0.1;
+                break;
+            case EXPLOIT_PUBLIC_FACING_APPLICATION:
+                actionCost = 0.3;
+                break;
+            case SOFTWARE_DISCOVERY:
+                actionCost = 0.1;
+                break;
+            case DATA_FROM_LOCAL_SYSTEM:
+                actionCost = 0.1;
+                break;
+            case MAN_IN_THE_MIDDLE:
+                actionCost = 0.2;
+                break;
+            case VALID_ACCOUNTS_VULN:
+                actionCost = 0.3;
+                break;
         }
+
+        double stateValue = 0;
+
+        if (actionsIntoZerodayUsed.contains(action)) {
+            actionCost += zeroDayPenality;
+        }
+
+        Map<NetworkNode.TYPE, NodeKnowledge> map = state.getNodeKnowledgeMap();
+        //experimental, try to motivate to do early IP scanning
+        Predicate<NetworkNode.TYPE> canScan = n -> state.getNodesWithAnyNodeAccess().contains(n);
+        for (NetworkNode.TYPE node : map.keySet()) {
+            if (!map.get(node).hasPrivIp() && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_IP_PORT)
+                    && Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan)) {
+                stateValue += 0.5;
+            }
+        }
+
+
+        for (NetworkNode.TYPE node : map.keySet()) {
+            if (!map.get(node).hasAccessLevelRoot() && targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()) {
+                stateValue += 1.0;
+            }
+        }
+
+        if (targetState == null || action == null){
+            if (state.isFinalState()) {
+                stateValue += finalStateBonus;
+            } else if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)) {
+                stateValue -= failedStatePenality;
+            }
+            return stateValue;
+        }
+
+        double reward = stateValue - actionCost;
+        return reward;
+    }
 
     @Override
     public State state() {
-            return state;
-        }
+        return state;
+    }
 }
 
