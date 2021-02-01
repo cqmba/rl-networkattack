@@ -11,13 +11,15 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     private final State state;
     private final double reward;
-    private Set<NodeAction> actionsIntoFailedState;
+    private final Set<NodeAction> actionsIntoFailedState;
+    private final Set<NodeAction> actionsIntoZerodayUsed;
 
 
-    public KnowledgeStateReward(State state, double reward, Set<NodeAction> actionsIntoFailedState) {
+    public KnowledgeStateReward(State state, double reward, Set<NodeAction> actionsIntoFailedState, Set<NodeAction> actionsIntoZerodayUsed) {
         this.state = state;
         this.reward = reward;
         this.actionsIntoFailedState = actionsIntoFailedState;
+        this.actionsIntoZerodayUsed = actionsIntoZerodayUsed;
     }
 
     @Override
@@ -26,7 +28,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
                 return -0.1;
             double actionCost =0.1;
             double finalStateBonus = 2.0;
-            double zeroDayPenality = 1.0;
+            double zeroDayPenality = 2.0;
             double failedStatePenality = 4.0;
 
             switch (action.getAction()){
@@ -58,18 +60,14 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             double stateValue =0;
             double targetStateValue=0;
 
-            if(!state.isZerodayUsed()||targetState.isZerodayUsed()){
-                actionCost+= zeroDayPenality;
+            if (actionsIntoZerodayUsed.contains(action)){
+                actionCost += zeroDayPenality;
             }
 
             if(state.isFinalState()){
                 targetStateValue+= finalStateBonus;
             }
-            /*
-            if(state.isFailedState()){
-                targetStateValue-= failedStatePenality;
-            }
-             */
+
             if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)){
                 targetStateValue-= failedStatePenality;
             }

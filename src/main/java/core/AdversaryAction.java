@@ -245,12 +245,7 @@ public enum AdversaryAction implements Serializable {
             NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
             //or learned by auth bypass (DB and Admin)
             if(!targetNodeKnowledge.hasAccessLevelRoot()){
-                if (target.equals(NetworkNode.TYPE.ADMINPC)){
-                    newState.setZerodayUsed(true);
-                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                }else if (target.equals(NetworkNode.TYPE.DATABASE)){
-                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                }
+                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
             }
             //learn own IP if new
             if (!targetNodeKnowledge.hasPrivIp()){

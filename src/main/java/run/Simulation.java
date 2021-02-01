@@ -46,7 +46,7 @@ public class Simulation {
         System.out.println("Starting simulation");
         setupWorld(true);
         computeStates();
-        chooseRandomStatesUntilEnd();
+        //chooseRandomStatesUntilEnd();
         //choseStatesManually();
     }
 
@@ -137,13 +137,11 @@ public class Simulation {
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
-        int failed = 0;
         int rootNodes= 0;
         int knownNetw = 0;
         int createdAdmin = 0;
         int createdDB = 0;
         int readDB = 0;
-        int zerodayUsed = 0;
         for (State state: states){
             if (state.isFinalState()){
                 config_0++;
@@ -163,14 +161,10 @@ public class Simulation {
             if (state.hasReadDatabase()){
                 readDB++;
             }
-            if (state.isZerodayUsed()){
-                zerodayUsed++;
-            }
         }
         System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
-                +config_0+"\nFailed States: "+failed+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
-                +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB
-                +"\nZeroday Used: "+zerodayUsed);
+                +config_0+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
+                +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB);
 
 
         FileOutputStream fout = null;
