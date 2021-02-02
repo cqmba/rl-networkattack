@@ -31,10 +31,10 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
     @Override
     public double reward(NodeAction action, State targetState) {
         double actionCost = 0.0;
-        double finalStateBonus = 7.0;
-        double zeroDayPenality = 2.0;
-        double failedStatePenality = 4.0;
-        double stateValue = 0;
+        double finalStateBonus = 5.0;
+        double zeroDayPenality = 3.0;
+        double failedStatePenality = 5.0;
+        double stateValue = 0.0;
 
         if (targetState == null || action == null){
             if (state.isFinalState()) {
@@ -91,18 +91,22 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         for (NetworkNode.TYPE node : map.keySet()) {
             if (!map.get(node).hasPrivIp() && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_IP_PORT)
                     && Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan)) {
-                stateValue += 0.5;
+                stateValue += 0.2;
             }
+        }
+
+        //after initial access, using ADVERSARY node should be discouraged since everything can be done in internal network
+        if(Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan) && action.getCurrentActor().equals(NetworkNode.TYPE.ADVERSARY)){
+            actionCost += 0.5;
         }
 
         for (NetworkNode.TYPE node : map.keySet()) {
             if (!map.get(node).hasAccessLevelRoot() && targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()) {
-                stateValue += 1.0;
+                stateValue += 0.5;
             }
         }
 
-        double reward = stateValue - actionCost;
-        return reward;
+        return stateValue - actionCost;
     }
 
     @Override
