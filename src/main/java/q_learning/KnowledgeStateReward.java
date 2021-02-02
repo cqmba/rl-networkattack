@@ -96,7 +96,8 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         }
 
         //after initial access, using ADVERSARY node should be discouraged since everything can be done in internal network
-        if(Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan) && action.getCurrentActor().equals(NetworkNode.TYPE.ADVERSARY)){
+        Predicate<NetworkNode.TYPE> hasRoot = n -> state.getNodeKnowledgeMap().get(n).hasAccessLevelRoot();
+        if(Simulation.getSimWorld().getInternalNodes().stream().anyMatch(hasRoot) && action.getCurrentActor().equals(NetworkNode.TYPE.ADVERSARY)){
             actionCost += 0.5;
         }
 
