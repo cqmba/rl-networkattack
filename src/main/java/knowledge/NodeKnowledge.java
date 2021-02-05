@@ -27,6 +27,8 @@ public interface NodeKnowledge {
 
     boolean hasAccessLevelRoot();
 
+    boolean hasCreatedAccount();
+
     boolean hasFoundData(int ID);
 
     Map<Integer, Data> getKnownData();
@@ -44,4 +46,6 @@ public interface NodeKnowledge {
     void addAccessLevel(NetworkNode.ACCESS_LEVEL accessLevel);
 
     void addData(int ID, Data data);
+
+    void addCreatedAccount();
 }
