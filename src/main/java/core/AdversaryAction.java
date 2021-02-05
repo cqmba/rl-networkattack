@@ -361,44 +361,6 @@ public enum AdversaryAction implements Serializable {
             return newState;
         }
     },
-    CREATE_ACCOUNT {
-        @Override
-        public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
-                //check if we have  root access on the node
-                if(!currentActor.equals(NetworkNode.TYPE.ADVERSARY)&&currentActor.equals(node) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    attackableNodes.add(node);
-                }
-            }
-            if (!Simulation.isPreconditionFilterEnabled()){
-                return attackableNodes;
-            }
-            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
-        }
-
-        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
-            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
-            for (NetworkNode.TYPE target : targets){
-                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
-                if (simulatedNewState.equals(currentState)){
-                    usefulTargets.remove(target);
-                }
-            }
-            return usefulTargets;
-        }
-
-        @Override
-        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
-            State newState = (State) deepCopy(currentState);
-            Map<NetworkNode.TYPE, NodeKnowledge> knowledgeMap = newState.getNodeKnowledgeMap();
-            //create new credentials
-            if (knowledgeMap.containsKey(target) && !knowledgeMap.get(target).hasCreatedAccount()){
-                knowledgeMap.get(target).addCreatedAccount();
-            }
-            return newState;
-        }
-    },
     EXPLOIT_FOR_PRIVILEGE_ESCALATION {
         @Override
         public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
@@ -583,7 +545,6 @@ public enum AdversaryAction implements Serializable {
         _actions.add(VALID_ACCOUNTS_VULN);
         _actions.add(VALID_ACCOUNTS_CRED);
         _actions.add(DATA_FROM_LOCAL_SYSTEM);
-        _actions.add(CREATE_ACCOUNT);
         _actions.add(MAN_IN_THE_MIDDLE);
         _actions.add(SOFTWARE_DISCOVERY);
     }

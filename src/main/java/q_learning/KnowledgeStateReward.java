@@ -58,9 +58,6 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             case EXPLOIT_FOR_CLIENT_EXECUTION:
                 actionCost = 0.3;
                 break;
-            case CREATE_ACCOUNT:
-                actionCost = 0.1;
-                break;
             case VALID_ACCOUNTS_CRED:
                 actionCost = 0.1;
                 break;

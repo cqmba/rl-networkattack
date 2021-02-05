@@ -23,7 +23,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
     //could be hidden
     private NetworkNode.TYPE type;
-    private boolean createdAccount;
 
     public NodeKnowledgeImpl(NetworkNode.TYPE type) {
         this.pub_ip = "";
@@ -38,7 +37,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         this.remotelyVisibleSWInNetwork = new EnumMap<>(NetworkNode.TYPE.class);
         //could also add new unknown type
         this.type = type;
-        this.createdAccount = false;
     }
 
     @Override
@@ -74,16 +72,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     @Override
     public boolean hasAccessLevelRoot(){
         return sysAccess.equals(NetworkNode.ACCESS_LEVEL.ROOT);
-    }
-
-    @Override
-    public boolean hasCreatedAccount() {
-        return createdAccount;
-    }
-
-    @Override
-    public boolean hasFoundData(int ID) {
-        return dataSet.containsKey(ID);
     }
 
     @Override
@@ -127,14 +115,9 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public void addCreatedAccount() {
-        this.createdAccount = true;
-    }
-
-    @Override
     public int hashCode() {
 
-        return Objects.hash(pub_ip, priv_ip, hostname, operatingSystem, osVersion, remoteSoftware, localSoftware, dataSet, sysAccess, remotelyVisibleSWInNetwork, type, createdAccount);
+        return Objects.hash(pub_ip, priv_ip, hostname, operatingSystem, osVersion, remoteSoftware, localSoftware, dataSet, sysAccess, remotelyVisibleSWInNetwork, type);
     }
 
     @Override
@@ -152,7 +135,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
                 Objects.equals(dataSet, that.dataSet) &&
                 Objects.equals(sysAccess, that.sysAccess) &&
                 Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
-                Objects.equals(type, that.type) &&
-                Objects.equals(createdAccount, that.createdAccount);
+                Objects.equals(type, that.type);
     }
 }

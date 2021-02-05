@@ -10,8 +10,11 @@ import run.Simulation;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class State implements Serializable {
+
+    private static final Logger LOGGER = Logger.getLogger(State.class.getName());
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
     private boolean startState;
 
@@ -153,6 +156,7 @@ public class State implements Serializable {
                 }
             }
             states = newSetofStates;
+            LOGGER.info(String.valueOf(previousNumber_of_States));
         }
         return states;
     }
@@ -190,8 +194,6 @@ public class State implements Serializable {
     public boolean isFinalState(){
         Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
         return hasRootOnRequiredNodes(expectedRootNodes)
-                && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)
-                && hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)
                 && hasReadDatabase()
                 && knowsNetwork();
     }
@@ -221,11 +223,6 @@ public class State implements Serializable {
             return true;
         }
         return false;
-    }
-
-    public boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
-        return (nodeKnowledgeMap.containsKey(node) &&
-                nodeKnowledgeMap.get(node).hasCreatedAccount());
     }
 
     public boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){

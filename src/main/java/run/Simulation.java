@@ -44,7 +44,7 @@ public class Simulation {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
-        setupWorld(true);
+        setupWorld(false);
         computeStates();
         //chooseRandomStatesUntilEnd();
         //choseStatesManually();
@@ -114,8 +114,6 @@ public class Simulation {
         int config_0 = 0;
         int rootNodes= 0;
         int knownNetw = 0;
-        int createdAdmin = 0;
-        int createdDB = 0;
         int readDB = 0;
         for (State state: states){
             if (state.isFinalState()){
@@ -127,19 +125,13 @@ public class Simulation {
             if (state.hasRootOnRequiredNodes(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE))){
                 rootNodes++;
             }
-            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)){
-                createdAdmin++;
-            }
-            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)){
-                createdDB++;
-            }
             if (state.hasReadDatabase()){
                 readDB++;
             }
         }
-        System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
+        System.out.println("State count: "+states_nr+"\nFinal States: "
                 +config_0+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
-                +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB);
+                +"\nRead DB: "+readDB);
 
 
         FileOutputStream fout = null;
