@@ -57,12 +57,12 @@ public class QLearnerNetwork {
     private static final int NE = 5;
 
     // Should be the highest (or higher than that) reward possible
-    private static final double R_PLUS = 4.0;
+    private static final double R_PLUS = 20.0;
 
-    public static boolean failedStateEnabled = true;
+    public static boolean failedStateEnabled = false;
 
     //set these values to include a honeypot
-    private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
+    private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
     private static final NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
     private static final AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
 
@@ -111,7 +111,7 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100);
+        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100000);
         /*
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
@@ -131,8 +131,14 @@ public class QLearnerNetwork {
             LOGGER.info("Printing best path from initial state...");
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
+            NetworkNode.TYPE previousActor = null;
             for (Pair<State, NodeAction> pair : path) {
-                LOGGER.info(String.format("\tAction: %s", pair.getB()));
+                NodeAction nodeAction = pair.getB();
+                if (!nodeAction.getCurrentActor().equals(previousActor)){
+                    previousActor = nodeAction.getCurrentActor();
+                    LOGGER.info("\tActive Host: "+previousActor+" \tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
+                }
+                LOGGER.info("\t\t\tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
             }
         } catch (Exception e) {
             e.printStackTrace();
