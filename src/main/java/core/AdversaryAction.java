@@ -391,14 +391,11 @@ public enum AdversaryAction implements Serializable {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
+            Map<NetworkNode.TYPE, NodeKnowledge> knowledgeMap = newState.getNodeKnowledgeMap();
             //create new credentials
-            Data data = new Data(CREATE_ACC_ID, new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
-            NetworkNode node = Simulation.getNodeByType(target);
-            //add credentials to node
-            //TODO this changes the environment! is that ok?
-            node.getDataSet().put(CREATE_ACC_ID, data);
-            //add credentials to node knowledge
-            newState.getNodeKnowledgeMap().get(target).getKnownData().put(CREATE_ACC_ID, data);
+            if (knowledgeMap.containsKey(target) && !knowledgeMap.get(target).hasCreatedAccount()){
+                knowledgeMap.get(target).addCreatedAccount();
+            }
             return newState;
         }
     },
@@ -590,8 +587,6 @@ public enum AdversaryAction implements Serializable {
         _actions.add(MAN_IN_THE_MIDDLE);
         _actions.add(SOFTWARE_DISCOVERY);
     }
-
-    public static final int CREATE_ACC_ID = 9999;
 
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor);
     public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);

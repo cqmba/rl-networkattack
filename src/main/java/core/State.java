@@ -225,7 +225,7 @@ public class State implements Serializable {
 
     public boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
         return (nodeKnowledgeMap.containsKey(node) &&
-                nodeKnowledgeMap.get(node).getKnownData().containsKey(AdversaryAction.CREATE_ACC_ID));
+                nodeKnowledgeMap.get(node).hasCreatedAccount());
     }
 
     public boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
