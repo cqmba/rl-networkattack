@@ -134,11 +134,15 @@ public class QLearnerNetwork {
             NetworkNode.TYPE previousActor = null;
             for (Pair<State, NodeAction> pair : path) {
                 NodeAction nodeAction = pair.getB();
+                if (nodeAction == null){
+                    break;
+                }
                 if (!nodeAction.getCurrentActor().equals(previousActor)){
                     previousActor = nodeAction.getCurrentActor();
                     LOGGER.info("\tActive Host: "+previousActor+" \tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
+                }else {
+                    LOGGER.info("\t\t\tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
                 }
-                LOGGER.info("\t\t\tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
             }
         } catch (Exception e) {
             e.printStackTrace();
