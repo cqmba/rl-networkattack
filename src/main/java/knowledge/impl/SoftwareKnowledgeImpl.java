@@ -78,6 +78,6 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     @Override
     public int hashCode() {
 
-        return Objects.hash(name, remote);
+        return Objects.hash(name, version, vulnerabilities, remote);
     }
 }

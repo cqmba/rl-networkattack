@@ -44,7 +44,7 @@ public enum AdversaryAction implements Serializable {
             if (currentState.isStartState()){
                 newState.setStartState(false);
             }
-            Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
+            Set<NetworkNode.TYPE> knownNodes = newState.getNetworkKnowledge().getKnownNodes();
             addIPKnowledge(newState, knownNodes, target);
             //implement router port forwarding
             if (target.equals(NetworkNode.TYPE.ROUTER)){
@@ -160,12 +160,14 @@ public enum AdversaryAction implements Serializable {
             for(Software s : actualSoftware){
                 SoftwareKnowledge foundSw = findSoftwareByName(knownSoftware,s.getName());
                 if(foundSw!=null){
+                    knownSoftware.remove(foundSw);
                     if (!foundSw.hasVersion()){
                         foundSw.addVersion(s.getVersion());
                     }
                     if (foundSw.getVulnerabilities().isEmpty()){
                         foundSw.addVulnerabilities(s.getVulnerabilities());
                     }
+                    knownSoftware.add(foundSw);
                 }
             }
         }
@@ -313,7 +315,7 @@ public enum AdversaryAction implements Serializable {
             State newState = (State) deepCopy(currentState);
             Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
             NodeKnowledge targetNodeKnowledge = map.get(target);
-            Set<Credentials> credentials = getAllCredentialsFromData(map, currentState.getNetworkKnowledge().getSniffedDataMap());
+            Set<Credentials> credentials = getAllCredentialsFromData(map, newState.getNetworkKnowledge().getSniffedDataMap());
             for (Credentials creds : credentials) {
                 Credentials.ACCESS_GRANT_LEVEL acLevel = creds.getAccessGrantLevel();
                 if (!targetNodeKnowledge.hasAccessLevelRoot()) {
@@ -423,7 +425,7 @@ public enum AdversaryAction implements Serializable {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            Set<Integer> knownSniffedData = currentState.getNetworkKnowledge().getSniffedDataMap().keySet();
+            Set<Integer> knownSniffedData = newState.getNetworkKnowledge().getSniffedDataMap().keySet();
             Map<Integer, Data> actualDataMap = Simulation.getSimWorld().getSniffableData();
             for (int ID: actualDataMap.keySet()){
                 if (!knownSniffedData.contains(ID)){
@@ -467,12 +469,15 @@ public enum AdversaryAction implements Serializable {
                     //get software knowledge if already exist for a specific softare
                     SoftwareKnowledge softwareKnowledge =AdversaryAction.findSoftwareByName(softwareKnowledgeSet, s.getName());
                     if(softwareKnowledge!=null){
+                        softwareKnowledgeSet.remove(softwareKnowledge);
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+                        softwareKnowledgeSet.add(softwareKnowledge);
                     }else{
                         softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+                        softwareKnowledgeSet.add(softwareKnowledge);
                     }
                 }
             }else{

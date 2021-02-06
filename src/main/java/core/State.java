@@ -6,6 +6,7 @@ import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
+import knowledge.impl.SoftwareKnowledgeImpl;
 import run.Simulation;
 
 import java.io.*;
@@ -106,7 +107,9 @@ public class State implements Serializable {
             }
         }else{
             //for the case that the node is not contained in the map, create entry in the map
-            softwareKnowledgeMap.put(node, Set.of(SoftwareKnowledge.addNew(swName, remote)));
+            Set<SoftwareKnowledge> swSet = new HashSet();
+            swSet.add(SoftwareKnowledge.addNew(swName, remote));
+            softwareKnowledgeMap.put(node, swSet);
         }
     }
 
@@ -154,6 +157,7 @@ public class State implements Serializable {
                 for (NodeAction a : possibleActions) {
                     newSetofStates.add(a.action.executePostConditionOnTarget(a.target,s,a.currentActor));
                 }
+
             }
             states = newSetofStates;
             LOGGER.info(String.valueOf(previousNumber_of_States));

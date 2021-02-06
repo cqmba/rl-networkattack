@@ -84,17 +84,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
         Map<NetworkNode.TYPE, NodeKnowledge> map = state.getNodeKnowledgeMap();
         //experimental, try to motivate to do early IP scanning
-        Predicate<NetworkNode.TYPE> canScan = n -> state.getNodesWithAnyNodeAccess().contains(n);
-        Set<NetworkNode.TYPE> potentialScanningTargets = map.keySet();
-        potentialScanningTargets.remove(NetworkNode.TYPE.ADVERSARY);
-        for (NetworkNode.TYPE node : potentialScanningTargets) {
-            if (!map.get(node).hasPrivIp() && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_IP_PORT)
-                    && Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan)) {
-                stateValue += 0.2;
-                //limit to single bonus
-                break;
-            }
-        }
+
 
         //after initial access, using ADVERSARY node should be discouraged since everything can be done in internal network
         Predicate<NetworkNode.TYPE> hasRoot = n -> state.getNodeKnowledgeMap().containsKey(n) && state.getNodeKnowledgeMap().get(n).hasAccessLevelRoot();
@@ -102,11 +92,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
             actionCost += 0.5;
         }
 
-        for (NetworkNode.TYPE node : potentialScanningTargets) {
-            if (!map.get(node).hasAccessLevelRoot() && targetState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()) {
-                stateValue += 0.5;
-            }
-        }
+       
 
         return stateValue - actionCost;
     }
