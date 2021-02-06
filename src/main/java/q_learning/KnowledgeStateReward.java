@@ -76,8 +76,9 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         potentialScanningTargets.remove(NetworkNode.TYPE.ADVERSARY);
         for (NetworkNode.TYPE node : potentialScanningTargets) {
             if (!map.get(node).hasPrivIp() && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_IP_PORT)
+                    && action.getTarget().equals(node)
                     && Simulation.getSimWorld().getInternalNodes().stream().anyMatch(canScan)) {
-                stateValue += 0.2;
+                stateValue += 0.25;
                 //limit to single bonus
                 break;
             }
@@ -86,8 +87,10 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         Set<NetworkNode.TYPE> vulnscanTargets = new HashSet<>(potentialScanningTargets);
         vulnscanTargets.removeAll(state.getNodesWithAnyNodeAccess());
         for (NetworkNode.TYPE node: vulnscanTargets){
-            if (!map.get(node).hasOperatingSystem() && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_VULNERABILITY)){
-                stateValue += 0.2;
+            if (!map.get(node).hasOperatingSystem()
+                    && action.getTarget().equals(node)
+                    && action.getAction().equals(AdversaryAction.ACTIVE_SCAN_VULNERABILITY)){
+                stateValue += 0.15;
                 //limit to single bonus
                 break;
             }
