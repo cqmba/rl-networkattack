@@ -227,8 +227,7 @@ public class QLearnerNetwork {
         Map<State, StateReward<State, NodeAction>> states = new HashMap<>();
 
         for(State s : stateSet){
-            double reward = 0.0;
-            states.put(s, new KnowledgeStateReward(s, reward, getFailedNodeActions(), getZerodayTransitions()));
+            states.put(s, new KnowledgeStateReward(s, getFailedNodeActions(), getZerodayTransitions()));
         }
 
         return states;
