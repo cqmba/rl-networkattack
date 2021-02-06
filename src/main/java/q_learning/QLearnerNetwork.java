@@ -57,14 +57,17 @@ public class QLearnerNetwork {
     private static final int NE = 5;
 
     // Should be the highest (or higher than that) reward possible
-    private static final double R_PLUS = 4.0;
+    private static final double R_PLUS = 20.0;
 
-    public static boolean failedStateEnabled = true;
+    public static boolean failedStateEnabled = false;
 
     //set these values to include a honeypot
-    private static Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
-    private static NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
-    private static AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
+    private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
+    private static final NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
+    private static final AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
+
+    private static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
+    private static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
 
 
     public static void main(String[] args) {
@@ -108,12 +111,14 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        List<Pair<Integer, Double>> rewards = learner.runIterations(100000, 100);
-
+        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100000);
+        /*
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
         learner.saveQ("q.ser");
 
+
+         */
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving rewards...");
         try {
@@ -126,8 +131,18 @@ public class QLearnerNetwork {
             LOGGER.info("Printing best path from initial state...");
         try {
             List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
+            NetworkNode.TYPE previousActor = null;
             for (Pair<State, NodeAction> pair : path) {
-                LOGGER.info(String.format("\tAction: %s", pair.getB()));
+                NodeAction nodeAction = pair.getB();
+                if (nodeAction == null){
+                    break;
+                }
+                if (!nodeAction.getCurrentActor().equals(previousActor)){
+                    previousActor = nodeAction.getCurrentActor();
+                    LOGGER.info("\tActive Host: "+previousActor+" \tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
+                }else {
+                    LOGGER.info("\t\t\tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -213,7 +228,7 @@ public class QLearnerNetwork {
 
         for(State s : stateSet){
             double reward = 0.0;
-            states.put(s, new KnowledgeStateReward(s, reward, getFailedNodeActions()));
+            states.put(s, new KnowledgeStateReward(s, reward, getFailedNodeActions(), getZerodayTransitions()));
         }
 
         return states;
@@ -263,6 +278,14 @@ public class QLearnerNetwork {
             }
         }
         return failedStates;
+    }
+
+    private static Set<NodeAction> getZerodayTransitions(){
+        Set<NodeAction> zerodayTransitions = new HashSet<>();
+        for (NetworkNode.TYPE actor : Set.of(NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.DATABASE)){
+            zerodayTransitions.add(new NodeAction(zerodayTarget, actor, zerodayAction));
+        }
+        return zerodayTransitions;
     }
 
     private static Set<NodeAction> getFailedNodeActions(){

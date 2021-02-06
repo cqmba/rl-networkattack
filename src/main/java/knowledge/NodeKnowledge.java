@@ -27,8 +27,6 @@ public interface NodeKnowledge {
 
     boolean hasAccessLevelRoot();
 
-    boolean hasFoundData(int ID);
-
     Map<Integer, Data> getKnownData();
 
     void addPubIp(String pubIp);

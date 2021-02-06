@@ -75,11 +75,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     }
 
     @Override
-    public boolean hasFoundData(int ID) {
-        return dataSet.containsKey(ID);
-    }
-
-    @Override
     public Map<Integer, Data> getKnownData() {
         return this.dataSet;
     }

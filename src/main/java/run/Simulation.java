@@ -44,39 +44,39 @@ public class Simulation {
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
-        setupWorld(true);
+        setupWorld(false);
         computeStates();
-        chooseRandomStatesUntilEnd();
+        //chooseRandomStatesUntilEnd();
         //choseStatesManually();
     }
 
     private static void chooseRandomStatesUntilEnd(){
-        List<Choice> choiceList = new ArrayList<>();
+        List<Transition> transitionList = new ArrayList<>();
         while (!state.isFinalState()){
             for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
                 Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
                 for (AdversaryAction action: actions.keySet()){
                     for (NetworkNode.TYPE target: actions.get(action)){
-                        choiceList.add(new Choice(target, actor, action));
+                        transitionList.add(new Transition(target, actor, action));
                     }
                 }
             }
-            Collections.shuffle(choiceList);
+            Collections.shuffle(transitionList);
             //execute random Action
-            Choice randomChoice = choiceList.get(0);
-            state = State.performGivenAction(Simulation.state, randomChoice.action, randomChoice.target, randomChoice.actor);
-            choiceList.clear();
-            System.out.println("........Actor: "+randomChoice.actor+" Performing ACTION "+randomChoice.action+" on "+randomChoice.target+"..........");
+            Transition randomTransition = transitionList.get(0);
+            state = State.performGivenAction(Simulation.state, randomTransition.action, randomTransition.target, randomTransition.actor);
+            transitionList.clear();
+            System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
         }
         System.out.println("Is final state "+state.isFinalState());
     }
 
-    static class Choice{
+    static class Transition {
         public NetworkNode.TYPE target;
         public NetworkNode.TYPE actor;
         public AdversaryAction action;
 
-        public Choice (NetworkNode.TYPE target, NetworkNode.TYPE actor, AdversaryAction action){
+        public Transition(NetworkNode.TYPE target, NetworkNode.TYPE actor, AdversaryAction action){
             this.target = target;
             this.actor = actor;
             this.action = action;
@@ -86,64 +86,35 @@ public class Simulation {
     private static void choseStatesManually(){
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        NetworkNode.TYPE currentActor = NetworkNode.TYPE.ADVERSARY;
-        //for now do this manually
-
-        List<NetworkNode.TYPE> targets = new ArrayList<>();
-        List<AdversaryAction> actions = new ArrayList<>();
-        actions.add(0, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(0, NetworkNode.TYPE.ROUTER);
-        actions.add(1, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(1, NetworkNode.TYPE.WEBSERVER);
-        actions.add(2, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(2, NetworkNode.TYPE.ADMINPC);
-        actions.add(3, AdversaryAction.EXPLOIT_FOR_CLIENT_EXECUTION);
-        targets.add(3, NetworkNode.TYPE.WEBSERVER);
-        //currentActor = NetworkNode.TYPE.WEBSERVER;
-        actions.add(4, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(4, NetworkNode.TYPE.ADMINPC);
-        //currentActor = NetworkNode.TYPE.ADVERSARY;
-        //now from Adversary
-        actions.add(5, AdversaryAction.EXPLOIT_FOR_PRIVILEGE_ESCALATION);
-        targets.add(5, NetworkNode.TYPE.WEBSERVER);
-        //currentActor = NetworkNode.TYPE.WEBSERVER;
-        actions.add(6, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(6, NetworkNode.TYPE.ADMINPC);
-        actions.add(7, AdversaryAction.ACTIVE_SCAN_IP_PORT);
-        targets.add(7, NetworkNode.TYPE.DATABASE);
-        //Adv
-        actions.add(8, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(8, NetworkNode.TYPE.ADMINPC);
-        actions.add(9, AdversaryAction.ACTIVE_SCAN_VULNERABILITY);
-        targets.add(9, NetworkNode.TYPE.DATABASE);
-        for (int i=0; i<actions.size();i++){
-            AdversaryAction action = actions.get(i);
-            //Assume we have Webserver root control
-            if (i==4 || i==6 || i==7){
-                currentActor = NetworkNode.TYPE.WEBSERVER;
-            }else {
-                currentActor = NetworkNode.TYPE.ADVERSARY;
+        Transition debugTransistion = new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.VALID_ACCOUNTS_CRED);
+        List<Transition> transitions = new ArrayList<>();
+        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_VULNERABILITY));
+        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.VALID_ACCOUNTS_VULN));
+        transitions.add(new Transition(NetworkNode.TYPE.DATABASE, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADMINPC, AdversaryAction.DATA_FROM_LOCAL_SYSTEM));
+        transitions.add(debugTransistion);
+        for (Transition transition: transitions){
+            printPossibleActions(transition.actor);
+            printPerformAction(transition.action, transition.target);
+            if (transition.equals(debugTransistion)){
+                System.out.println("Debug here");
             }
-            printPossibleActions(currentActor);
-            printPerformAction(action, targets.get(i));
-            state = State.performGivenAction(state, action, targets.get(i), currentActor);
+            state = State.performGivenAction(state, transition.action, transition.target, transition.actor);
             SimpleStatePrint.print(state);
         }
-
-        printPossibleActions(currentActor);
+        printPossibleActions(transitions.get(transitions.size()-1).actor);
     }
 
     private static void computeStates() throws IOException {
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
-        int failed = 0;
         int rootNodes= 0;
         int knownNetw = 0;
-        int createdAdmin = 0;
-        int createdDB = 0;
         int readDB = 0;
-        int zerodayUsed = 0;
         for (State state: states){
             if (state.isFinalState()){
                 config_0++;
@@ -154,23 +125,13 @@ public class Simulation {
             if (state.hasRootOnRequiredNodes(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE))){
                 rootNodes++;
             }
-            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)){
-                createdAdmin++;
-            }
-            if (state.hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)){
-                createdDB++;
-            }
             if (state.hasReadDatabase()){
                 readDB++;
             }
-            if (state.isZerodayUsed()){
-                zerodayUsed++;
-            }
         }
-        System.out.println("State count: "+states_nr+"\nAdmin Root only States: "
-                +config_0+"\nFailed States: "+failed+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
-                +"\nCreated Admin: "+createdAdmin+"\nCreated DB: "+createdDB+"\nRead DB: "+readDB
-                +"\nZeroday Used: "+zerodayUsed);
+        System.out.println("State count: "+states_nr+"\nFinal States: "
+                +config_0+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
+                +"\nRead DB: "+readDB);
 
 
         FileOutputStream fout = null;
