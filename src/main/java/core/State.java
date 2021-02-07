@@ -6,20 +6,20 @@ import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
+import knowledge.impl.SoftwareKnowledgeImpl;
 import run.Simulation;
 
 import java.io.*;
 import java.util.*;
+import java.util.logging.Logger;
 
 public class State implements Serializable {
+
+    private static final Logger LOGGER = Logger.getLogger(State.class.getName());
     private Map<NetworkNode.TYPE, NodeKnowledge> nodeKnowledgeMap;
     private boolean startState;
-    //private boolean failedState;
-    private boolean zerodayUsed;
 
     private NetworkKnowledge networkKnowledge;
-    //used to determine which Node an Action is executed FROM in PostCondition Of Action
-    //private NetworkNode.TYPE currentActor;
     //Map for the SoftwareKnowledge of the adversary for each NetworkNode
     private Map<NetworkNode.TYPE,Set<SoftwareKnowledge>> softwareKnowledgeMap = new EnumMap<>(NetworkNode.TYPE.class);
 
@@ -27,8 +27,6 @@ public class State implements Serializable {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
         this.networkKnowledge = NetworkKnowledge.addNew();
         this.startState = startState;
-        this.zerodayUsed = false;
-        //this.failedState = false;
     }
 
     public static State getStartState(){
@@ -43,16 +41,6 @@ public class State implements Serializable {
     public void setStartState(boolean startState){
         this.startState = startState;
     }
-    /*
-    public boolean isFailedState() {
-        return failedState;
-    }
-
-    public void setFailedState(boolean failedState) {
-        this.failedState = failedState;
-    }
-
-     */
 
     //assumes next acting node was determined already, not sure when this actually happens
     public static Map<AdversaryAction, Set<NetworkNode.TYPE>> computePossibleActions(State current, NetworkNode.TYPE currentActor){
@@ -119,7 +107,9 @@ public class State implements Serializable {
             }
         }else{
             //for the case that the node is not contained in the map, create entry in the map
-            softwareKnowledgeMap.put(node, Set.of(SoftwareKnowledge.addNew(swName, remote)));
+            Set<SoftwareKnowledge> swSet = new HashSet();
+            swSet.add(SoftwareKnowledge.addNew(swName, remote));
+            softwareKnowledgeMap.put(node, swSet);
         }
     }
 
@@ -167,8 +157,10 @@ public class State implements Serializable {
                 for (NodeAction a : possibleActions) {
                     newSetofStates.add(a.action.executePostConditionOnTarget(a.target,s,a.currentActor));
                 }
+
             }
             states = newSetofStates;
+            LOGGER.info(String.valueOf(previousNumber_of_States));
         }
         return states;
     }
@@ -206,11 +198,8 @@ public class State implements Serializable {
     public boolean isFinalState(){
         Set<NetworkNode.TYPE> expectedRootNodes = new HashSet<>(Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE));
         return hasRootOnRequiredNodes(expectedRootNodes)
-                && hasCreatedAccountOnNode(NetworkNode.TYPE.ADMINPC)
-                && hasCreatedAccountOnNode(NetworkNode.TYPE.DATABASE)
                 && hasReadDatabase()
                 && knowsNetwork();
-               // && !failedState;
     }
 
     //could extend to software knowledge aswell
@@ -240,11 +229,6 @@ public class State implements Serializable {
         return false;
     }
 
-    public boolean hasCreatedAccountOnNode(NetworkNode.TYPE node){
-        return (nodeKnowledgeMap.containsKey(node) &&
-                nodeKnowledgeMap.get(node).getKnownData().containsKey(AdversaryAction.CREATE_ACC_ID));
-    }
-
     public boolean hasRootOnRequiredNodes (Set<NetworkNode.TYPE> required){
         for (NetworkNode.TYPE node : required){
             if (!nodeKnowledgeMap.containsKey(node) || !nodeKnowledgeMap.get(node).hasAccessLevelRoot()){
@@ -272,14 +256,6 @@ public class State implements Serializable {
         return startState;
     }
 
-    public boolean isZerodayUsed() {
-        return zerodayUsed;
-    }
-
-    public void setZerodayUsed(boolean zerodayUsed) {
-        this.zerodayUsed = zerodayUsed;
-    }
-
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
@@ -287,14 +263,13 @@ public class State implements Serializable {
         State state = (State) o;
         return Objects.equals(nodeKnowledgeMap, state.nodeKnowledgeMap) &&
                 Objects.equals(networkKnowledge, state.networkKnowledge) &&
-                Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap) &&
-                Objects.equals(zerodayUsed, state.zerodayUsed);
+                Objects.equals(softwareKnowledgeMap, state.softwareKnowledgeMap);
     }
 
     @Override
     public int hashCode() {
 
-        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap, zerodayUsed);
+        return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap);
     }
 
     /**

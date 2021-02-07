@@ -44,7 +44,7 @@ public enum AdversaryAction implements Serializable {
             if (currentState.isStartState()){
                 newState.setStartState(false);
             }
-            Set<NetworkNode.TYPE> knownNodes = currentState.getNetworkKnowledge().getKnownNodes();
+            Set<NetworkNode.TYPE> knownNodes = newState.getNetworkKnowledge().getKnownNodes();
             addIPKnowledge(newState, knownNodes, target);
             //implement router port forwarding
             if (target.equals(NetworkNode.TYPE.ROUTER)){
@@ -113,6 +113,8 @@ public enum AdversaryAction implements Serializable {
             if (!currentState.isStartState()){
                 targets.add(NetworkNode.TYPE.ROUTER);
             }
+            //only targets that we can attack
+            targets.retainAll(NetworkTopology.getConnectedHosts(currentActor));
             if (!Simulation.isPreconditionFilterEnabled()){
                 return targets;
             }
@@ -158,12 +160,14 @@ public enum AdversaryAction implements Serializable {
             for(Software s : actualSoftware){
                 SoftwareKnowledge foundSw = findSoftwareByName(knownSoftware,s.getName());
                 if(foundSw!=null){
+                    knownSoftware.remove(foundSw);
                     if (!foundSw.hasVersion()){
                         foundSw.addVersion(s.getVersion());
                     }
                     if (foundSw.getVulnerabilities().isEmpty()){
                         foundSw.addVulnerabilities(s.getVulnerabilities());
                     }
+                    knownSoftware.add(foundSw);
                 }
             }
         }
@@ -243,12 +247,7 @@ public enum AdversaryAction implements Serializable {
             NodeKnowledge targetNodeKnowledge = newState.getNodeKnowledgeMap().get(target);
             //or learned by auth bypass (DB and Admin)
             if(!targetNodeKnowledge.hasAccessLevelRoot()){
-                if (target.equals(NetworkNode.TYPE.ADMINPC)){
-                    newState.setZerodayUsed(true);
-                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                }else if (target.equals(NetworkNode.TYPE.DATABASE)){
-                    targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
-                }
+                targetNodeKnowledge.addAccessLevel(NetworkNode.ACCESS_LEVEL.ROOT);
             }
             //learn own IP if new
             if (!targetNodeKnowledge.hasPrivIp()){
@@ -316,7 +315,7 @@ public enum AdversaryAction implements Serializable {
             State newState = (State) deepCopy(currentState);
             Map<NetworkNode.TYPE, NodeKnowledge> map = newState.getNodeKnowledgeMap();
             NodeKnowledge targetNodeKnowledge = map.get(target);
-            Set<Credentials> credentials = getAllCredentialsFromData(map, currentState.getNetworkKnowledge().getSniffedDataMap());
+            Set<Credentials> credentials = getAllCredentialsFromData(map, newState.getNetworkKnowledge().getSniffedDataMap());
             for (Credentials creds : credentials) {
                 Credentials.ACCESS_GRANT_LEVEL acLevel = creds.getAccessGrantLevel();
                 if (!targetNodeKnowledge.hasAccessLevelRoot()) {
@@ -361,47 +360,6 @@ public enum AdversaryAction implements Serializable {
             if (!newState.getNodeKnowledgeMap().get(target).hasPrivIp()){
                 newState.addNodePrivIp(target, Simulation.getNodeByType(target).getPriv_ip());
             }
-            return newState;
-        }
-    },
-    CREATE_ACCOUNT {
-        @Override
-        public Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor) {
-            Set<NetworkNode.TYPE> attackableNodes = new HashSet<>();
-            for(NetworkNode.TYPE node : currentState.getNodeKnowledgeMap().keySet()){
-                //check if we have  root access on the node
-                if(!currentActor.equals(NetworkNode.TYPE.ADVERSARY)&&currentActor.equals(node) && currentState.getNodeKnowledgeMap().get(node).hasAccessLevelRoot()){
-                    attackableNodes.add(node);
-                }
-            }
-            if (!Simulation.isPreconditionFilterEnabled()){
-                return attackableNodes;
-            }
-            return getTargetsWhereActionResultsInStateChange(attackableNodes, currentState, currentActor);
-        }
-
-        private Set<NetworkNode.TYPE> getTargetsWhereActionResultsInStateChange(Set<NetworkNode.TYPE> targets, State currentState, NetworkNode.TYPE currentActor){
-            Set<NetworkNode.TYPE> usefulTargets = new HashSet<>(targets);
-            for (NetworkNode.TYPE target : targets){
-                State simulatedNewState = executePostConditionOnTarget(target, currentState, currentActor);
-                if (simulatedNewState.equals(currentState)){
-                    usefulTargets.remove(target);
-                }
-            }
-            return usefulTargets;
-        }
-
-        @Override
-        public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
-            State newState = (State) deepCopy(currentState);
-            //create new credentials
-            Data data = new Data(CREATE_ACC_ID, new Credentials(Credentials.TYPE.KEY,Credentials.ACCESS_GRANT_LEVEL.ROOT,"","",target),Data.GAINED_KNOWLEDGE.HIGH,Data.ORIGIN.CREATED,Data.ACCESS_REQUIRED.ROOT);
-            NetworkNode node = Simulation.getNodeByType(target);
-            //add credentials to node
-            //TODO this changes the environment! is that ok?
-            node.getDataSet().put(CREATE_ACC_ID, data);
-            //add credentials to node knowledge
-            newState.getNodeKnowledgeMap().get(target).getKnownData().put(CREATE_ACC_ID, data);
             return newState;
         }
     },
@@ -467,7 +425,7 @@ public enum AdversaryAction implements Serializable {
         @Override
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
-            Set<Integer> knownSniffedData = currentState.getNetworkKnowledge().getSniffedDataMap().keySet();
+            Set<Integer> knownSniffedData = newState.getNetworkKnowledge().getSniffedDataMap().keySet();
             Map<Integer, Data> actualDataMap = Simulation.getSimWorld().getSniffableData();
             for (int ID: actualDataMap.keySet()){
                 if (!knownSniffedData.contains(ID)){
@@ -502,24 +460,29 @@ public enum AdversaryAction implements Serializable {
         public State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor) {
             State newState = (State) deepCopy(currentState);
             NetworkNode node = Simulation.getNodeByType(target);
+            Set<Software> swToFind = new HashSet<>(node.getLocalSoftware());
+            swToFind.addAll(node.getRemoteSoftware());
             // check if node is already in our software knowledge map
             if(newState.getSoftwareKnowledgeMap().containsKey(node.getType())) {
                 Set<SoftwareKnowledge> softwareKnowledgeSet = newState.getSoftwareKnowledgeMap().get(target);
-                for(Software s : node.getLocalSoftware()){
+                for(Software s : swToFind){
                     //get software knowledge if already exist for a specific softare
                     SoftwareKnowledge softwareKnowledge =AdversaryAction.findSoftwareByName(softwareKnowledgeSet, s.getName());
                     if(softwareKnowledge!=null){
+                        softwareKnowledgeSet.remove(softwareKnowledge);
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+                        softwareKnowledgeSet.add(softwareKnowledge);
                     }else{
                         softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                         softwareKnowledge.addVersion(s.getVersion());
                         softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
+                        softwareKnowledgeSet.add(softwareKnowledge);
                     }
                 }
             }else{
                 Set<SoftwareKnowledge> softwareKnowledgeSet = new HashSet<>();
-                for(Software s : node.getLocalSoftware()){
+                for(Software s : swToFind){
                     SoftwareKnowledge softwareKnowledge = SoftwareKnowledge.addNew(s.getName(), false);
                     softwareKnowledge.addVersion(s.getVersion());
                     softwareKnowledge.addVulnerabilities(s.getVulnerabilities());
@@ -587,12 +550,9 @@ public enum AdversaryAction implements Serializable {
         _actions.add(VALID_ACCOUNTS_VULN);
         _actions.add(VALID_ACCOUNTS_CRED);
         _actions.add(DATA_FROM_LOCAL_SYSTEM);
-        _actions.add(CREATE_ACCOUNT);
         _actions.add(MAN_IN_THE_MIDDLE);
         _actions.add(SOFTWARE_DISCOVERY);
     }
-
-    public static final int CREATE_ACC_ID = 9999;
 
     public abstract Set<NetworkNode.TYPE> getTargetsWhichFulfillPrecondition(State currentState, NetworkNode.TYPE currentActor);
     public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
