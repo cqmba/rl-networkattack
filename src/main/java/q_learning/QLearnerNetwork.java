@@ -35,8 +35,8 @@ public class QLearnerNetwork {
     public static final boolean FAILED_STATE_ENABLED = false;
     private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
-    private static final int ITERATIONS = 1000000;
-    private static final int INITIAL_STATE_ITERATIONS = 0;
+    private static final int ITERATIONS = 100000;
+    private static final int INITIAL_STATE_ITERATIONS = 100000;
 
     //set these values to include a honeypot
     private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
@@ -88,7 +88,7 @@ public class QLearnerNetwork {
                         INITIAL_STATE_ITERATIONS,
                         String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
                         false),
-                new Parameter(0.1, 1.0, 0.0, 0, ERROR, NE, R_PLUS, ITERATIONS,
+                new Parameter(0.1, 1.0, 0.0, 1, ERROR, NE, R_PLUS, ITERATIONS,
                         INITIAL_STATE_ITERATIONS,
                         String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
                         true)
@@ -98,6 +98,7 @@ public class QLearnerNetwork {
 
     /**
      * Runs the learner once for each given parameter setting.
+     * NOTE: The seed is reset after each run, so you should change it for each run.
      *
      * @param mdp The markov decision process
      * @param params The parameters. Each param is run in order and the results will be saved
@@ -130,10 +131,6 @@ public class QLearnerNetwork {
                     par.getSaveQ());
 
             if (LOGGER.isLoggable(Level.INFO))
-                LOGGER.info("Saving learning values...");
-            learner.saveData(filename);
-
-            if (LOGGER.isLoggable(Level.INFO))
                 LOGGER.info("Printing best path from initial state...");
             try {
                 List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
@@ -154,6 +151,10 @@ public class QLearnerNetwork {
                 e.printStackTrace();
             }
         }
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Saving learning values...");
+        learner.saveData(filename);
     }
 
     /**
