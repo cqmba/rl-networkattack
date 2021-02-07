@@ -82,10 +82,10 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
     private double gamma;
     private double epsilon;
     private int Ne;
-    private final double Rplus;
+    private double Rplus;
 
-    private final Random random;
-    private final double errorEpsilon;
+    private Random random;
+    private double errorEpsilon;
 
     /**
      * Constructor.
@@ -120,9 +120,6 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
 
     // Setters not included and the reasons are:
     //  ActionsFunctions: The actions should not change during learning
-    //  Rplus: The rewards should not change during learning
-    //  errorEpsilon: Why should two values be not equal suddenly, when they where before?
-    //  seed: There isn't a reason why the random generator should change. It should always return random values anyways
 
     public void setAlpha(double alpha) {
         this.alpha = alpha;
@@ -136,9 +133,17 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         this.epsilon = epsilon;
     }
 
+    public void setSeed(int seed) { this.random = new Random(seed); }
+
+    public void setErrorEpsilon(double errorEpsilon) {
+        this.errorEpsilon = errorEpsilon;
+    }
+
     public void setNe(int ne) {
         this.Ne = ne;
     }
+
+    public void setRplus(double rplus) { this.Rplus = rplus; }
 
     //##########################################################################
     //              RENAMED SETTERS FOR BETTER UNDERSTANDING

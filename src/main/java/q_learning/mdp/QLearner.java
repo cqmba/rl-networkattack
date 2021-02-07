@@ -7,6 +7,7 @@ import com.google.gson.reflect.TypeToken;
 import core.State;
 import q_learning.FullRun;
 import q_learning.Pair;
+import q_learning.Parameter;
 
 import java.io.*;
 import java.util.*;
@@ -26,8 +27,8 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
     private final QLearningAgent<S, A> agent;
 
-    private final Random random;
-    private final int seed;
+    private Random random;
+    private int seed;
 
     private final int loggingCount;
 
@@ -112,10 +113,26 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         agent.setRandomness(actionEpsilon);
     }
 
+    public void setSeed(int seed) {
+        this.seed = seed;
+        this.random = new Random(seed);
+        agent.setSeed(seed);
+    }
+
+    public void setErrorEpsilon(double errorEpsilon) {
+        if (errorEpsilon < 0)
+            throw new IllegalArgumentException("Error epsilon must be greater 0");
+        agent.setErrorEpsilon(errorEpsilon);
+    }
+
     public void setNe(int ne) {
         if (ne <= 0)
             throw new IllegalArgumentException("Ne must be greater 0");
         agent.setNe(ne);
+    }
+
+    public void setRPlus(double rPlus) {
+        agent.setRplus(rPlus);
     }
 
     //##########################################################################
@@ -177,9 +194,9 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             }
         }
 
-        runData.add(new FullRun(agent.getAlpha(), agent.getGamma(), agent.getEpsilon(), seed,
-                agent.getErrorEpsilon(), agent.getNe(), agent.getRPlus(), iterations, initialIterations,
-                additionalInformation, accumulatedRewards, q));
+        Parameter parameter = new Parameter(agent.getAlpha(), agent.getGamma(), agent.getEpsilon(), seed,
+                agent.getErrorEpsilon(), agent.getNe(), agent.getRPlus(), iterations, initialIterations, additionalInformation, saveQ);
+        runData.add(new FullRun(parameter, accumulatedRewards, q));
     }
 
     private List<Double> runSingleIteration(S initialState, int iteration) {
