@@ -59,11 +59,11 @@ public class QLearnerNetwork {
     // Should be the highest (or higher than that) reward possible
     private static final double R_PLUS = 4.0;
 
-    public static boolean failedStateEnabled = true;
+    public static final boolean FAILED_STATE_ENABLED = false;
     private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
-    private static final int ITERATIONS = 500000;
-    private static final int INITIAL_STATE_ITERATIONS = 1000;
+    private static final int ITERATIONS = 1000000;
+    private static final int INITIAL_STATE_ITERATIONS = 0;
 
     //set these values to include a honeypot
     private static Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER);
@@ -81,7 +81,7 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating states...");
-        Map<State, StateReward<State, NodeAction>> states = null;
+        HashMap<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
         } catch (IOException e) {
@@ -98,37 +98,67 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating final states...");
-        Set<State> finalStates = getFinalStates(states, actions);
+        HashSet<State> finalStates = getFinalStates(states, actions);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Creating Q Learning agent...");
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
+        //run(mdp, 1000000, 0, 0.1, 0.5, "runDataRandomState3.json", 0);
+        //run(mdp, 1000000, 0, 0.01, 1.0, "runDataRandomState4.json", 1);
+        //run(mdp, 0, 1000000, 0.1, 0.5, "runDataInitialState3.json", 2);
+        //run(mdp, 0, 1000000, 0.01, 1.0, "runDataInitialState4.json", 3);
+
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, 0.01, 0.5, 0.2, ERROR, NE, R_PLUS, SEED, 10000);
 
 //        if (LOGGER.isLoggable(Level.INFO))
 //            LOGGER.info("Loading learning values...");
-//        learner.loadData("runData.json");
+//        learner.loadData("testRunQData0.json");
+
+//        if (LOGGER.isLoggable(Level.INFO))
+//            LOGGER.info("Learning...");
+//        learner.runIterations(10000, 0,
+//                String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
+//                true);
+
+//        if (LOGGER.isLoggable(Level.INFO))
+//            LOGGER.info("Saving learning values...");
+//        learner.saveData("testRun");
+
+//        if (LOGGER.isLoggable(Level.INFO))
+//            LOGGER.info("Printing best path from initial state...");
+//        try {
+//            List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
+//            for (Pair<State, NodeAction> pair : path) {
+//                LOGGER.info(String.format("\tAction: %s", pair.getB()));
+//            }
+//        } catch (Exception e) {
+//            e.printStackTrace();
+//        }
+    }
+
+    private static void run(MDP<State, NodeAction> mdp, int iterations, int initialIterations, double learningRate,
+                            double discountFactor, String filename, int seed) {
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, learningRate, discountFactor, 0.3, ERROR,
+                NE, R_PLUS, seed, 10000);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Learning...");
-        learner.runIterations(ITERATIONS, INITIAL_STATE_ITERATIONS,
-                String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", failedStateEnabled, DISALLOW_SELF_TRANSITIONS));
+        learner.runIterations(iterations, initialIterations,
+                String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
+                false);
+
+        learner.setActionEpsilon(0.0);
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Learning...");
+
+        learner.runIterations(iterations, initialIterations,
+                String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
+                true);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
-        learner.saveData("runData.json");
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Printing best path from initial state...");
-        try {
-            List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
-            for (Pair<State, NodeAction> pair : path) {
-                LOGGER.info(String.format("\tAction: %s", pair.getB()));
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        learner.saveData(filename);
     }
 
     /**
@@ -145,7 +175,7 @@ public class QLearnerNetwork {
 
         // First set up the environment as usual
         Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
-        Map<State, StateReward<State, NodeAction>> states = null;
+        HashMap<State, StateReward<State, NodeAction>> states = null;
         try {
             states = generateStates();
         } catch (IOException e) {
@@ -153,7 +183,7 @@ public class QLearnerNetwork {
         }
         ActionsFunction<State, NodeAction> actions = generateActions(states);
         QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
-        Set<State> finalStates = getFinalStates(states, actions);
+        HashSet<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
@@ -163,7 +193,7 @@ public class QLearnerNetwork {
         // run the learner and get the utilities
         List<Map<State, Double>> utilities = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
-            learner.runIterations(iterationsPerRun, initialIterationsPerRun, "");
+            learner.runIterations(iterationsPerRun, initialIterationsPerRun, "", false);
             utilities.add(learner.getUtility());
             learner.reset();
         }
@@ -188,7 +218,7 @@ public class QLearnerNetwork {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static Map<State, StateReward<State, NodeAction>> generateStates() throws IOException {
+    private static HashMap<State, StateReward<State, NodeAction>> generateStates() throws IOException {
         FileInputStream streamIn = null;
         ObjectInputStream objectinputstream = null;
         Set<State> stateSet = null;
@@ -206,7 +236,7 @@ public class QLearnerNetwork {
             }
         }
 
-        Map<State, StateReward<State, NodeAction>> states = new HashMap<>();
+        HashMap<State, StateReward<State, NodeAction>> states = new HashMap<>();
 
         for(State s : stateSet){
             double reward = 0.0;
@@ -270,14 +300,14 @@ public class QLearnerNetwork {
         return possibleFailedTransitions;
     }
 
-    private static Set<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions){
-        Set<State> finalStates = new HashSet<>();
+    private static HashSet<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions){
+        HashSet<State> finalStates = new HashSet<>();
         for (State state : states.keySet()) {
             if(state.isFinalState()){//||state.isFailedState()
                 finalStates.add(state);
             }
         }
-        if (failedStateEnabled){
+        if (FAILED_STATE_ENABLED){
             finalStates.addAll(getFailedStates(states, actions));
         }
         return finalStates;

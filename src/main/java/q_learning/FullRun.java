@@ -14,7 +14,7 @@ public class FullRun {
     private final int initialStateIterations;
     private final String additionalInformation;
     private final List<Pair<Integer, Double>> rewards;
-    private final byte[] Q;
+    private byte[] Q;
 
     public FullRun(double learningRate, double discountFactor, double epsilon, int seed, double error, int ne,
                    double rPlus, int iterations, int initialStateIterations, String additionalInformation,
@@ -34,4 +34,9 @@ public class FullRun {
     }
 
     public byte[] getQ() { return Q; }
+
+    public void removeQ(int counter) {
+        Q = new byte[1];
+        Q[0] = (byte)(counter % 256);
+    }
 }

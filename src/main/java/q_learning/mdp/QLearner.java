@@ -128,8 +128,8 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
      * @param initialIterations The number of iterations run (in addition) starting from the initial state set by the mdp.
      * @param additionalInformation additional information which should be saved in a file for this run.
      */
-    public void runIterations(int iterations, int initialIterations, String additionalInformation) {
-        if (iterations <= 0)
+    public void runIterations(int iterations, int initialIterations, String additionalInformation, boolean saveQ) {
+        if (iterations <= 0 && initialIterations <= 0)
             throw new IllegalArgumentException("Iterations must be greater 0");
 
         List<Pair<Integer, Double>> accumulatedRewards = new ArrayList<>();
@@ -168,11 +168,13 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         }
 
         byte[] q = null;
-        try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bout)) {
-            oos.writeObject((HashMap)agent.getQ());
-            q = bout.toByteArray();
-        } catch (IOException e) {
-            e.printStackTrace();
+        if (saveQ) {
+            try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bout)) {
+                oos.writeObject((HashMap) agent.getQ());
+                q = bout.toByteArray();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         runData.add(new FullRun(agent.getAlpha(), agent.getGamma(), agent.getEpsilon(), seed,
@@ -195,8 +197,9 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
             S nextState = null;
             // Do the action and set the new state
-            if (curAction != null)
+            if (curAction != null) {
                 nextState = mdp.stateTransition(curState, curAction);
+            }
 
             rewards.add(mdp.reward(curState, curAction, nextState));
 
@@ -266,26 +269,53 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
     public void saveData(String filename) {
         try {
-            new Gson().toJson(runData, new FileWriter(filename));
+            String json = ".json";
+
+            String newFilename = filename;
+            int counter = 0;
+            while (new File(newFilename + json).exists()) {
+                newFilename = filename + counter;
+                counter++;
+            }
+
+            Gson gson = new Gson();
+            counter = 0;
+            for (FullRun run : runData) {
+                byte[] q = run.getQ();
+                if (q != null) {
+                    Writer writer = new FileWriter(newFilename + "QData" + counter + json);
+                    gson.toJson(q, writer);
+                    writer.flush();
+                    writer.close();
+                    run.removeQ(counter);
+                    counter++;
+                }
+            }
+
+            Writer writer = new FileWriter(newFilename + json);
+            gson.toJson(runData, writer);
+            writer.flush();
+            writer.close();
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
     public void loadData(String filename) {
-        List<FullRun> runData = null;
+        byte[] qFileData = null;
         try {
-            runData = new Gson().fromJson(new FileReader(filename), new TypeToken<ArrayList<FullRun>>() {
+            qFileData = new Gson().fromJson(new FileReader(filename), new TypeToken<byte[]>() {
             }.getType());
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        if (runData == null)
-            LOGGER.severe(String.format("Could not load runData with filename %s.", filename));
+        if (qFileData == null) {
+            LOGGER.severe(String.format("Could not load Q File with filename %s.", filename));
+        }
 
         Map<Pair<S, A>, Double> q = null;
-        try (ByteArrayInputStream streamIn = new ByteArrayInputStream(runData.get(runData.size() - 1).getQ()); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+        try (ByteArrayInputStream streamIn = new ByteArrayInputStream(qFileData); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
             q = (HashMap<Pair<S, A>, Double>) objectinputstream.readObject();
         } catch (Exception e) {
             e.printStackTrace();
@@ -293,7 +323,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         if (q != null) {
             agent.setQ(q);
         } else {
-            LOGGER.severe(String.format("Could not load Q with filename %s.", filename));
+            LOGGER.severe(String.format("Could not load latest Q with filename %s.", filename));
         }
     }
 

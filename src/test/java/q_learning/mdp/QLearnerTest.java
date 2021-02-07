@@ -111,7 +111,7 @@ public class QLearnerTest {
         LOGGER.setLevel(LEVEL);
 
         // generate states, actions and MDP
-        Map<CellState, StateReward<CellState, CellAction>> states = generateStates();
+        HashMap<CellState, StateReward<CellState, CellAction>> states = generateStates();
         ActionsFunction<CellState, CellAction> actions = generateActions(states);
         QStateTransition<CellState, CellAction> transitions = generateTransitions(states, actions);
         HashSet<CellState> finalStates = new HashSet<>();
@@ -121,7 +121,7 @@ public class QLearnerTest {
 
         QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 100);
 
-        learner.runIterations(20000, 20, "");
+        learner.runIterations(20000, 20, "", false);
 
         // print the learned results.
         // Prints each states calculated utility
@@ -160,8 +160,8 @@ public class QLearnerTest {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static Map<CellState, StateReward<CellState, CellAction>> generateStates() {
-        Map<CellState, StateReward<CellState, CellAction>> states = new HashMap<>();
+    private static HashMap<CellState, StateReward<CellState, CellAction>> generateStates() {
+        HashMap<CellState, StateReward<CellState, CellAction>> states = new HashMap<>();
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
                 if (!(x == 3 && y == 0) && !(x == 0 && y == 1) && !(x == 1 && y ==1) && !(x == 3 && y == 1) &&

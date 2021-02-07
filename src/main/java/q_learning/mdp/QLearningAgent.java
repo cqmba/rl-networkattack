@@ -287,7 +287,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
      * @return the learning rate to use based on the frequency of the state
      *         passed in.
      */
-    protected double alpha(FrequencyCounter<Pair<S, A>> Nsa, S s, A a) {
+    protected double alpha(FrequencyCounter<Pair<S, A>> Nsa, S s, A a) { //TODO maybe use this?
         // Default implementation is just to return a fixed parameter value
         // irrespective of the # of times a state action has been encountered
         return alpha;

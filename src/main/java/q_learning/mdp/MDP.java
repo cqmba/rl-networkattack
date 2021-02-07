@@ -6,15 +6,16 @@ import q_learning.interfaces.QMarkovDecisionProcess;
 import q_learning.interfaces.StateReward;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
  * A simple implementation of a Markov Decision Process
  */
-public class MDP<S extends Serializable, A extends Action & Serializable> implements QMarkovDecisionProcess<S, A> {
+public class MDP<S extends Serializable, A extends Action & Serializable> implements QMarkovDecisionProcess<S, A>, Serializable {
     // Save state and reward
-    private final Map<S, StateReward<S, A>> states;
+    private final HashMap<S, StateReward<S, A>> states;
 
     private final S initialState;
 
@@ -24,7 +25,7 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
     // Every transition of a state and action
     private final QStateTransition<S, A> transitions;
 
-    private final Set<S> finalStates;
+    private final HashSet<S> finalStates;
 
     /**
      * The constructor for Markov decision process.
@@ -36,9 +37,9 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
      * @param transitions A StateTransition providing all transitions from state to state with an action
      * @param finalStates All final states
      */
-    public MDP(Map<S, StateReward<S, A>> states, S initialState,
+    public MDP(HashMap<S, StateReward<S, A>> states, S initialState,
                ActionsFunction<S, A> actions, QStateTransition<S, A> transitions,
-               Set<S> finalStates) {
+               HashSet<S> finalStates) {
         this.states = states;
         this.initialState = initialState;
         this.actions = actions;

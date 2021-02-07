@@ -2,6 +2,8 @@ package q_learning.interfaces;
 
 import aima.core.agent.Action;
 
+import java.io.Serializable;
+
 /**
  * This interface provides methods to provide the reward of a single state. For this, a reward/utility function
  * has to be implemented. Since this interface needs a single state as foundation, it enables for different reward
@@ -10,7 +12,7 @@ import aima.core.agent.Action;
  * @param <S> The state class
  * @param <A> The action class
  */
-public interface StateReward<S, A extends Action> {
+public interface StateReward<S extends Serializable, A extends Action & Serializable> extends Serializable {
     /**
      * Should return the state for which a reward is implemented.
      *
