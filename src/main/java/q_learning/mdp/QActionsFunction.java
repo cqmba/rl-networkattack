@@ -2,6 +2,7 @@ package q_learning.mdp;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
+import q_learning.interfaces.QActionsFunctionInterface;
 
 import java.io.Serializable;
 import java.util.*;
@@ -10,7 +11,7 @@ import java.util.*;
  * A simple implementation of ActionsFunction.
  * Actions can be added after initialization.
  */
-public class QActionsFunction<S extends Serializable, A extends Action & Serializable> implements ActionsFunction<S, A>, Serializable {
+public class QActionsFunction<S extends Serializable, A extends Action & Serializable> implements QActionsFunctionInterface<S, A>, Serializable {
     private final HashMap<S, HashSet<A>> actions;
 
     /**

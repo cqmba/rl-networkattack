@@ -2,6 +2,7 @@ package q_learning.mdp;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
+import q_learning.interfaces.QActionsFunctionInterface;
 import q_learning.interfaces.QMarkovDecisionProcess;
 import q_learning.interfaces.StateReward;
 
@@ -20,7 +21,7 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
     private final S initialState;
 
     // Each state with all possible actions
-    private final ActionsFunction<S, A> actions;
+    private final QActionsFunctionInterface<S, A> actions;
 
     // Every transition of a state and action
     private final QStateTransition<S, A> transitions;
@@ -38,7 +39,7 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
      * @param finalStates All final states
      */
     public MDP(HashMap<S, StateReward<S, A>> states, S initialState,
-               ActionsFunction<S, A> actions, QStateTransition<S, A> transitions,
+               QActionsFunctionInterface<S, A> actions, QStateTransition<S, A> transitions,
                HashSet<S> finalStates) {
         this.states = states;
         this.initialState = initialState;

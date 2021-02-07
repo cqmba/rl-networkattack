@@ -6,6 +6,7 @@ import q_learning.Pair;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
+import q_learning.interfaces.QActionsFunctionInterface;
 import q_learning.interfaces.StateReward;
 
 import java.util.HashMap;
@@ -112,7 +113,7 @@ public class QLearnerTest {
 
         // generate states, actions and MDP
         HashMap<CellState, StateReward<CellState, CellAction>> states = generateStates();
-        ActionsFunction<CellState, CellAction> actions = generateActions(states);
+        QActionsFunctionInterface<CellState, CellAction> actions = generateActions(states);
         QStateTransition<CellState, CellAction> transitions = generateTransitions(states, actions);
         HashSet<CellState> finalStates = new HashSet<>();
         finalStates.add(new CellState(5, 2));
@@ -184,7 +185,7 @@ public class QLearnerTest {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<CellState, CellAction> generateActions(
+    private static QActionsFunctionInterface<CellState, CellAction> generateActions(
             Map<CellState, StateReward<CellState, CellAction>> states) {
         QActionsFunction<CellState, CellAction> actions = new QActionsFunction(states);
         CellAction up = new CellAction(0);

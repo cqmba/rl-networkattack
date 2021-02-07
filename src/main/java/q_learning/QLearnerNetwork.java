@@ -7,6 +7,7 @@ import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
+import q_learning.interfaces.QActionsFunctionInterface;
 import q_learning.interfaces.StateReward;
 import q_learning.mdp.*;
 import run.Simulation;
@@ -66,7 +67,7 @@ public class QLearnerNetwork {
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating Actions...");
-        ActionsFunction<State, NodeAction> actions = generateActions(states);
+        QActionsFunctionInterface<State, NodeAction> actions = generateActions(states);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating Transitions...");
@@ -177,7 +178,7 @@ public class QLearnerNetwork {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        ActionsFunction<State, NodeAction> actions = generateActions(states);
+        QActionsFunctionInterface<State, NodeAction> actions = generateActions(states);
         QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
         HashSet<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
@@ -247,7 +248,7 @@ public class QLearnerNetwork {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<State, NodeAction> generateActions(Map<State, StateReward<State, NodeAction>> states) {
+    private static QActionsFunctionInterface<State, NodeAction> generateActions(Map<State, StateReward<State, NodeAction>> states) {
         QActionsFunction<State, NodeAction> actions = new QActionsFunction(states);
         for (State state : states.keySet()) {
             for (NodeAction nodeAction : NodeAction.getAllActionPossibleWithChangeState(state)) {
