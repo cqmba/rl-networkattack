@@ -2,8 +2,8 @@ package q_learning.mdp;
 
 import aima.core.probability.mdp.ActionsFunction;
 import org.junit.Test;
-import q_learning.Pair;
-import q_learning.Parameter;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;

@@ -6,8 +6,8 @@ import java.util.*;
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
-import q_learning.Pair;
-import q_learning.Parameter;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 import q_learning.abstracts.QReinforcementAgent;
 
 /**

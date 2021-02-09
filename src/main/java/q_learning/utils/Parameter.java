@@ -1,4 +1,4 @@
-package q_learning;
+package q_learning.utils;
 
 public class Parameter {
     private final int learningRateMaxCount;

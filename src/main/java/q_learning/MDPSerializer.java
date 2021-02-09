@@ -5,6 +5,7 @@ import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
+import q_learning.env_network.KnowledgeStateReward;
 import q_learning.interfaces.QActionsFunctionInterface;
 import q_learning.interfaces.StateReward;
 import q_learning.mdp.MDP;

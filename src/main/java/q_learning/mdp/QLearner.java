@@ -4,10 +4,9 @@ import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import core.State;
-import q_learning.FullRun;
-import q_learning.Pair;
-import q_learning.Parameter;
+import q_learning.utils.FullRun;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 
 import java.io.*;
 import java.util.*;

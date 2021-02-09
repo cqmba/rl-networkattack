@@ -1,7 +1,7 @@
 package q_learning.mdp;
 
 import aima.core.agent.Action;
-import q_learning.Pair;
+import q_learning.utils.Pair;
 
 import java.io.Serializable;
 import java.util.HashMap;
