@@ -28,7 +28,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     private final QLearningAgent<S, A> agent;
 
     private Random random;
-    private int seed;
+    private Parameter parameter;
 
     private final int loggingCount;
 
@@ -40,54 +40,20 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
      *
      * @param mdp
      *      The MDP that should be used
-     * @param learningRate
-     *      The learning rate, which has to be between 0 and 1. The learning rate determines how much of the new
-     *      information is used. A learning rate of 1 overrides all previous data, while a learning rate of 0
-     *      ignores new information. A learning rate of 0.01 to 0.1 is recommended.
-     * @param discountFactor
-     *      The discount factor, which has to be between 0 and 1. A high discount factor lets the agent be far sighted
-     *      while a low factor makes it consider early rewards more. In some cases a discount factor of or near 1
-     *      can result in divergence or instabilities.
-     * @param actionEpsilon
-     *      The epsilon value used for action determination, which must be between 0 and 1. Usually the action with
-     *      the highest reward is used as the next action, however with a probability of epsilon a random action is
-     *      selected, which can help to find better paths. A small value is recommended.
-     * @param errorEpsilon
-     *      The error epsilon tells how far apart two floating point numbers can be and still be considered identical.
-     *      A value in the region of e-10 is recommended.
-     * @param ne
-     *      A state has a high reward if it was visited less than this number.
-     * @param rPlus
-     *      This should be higher than the maximum possible reward. A state has the reward of rPlus if it was visited
-     *      less than Ne times.
-     * @param seed
-     *      A seed for a random number generator used to determine random next actions in case it cannot be decided by
-     *      reward.
+     * @param parameter
+     *      The parameter used for learning
      * @param loggingCount
      *      Every loggingCount'th iteration the logger will print the current iteration to the console.
      */
-    public QLearner(MDP<S, A> mdp, double learningRate, double discountFactor, double actionEpsilon,
-                    double errorEpsilon, int ne, double rPlus, int seed, int loggingCount) {
-        // Check if Values are chosen in possible range
-        if (learningRate < 0 || learningRate > 1)
-            throw new IllegalArgumentException("Learning Rate must be in 0<=LearningRate<=1");
-        if (discountFactor < 0 || discountFactor > 1)
-            throw new IllegalArgumentException("Discount factor must be in 0<=DiscountFactor<=1");
-        if (actionEpsilon < 0 || actionEpsilon > 1)
-            throw new IllegalArgumentException("Action epsilon must be in 0<=ActionEpsilon<=1");
-        if (errorEpsilon < 0)
-            throw new IllegalArgumentException("Error epsilon must be greater 0");
-        if (ne <= 0)
-            throw new IllegalArgumentException("Ne must be greater 0");
-        if (loggingCount <= 0)
-            throw new IllegalArgumentException("Logging count must be greater 0");
+    public QLearner(MDP<S, A> mdp, Parameter parameter, int loggingCount) {
+        if (parameter == null)
+            throw new IllegalArgumentException("Parameter are null");
 
         this.mdp = mdp;
-        this.agent = new QLearningAgent<>(mdp.getActionsFunction(), learningRate, discountFactor, actionEpsilon,
-                ne, rPlus, seed, errorEpsilon);
+        this.agent = new QLearningAgent<>(mdp.getActionsFunction(), parameter);
 
-        this.random = new Random(seed);
-        this.seed = seed;
+        this.random = new Random(parameter.getSeed());
+        this.parameter = parameter;
         this.loggingCount = loggingCount;
     }
 
@@ -95,44 +61,13 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     //              SETTERS FOR PARAMETERS
     //##########################################################################
 
-    public void setLearningRate(double learningRate) {
-        if (learningRate < 0 || learningRate > 1)
-            throw new IllegalArgumentException("Learning Rate must be in 0<=LearningRate<=1");
-        agent.setLearningRate(learningRate);
-    }
+    public void setParameter(Parameter parameter) {
+        if (parameter == null)
+            throw new IllegalArgumentException("Parameters are null");
 
-    public void setDiscountFactor(double discountFactor) {
-        if (discountFactor < 0 || discountFactor > 1)
-            throw new IllegalArgumentException("Discount factor must be in 0<=DiscountFactor<=1");
-        agent.setDiscountFactor(discountFactor);
-    }
-
-    public void setActionEpsilon(double actionEpsilon) {
-        if (actionEpsilon < 0 || actionEpsilon > 1)
-            throw new IllegalArgumentException("Action epsilon must be in 0<=ActionEpsilon<=1");
-        agent.setRandomness(actionEpsilon);
-    }
-
-    public void setSeed(int seed) {
-        this.seed = seed;
-        this.random = new Random(seed);
-        agent.setSeed(seed);
-    }
-
-    public void setErrorEpsilon(double errorEpsilon) {
-        if (errorEpsilon < 0)
-            throw new IllegalArgumentException("Error epsilon must be greater 0");
-        agent.setErrorEpsilon(errorEpsilon);
-    }
-
-    public void setNe(int ne) {
-        if (ne <= 0)
-            throw new IllegalArgumentException("Ne must be greater 0");
-        agent.setNe(ne);
-    }
-
-    public void setRPlus(double rPlus) {
-        agent.setRplus(rPlus);
+        this.parameter = parameter;
+        agent.setParameter(parameter);
+        this.random = new Random(parameter.getSeed());
     }
 
     //##########################################################################
@@ -140,21 +75,15 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     //##########################################################################
 
     /**
-     * Runs the QLearningAgent "iterations" times.
-     * @param iterations The number of iterations to run
-     * @param initialIterations The number of iterations run (in addition) starting from the initial state set by the mdp.
-     * @param additionalInformation additional information which should be saved in a file for this run.
+     * Runs the QLearningAgent
      */
-    public void runIterations(int iterations, int initialIterations, String additionalInformation, boolean saveQ) {
-        if (iterations <= 0 && initialIterations <= 0)
-            throw new IllegalArgumentException("Iterations must be greater 0");
-
+    public void runIterations() {
         List<Pair<Integer, Double>> accumulatedRewards = new ArrayList<>();
 
         // run the q learning agent
         // Each run is started from a random state and run until a final state is reached.
         // This is done x times as defined in the "for" below
-        for (int i = 0; i < iterations; i++) {
+        for (int i = 0; i < parameter.getIterations(); i++) {
             // get random initial state and an action
             int item = random.nextInt(mdp.states().size());
             S curState = null;
@@ -174,7 +103,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             accumulatedRewards.add(new Pair<>(i, sum));
         }
 
-        for (int i = iterations; i < iterations + initialIterations; i++) {
+        for (int i = parameter.getIterations(); i < parameter.getIterations() + parameter.getInitialStateIterations(); i++) {
             S curState = mdp.getInitialState();
 
             List<Double> curRewards = runSingleIteration(curState, i);
@@ -185,7 +114,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         }
 
         byte[] q = null;
-        if (saveQ) {
+        if (parameter.getSaveQ()) {
             try (ByteArrayOutputStream bout = new ByteArrayOutputStream(); ObjectOutputStream oos = new ObjectOutputStream(bout)) {
                 oos.writeObject((HashMap) agent.getQ());
                 q = bout.toByteArray();
@@ -194,9 +123,8 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
             }
         }
 
-        Parameter parameter = new Parameter(agent.getAlpha(), agent.getGamma(), agent.getEpsilon(), seed,
-                agent.getErrorEpsilon(), agent.getNe(), agent.getRPlus(), iterations, initialIterations, additionalInformation, saveQ);
-        runData.add(new FullRun(parameter, accumulatedRewards, q));
+        Parameter usedParams = agent.getParameters();
+        runData.add(new FullRun(usedParams, accumulatedRewards, q));
     }
 
     private List<Double> runSingleIteration(S initialState, int iteration) {
@@ -210,7 +138,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
         do {
             // get next action using q learning
-            curAction = agent.execute(curState, mdp);
+            curAction = agent.execute(curState, mdp, iteration);
 
             S nextState = null;
             // Do the action and set the new state

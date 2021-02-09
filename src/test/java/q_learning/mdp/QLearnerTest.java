@@ -3,6 +3,7 @@ package q_learning.mdp;
 import aima.core.probability.mdp.ActionsFunction;
 import org.junit.Test;
 import q_learning.Pair;
+import q_learning.Parameter;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
@@ -120,9 +121,12 @@ public class QLearnerTest {
         finalStates.add(new CellState(1, 4));
         MDP<CellState, CellAction> mdp = new MDP<>(states, new CellState(0, 0), actions, transitions, finalStates);
 
-        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 100);
+        Parameter param = new Parameter(1, LEARNING_RATE, LEARNING_RATE, 1.0,
+                EPSILON, EPSILON, 1.0, DISCOUNT_FACTOR, SEED, ERROR, NE, R_PLUS,
+                20000, 1000, "", false);
+        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, param, 100);
 
-        learner.runIterations(20000, 20, "", false);
+        learner.runIterations();
 
         // print the learned results.
         // Prints each states calculated utility

@@ -29,7 +29,7 @@ public abstract class QReinforcementAgent<S extends Serializable, A extends Acti
     protected QReinforcementAgent() {
     }
 
-    public abstract A execute(S state, MDP<S, A> mdp);
+    public abstract A execute(S state, MDP<S, A> mdp, int curIteration);
 
     public abstract Map<S, Double> getUtility();
 

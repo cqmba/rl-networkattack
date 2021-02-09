@@ -84,15 +84,34 @@ public class QLearnerNetwork {
         //##############################################################################################
         //                                      RUN LEARNING
         //##############################################################################################
+
         List<Parameter> params = Arrays.asList(
-                new Parameter(0.1, 1.0, 0.3, 0, ERROR, NE, R_PLUS, ITERATIONS,
-                        INITIAL_STATE_ITERATIONS,
-                        String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
-                        false),
-                new Parameter(0.1, 1.0, 0.0, 1, ERROR, NE, R_PLUS, ITERATIONS,
-                        INITIAL_STATE_ITERATIONS,
+                // Runs with static learning rate of 0.1, decreasing epsilon from 0.3 to 0.0 (linear decreasing)
+                // and discount factor 1.0
+                // Note that the learningRateMaxCount has to be at least 1. The value does not make a difference though
+                // if the learningRateStartValue and EndValue are the same.
+                new Parameter(1, 0.1, 0.1, 1.0,
+                        0.3, 0.0, 1.0,
+                        1.0, 0, ERROR, NE,
+                        R_PLUS, ITERATIONS, INITIAL_STATE_ITERATIONS,
                         String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
                         true)
+
+                // Runs with deceasing learning rate (from 0.1 to 0.01) as the states are explored.
+                // 0.01 is reached when a state is explored 20 times and it will be 0.1 when it is explored
+                // 0 times. The decrease is linear.
+                // If you want a different decrease, change the 1.0 in the learningRateSlope.
+                // a value smaller 1 will result in little loss at the start and heavier loss at the end
+                //      (looks a little like a root function mirrored on the y-axis)
+                // a value greater 1 will result in heavy loss early on and little loss later (looks a little like 1/x)
+                // The same principle applies to epsilon.
+                // If you do not want a decrease or raise of the values, set the Start and End values to the same number.
+//                new Parameter(20, 0.1, 0.01, 1.0,
+//                        0.3, 0.0, 1.0,
+//                        1.0, 0, ERROR, NE,
+//                        R_PLUS, ITERATIONS, INITIAL_STATE_ITERATIONS,
+//                        String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
+//                        true)
         );
         runWithParameters(mdp, params, "runData", 10000, null);
     }
@@ -109,27 +128,21 @@ public class QLearnerNetwork {
      */
     private static void runWithParameters(MDP<State, NodeAction> mdp, List<Parameter> params, String filename,
                                           int loggingCount, String loadFilename) {
-
         // create learner. The parameters are changed at each run in the for loop.
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, 0.5, 0.5, 0.5, 0.1,
-                1, 0.0, 0, loggingCount);
+        Parameter dummyParam = new Parameter(1, 0.1, 0.1, 1.0,
+                0.1, 0.1, 1.0, 1.0, 0, ERROR, 1, 0.0,
+                0, 0, "", false);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, dummyParam, loggingCount);
 
         if (loadFilename != null)
             learner.loadData(loadFilename);
 
         for (Parameter par : params) {
-            learner.setLearningRate(par.getLearningRate());
-            learner.setDiscountFactor(par.getDiscountFactor());
-            learner.setActionEpsilon(par.getEpsilon());
-            learner.setSeed(par.getSeed());
-            learner.setErrorEpsilon(par.getError());
-            learner.setNe(par.getNe());
-            learner.setRPlus(par.getrPlus());
+            learner.setParameter(par);
 
             if (LOGGER.isLoggable(Level.INFO))
                 LOGGER.info("Learning...");
-            learner.runIterations(par.getIterations(), par.getInitialStateIterations(), par.getAdditionalInformation(),
-                    par.getSaveQ());
+            learner.runIterations();
 
             if (LOGGER.isLoggable(Level.INFO))
                 LOGGER.info("Printing best path from initial state...");
@@ -183,14 +196,17 @@ public class QLearnerNetwork {
         HashSet<State> finalStates = getFinalStates(states, actions);
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, 0.1, 1.0, 0.0, ERROR, NE, R_PLUS, 0, 10000);
+        Parameter param = new Parameter(1, 0.1, 0.1, 1.0,
+                0.0, 0.0, 1.0, 1.0, 0,
+                ERROR, NE, R_PLUS, 0, 10000, "", false);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, param, 10000);
 
         // now calculate the rms error
 
         // run the learner and get the utilities
         List<Map<State, Double>> utilities = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
-            learner.runIterations(iterationsPerRun, initialIterationsPerRun, "", false);
+            learner.runIterations();
             utilities.add(learner.getUtility());
             learner.reset();
         }
