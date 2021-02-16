@@ -1,6 +1,7 @@
 package core;
 
 
+import com.google.gson.Gson;
 import environment.Data;
 import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
@@ -270,6 +271,11 @@ public class State implements Serializable {
     public int hashCode() {
 
         return Objects.hash(nodeKnowledgeMap, networkKnowledge, softwareKnowledgeMap);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 
     /**

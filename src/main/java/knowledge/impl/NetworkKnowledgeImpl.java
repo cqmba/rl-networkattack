@@ -1,5 +1,6 @@
 package knowledge.impl;
 
+import com.google.gson.Gson;
 import environment.Data;
 import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
@@ -54,5 +55,10 @@ public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
     public int hashCode() {
 
         return Objects.hash(nodes, sniffedData);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

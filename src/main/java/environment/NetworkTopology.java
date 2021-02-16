@@ -1,5 +1,6 @@
 package environment;
 
+import com.google.gson.Gson;
 import run.Simulation;
 
 import java.util.*;
@@ -77,5 +78,10 @@ public class NetworkTopology{
             }
         }
         return visibleSoftware;
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

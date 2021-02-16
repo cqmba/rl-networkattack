@@ -1,5 +1,6 @@
 package knowledge.impl;
 
+import com.google.gson.Gson;
 import environment.Data;
 import environment.NetworkNode;
 import environment.Software;
@@ -136,5 +137,10 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
                 Objects.equals(sysAccess, that.sysAccess) &&
                 Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
                 Objects.equals(type, that.type);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

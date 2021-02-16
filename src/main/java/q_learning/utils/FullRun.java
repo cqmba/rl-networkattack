@@ -1,15 +1,21 @@
 package q_learning.utils;
 
+import java.io.Serializable;
 import java.util.List;
 
-public class FullRun {
+public class FullRun<S extends Serializable, A extends Serializable> {
     private final Parameter parameter;
     private final List<Pair<Integer, Double>> rewards;
+    private List<Pair<S, A>> policy;
+    private double policyReward;
     private byte[] Q;
 
-    public FullRun(Parameter parameter, List<Pair<Integer, Double>> rewards, byte[] Q) {
+    public FullRun(Parameter parameter, List<Pair<Integer, Double>> rewards, List<Pair<S, A>> policy, double policyReward,
+                   byte[] Q) {
         this.parameter = parameter;
         this.rewards = rewards;
+        this.policy = policy;
+        this.policyReward = policyReward;
         this.Q = Q;
     }
 

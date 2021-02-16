@@ -1,6 +1,7 @@
 package core;
 
 import aima.core.agent.Action;
+import com.google.gson.Gson;
 import environment.NetworkNode;
 
 import java.io.Serializable;
@@ -76,11 +77,7 @@ public class NodeAction implements Action, Serializable {
 
     @Override
     public String toString() {
-        return "NodeAction{" +
-                "target=" + target +
-                ", currentActor=" + currentActor +
-                ", action=" + action +
-                '}';
+        return new Gson().toJson(this);
     }
 }
 
