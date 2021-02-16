@@ -4,6 +4,7 @@ import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.*;
+import me.tongfei.progressbar.ProgressBar;
 import q_learning.MDPSerializer;
 import q_learning.QLearnerNetwork;
 import stats.StatisticsHelper;
@@ -53,7 +54,7 @@ public class Simulation {
         System.out.println("Starting simulation");
         setupWorld();
         //computeStates();
-        chooseRandomStatesUntilEnd(100000);
+        chooseRandomStatesUntilEnd(1000);
         //choseStatesManually();
     }
 
@@ -70,46 +71,46 @@ public class Simulation {
         int failedState = 0;
         int failedOncePerRunAggr = 0;
 
-        for (int i=0; i<iterations;i++){
-            if (i%100 == 0){
-                LOGGER.info("Random Iteration "+i);
-            }
-            singleRun.clear();
-            state = State.getStartState();
-            int zdOncePerRun = 0;
-            int failedOncePerRun = 0;
-            while (!state.isFinalState()){
-                for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
-                    Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
-                    for (AdversaryAction action: actions.keySet()){
-                        for (NetworkNode.TYPE target: actions.get(action)){
-                            transitionList.add(new NodeAction(target, actor, action));
+        try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
+            for ( int i=0; i<iterations;i++) {
+                singleRun.clear();
+                state = State.getStartState();
+                int zdOncePerRun = 0;
+                int failedOncePerRun = 0;
+                while (!state.isFinalState()){
+                    for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
+                        Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
+                        for (AdversaryAction action: actions.keySet()){
+                            for (NetworkNode.TYPE target: actions.get(action)){
+                                transitionList.add(new NodeAction(target, actor, action));
+                            }
                         }
                     }
+                    Collections.shuffle(transitionList);
+                    //execute random Action
+                    NodeAction nodeAction = transitionList.get(0);
+                    singleRun.add(nodeAction);
+                    state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
+                    if (failedNodeActions.contains(nodeAction)){
+                        failedState++;
+                        failedOncePerRun = 1;
+                    } else if (zerodayTransitions.contains(nodeAction)){
+                        zeroday++;
+                        zdOncePerRun = 1;
+                    }
+                    transitionList.clear();
+                    //System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
                 }
-                Collections.shuffle(transitionList);
-                //execute random Action
-                NodeAction nodeAction = transitionList.get(0);
-                singleRun.add(nodeAction);
-                state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
-                if (failedNodeActions.contains(nodeAction)){
-                    failedState++;
-                    failedOncePerRun = 1;
-                } else if (zerodayTransitions.contains(nodeAction)){
-                    zeroday++;
-                    zdOncePerRun = 1;
-                }
-                transitionList.clear();
-                //System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
+                act_count[i] = singleRun.size();
+                zdOncePerRunAggr += zdOncePerRun;
+                failedOncePerRunAggr += failedOncePerRun;
+                pb.step(); // step by 1
             }
-            act_count[i] = singleRun.size();
-            zdOncePerRunAggr += zdOncePerRun;
-            failedOncePerRunAggr += failedOncePerRun;
         }
         StatisticsHelper actionStats = new StatisticsHelper(act_count);
         LOGGER.info("Minimum transitions: "+actionStats.getMin());
         LOGGER.info("Maximum transitions: "+actionStats.getMax());
-        LOGGER.info("Mean transitions: "+actionStats.getMean());
+        LOGGER.info("Mean transitions: "+ String.format("%.2f", actionStats.getMean()));
         LOGGER.info("Median transitions: "+actionStats.getMedian());
         LOGGER.info("Mode transitions: "+actionStats.mode());
         double zerodayPerc = (double) zeroday / iterations * 100;
