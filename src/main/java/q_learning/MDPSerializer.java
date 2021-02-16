@@ -29,12 +29,12 @@ public class MDPSerializer {
     private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
     //set these values to include a honeypot
-    private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
-    private static final NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
-    private static final AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
+    public static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
+    public static final NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
+    public static final AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
 
-    private static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
-    private static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
+    public static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
+    public static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
 
     public static void main(String[] args) throws IOException {
         if (LOGGER.isLoggable(Level.INFO))
@@ -42,7 +42,8 @@ public class MDPSerializer {
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
-        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
+        //TODO change filter context
+        Simulation.setupWorld();
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating states...");
@@ -145,7 +146,7 @@ public class MDPSerializer {
         return failedStates;
     }
 
-    private static Set<NodeAction> getZerodayTransitions(){
+    public static Set<NodeAction> getZerodayTransitions(){
         Set<NodeAction> zerodayTransitions = new HashSet<>();
         for (NetworkNode.TYPE actor : Set.of(NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.DATABASE)){
             zerodayTransitions.add(new NodeAction(zerodayTarget, actor, zerodayAction));
@@ -153,7 +154,7 @@ public class MDPSerializer {
         return zerodayTransitions;
     }
 
-    private static Set<NodeAction> getFailedNodeActions(){
+    public static Set<NodeAction> getFailedNodeActions(){
         Set<NodeAction> possibleFailedTransitions = new HashSet<>();
         for (NetworkNode.TYPE actor : actorsFailedTransition){
             possibleFailedTransitions.add(new NodeAction(targetFailedTransition, actor, failedAction));

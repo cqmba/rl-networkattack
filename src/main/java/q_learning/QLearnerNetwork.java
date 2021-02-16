@@ -38,7 +38,8 @@ public class QLearnerNetwork {
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
-        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
+        // TODO change filter context
+        Simulation.setupWorld();
 
 
         if (LOGGER.isLoggable(Level.INFO))

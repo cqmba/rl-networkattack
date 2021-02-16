@@ -1,8 +1,12 @@
 package run;
 
 import core.AdversaryAction;
+import core.NodeAction;
 import core.State;
 import environment.*;
+import q_learning.MDPSerializer;
+import q_learning.QLearnerNetwork;
+import stats.StatisticsHelper;
 import visualize.SimpleActionsPrint;
 import visualize.SimpleNetworkPrint;
 import visualize.SimpleStatePrint;
@@ -11,8 +15,11 @@ import visualize.SimpleStatePrint;
 import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
+import java.util.logging.Logger;
 
 public class Simulation {
+    public static final Logger LOGGER = Logger.getLogger(Simulation.class.getName());
+
     private static final String PUB_IP = "79.1.1.100";
     private static final String ROUTER_PRIV_IP = "10.1.1.1";
     private static final String WEBSERVER_PRIV_IP = "10.1.1.2";
@@ -40,72 +47,92 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    private static boolean preconditionFilterEnabled;
+    private static final boolean SELF_TRANSITION_DISABLED = false;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
-        setupWorld(false);
-        computeStates();
-        //chooseRandomStatesUntilEnd();
+        setupWorld();
+        //computeStates();
+        chooseRandomStatesUntilEnd(10000);
         //choseStatesManually();
     }
 
-    private static void chooseRandomStatesUntilEnd(){
-        List<Transition> transitionList = new ArrayList<>();
-        while (!state.isFinalState()){
-            for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
-                Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
-                for (AdversaryAction action: actions.keySet()){
-                    for (NetworkNode.TYPE target: actions.get(action)){
-                        transitionList.add(new Transition(target, actor, action));
+    private static void chooseRandomStatesUntilEnd(int iterations){
+        LOGGER.info("Starting  "+iterations);
+        LOGGER.info("Self transitions enabled: "+ !SELF_TRANSITION_DISABLED);
+        List<NodeAction> transitionList = new ArrayList<>();
+        List<NodeAction> singleRun = new ArrayList<>();
+        Set<NodeAction> failedNodeActions = MDPSerializer.getFailedNodeActions();
+        Set<NodeAction> zerodayTransitions = MDPSerializer.getZerodayTransitions();
+        int[] act_count = new int[iterations];
+        int zeroday = 0;
+        int failedState = 0;
+
+        for (int i=0; i<iterations;i++){
+            if (i%100 == 0){
+                LOGGER.info("Random Iteration "+i);
+            }
+            singleRun.clear();
+            state = State.getStartState();
+            while (!state.isFinalState()){
+                for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
+                    Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
+                    for (AdversaryAction action: actions.keySet()){
+                        for (NetworkNode.TYPE target: actions.get(action)){
+                            transitionList.add(new NodeAction(target, actor, action));
+                        }
                     }
                 }
+                Collections.shuffle(transitionList);
+                //execute random Action
+                NodeAction nodeAction = transitionList.get(0);
+                singleRun.add(nodeAction);
+                state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
+                if (failedNodeActions.contains(nodeAction)){
+                    failedState++;
+                } else if (zerodayTransitions.contains(nodeAction)){
+                    zeroday++;
+                }
+                transitionList.clear();
+                //System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
             }
-            Collections.shuffle(transitionList);
-            //execute random Action
-            Transition randomTransition = transitionList.get(0);
-            state = State.performGivenAction(Simulation.state, randomTransition.action, randomTransition.target, randomTransition.actor);
-            transitionList.clear();
-            System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
+            act_count[i] = singleRun.size();
         }
-        System.out.println("Is final state "+state.isFinalState());
-    }
-
-    static class Transition {
-        public NetworkNode.TYPE target;
-        public NetworkNode.TYPE actor;
-        public AdversaryAction action;
-
-        public Transition(NetworkNode.TYPE target, NetworkNode.TYPE actor, AdversaryAction action){
-            this.target = target;
-            this.actor = actor;
-            this.action = action;
-        }
+        StatisticsHelper actionStats = new StatisticsHelper(act_count);
+        LOGGER.info("Minimum transitions: "+actionStats.getMin());
+        LOGGER.info("Maximum transitions: "+actionStats.getMax());
+        LOGGER.info("Mean transitions: "+actionStats.getMean());
+        LOGGER.info("Median transitions: "+actionStats.getMedian());
+        LOGGER.info("Mode transitions: "+actionStats.mode());
+        double zerodayPerc = (double) zeroday / iterations * 100;
+        LOGGER.info("Zerodays hit: "+zeroday + " Percentage: " + zerodayPerc);
+        double failedStatePerc = (double) failedState / iterations * 100;
+        LOGGER.info("Honeydays hit: "+failedState + " Percentage: " +failedStatePerc);
     }
 
     private static void choseStatesManually(){
         SimpleNetworkPrint.print(simWorld);
         SimpleStatePrint.print(state);
-        Transition debugTransistion = new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.VALID_ACCOUNTS_CRED);
-        List<Transition> transitions = new ArrayList<>();
-        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_VULNERABILITY));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.VALID_ACCOUNTS_VULN));
-        transitions.add(new Transition(NetworkNode.TYPE.DATABASE, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADMINPC, AdversaryAction.DATA_FROM_LOCAL_SYSTEM));
+        NodeAction debugTransistion = new NodeAction(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.VALID_ACCOUNTS_CRED);
+        List<NodeAction> transitions = new ArrayList<>();
+        transitions.add(new NodeAction(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new NodeAction(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_VULNERABILITY));
+        transitions.add(new NodeAction(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.VALID_ACCOUNTS_VULN));
+        transitions.add(new NodeAction(NetworkNode.TYPE.DATABASE, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new NodeAction(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new NodeAction(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
+        transitions.add(new NodeAction(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADMINPC, AdversaryAction.DATA_FROM_LOCAL_SYSTEM));
         transitions.add(debugTransistion);
-        for (Transition transition: transitions){
-            printPossibleActions(transition.actor);
-            printPerformAction(transition.action, transition.target);
+        for (NodeAction transition: transitions){
+            printPossibleActions(transition.getCurrentActor());
+            printPerformAction(transition.getAction(), transition.getTarget());
             if (transition.equals(debugTransistion)){
                 System.out.println("Debug here");
             }
-            state = State.performGivenAction(state, transition.action, transition.target, transition.actor);
+            state = State.performGivenAction(state, transition.getAction(), transition.getTarget(), transition.getCurrentActor());
             SimpleStatePrint.print(state);
         }
-        printPossibleActions(transitions.get(transitions.size()-1).actor);
+        printPossibleActions(transitions.get(transitions.size()-1).getCurrentActor());
     }
 
     private static void computeStates() throws IOException {
@@ -150,8 +177,7 @@ public class Simulation {
         }
     }
 
-    public static void setupWorld(boolean filterEnabled){
-        preconditionFilterEnabled = filterEnabled;
+    public static void setupWorld(){
         //add Router, currently no Software
         Map<Integer, Data> routerData = new HashMap<>();
         Set<Software> routerSW = new HashSet<>();
@@ -279,6 +305,6 @@ public class Simulation {
     }
 
     public static boolean isPreconditionFilterEnabled() {
-        return preconditionFilterEnabled;
+        return SELF_TRANSITION_DISABLED;
     }
 }

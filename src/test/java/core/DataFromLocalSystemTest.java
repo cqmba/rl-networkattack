@@ -27,7 +27,7 @@ public class DataFromLocalSystemTest {
 
     @BeforeClass
     public static void setUp(){
-        Simulation.setupWorld(true);
+        Simulation.setupWorld();
 
         NetworkNode actualTarget = Simulation.getNodeByType(target);
         dataOnWebserver = actualTarget.getDataSet();

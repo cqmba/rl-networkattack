@@ -23,7 +23,7 @@ public class ValidAccountsTest {
 
     @BeforeClass
     public static void setUp(){
-        Simulation.setupWorld(true);
+        Simulation.setupWorld();
         NetworkNode actualTarget = Simulation.getNodeByType(target);
         stateWithValidAccount.addNodeKnowledge(target);
         stateWithValidAccount.addNodePubIp(target, actualTarget.getPub_ip());
