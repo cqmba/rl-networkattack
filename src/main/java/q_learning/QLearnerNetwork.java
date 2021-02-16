@@ -1,14 +1,11 @@
 package q_learning;
 
-import aima.core.probability.mdp.ActionsFunction;
-
-import com.google.gson.Gson;
-import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
-import q_learning.interfaces.StateReward;
 import q_learning.mdp.*;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 import run.Simulation;
 
 import java.io.*;
@@ -17,34 +14,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 public class QLearnerNetwork {
-
     private static final Logger LOGGER = Logger.getLogger(QLearnerNetwork.class.getName());
-
-    /*
-     * Learning Rate determines how much new information is used instead of old and is between 0 and 1. A learning rate
-     * of 1 overrides all learned data, while a learning rate of 0 does not learn. Usually smaller values are used
-     * (0.01 to 0.1), so that jumping over the perfect value (which should be learned) is prevented.
-     */
-    private static final double LEARNING_RATE = 0.05;
-
-    /*
-     * In q-learning an action is selected and the value of that action is calculated. For that the best action after
-     * that is also considered. The discount factor manages the importance of the next actions and must be between
-     * 0 and 1. A low value is considered short-sighted, while a high value looks further into the future.
-     * Due to problems when the discount factor is near 1, it is advised to use a smaller value.
-     */
-    private static final double DISCOUNT_FACTOR = 0.5;
-
-    /*
-     * In order to select the next action, the q-learning agent will select either the best action by utility for
-     * the next step or with probability of epsilon will select a random action.
-     */
-    private static final double EPSILON = 0.05;
-
-    /*
-     * A fixed seed for random path selection
-     */
-    private static final int SEED = 0;
 
     /*
      * To which extend two doubles may differ and be considered identical
@@ -59,16 +29,8 @@ public class QLearnerNetwork {
     // Should be the highest (or higher than that) reward possible
     private static final double R_PLUS = 20.0;
 
-    public static boolean failedStateEnabled = false;
-
-    //set these values to include a honeypot
-    private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
-    private static final NetworkNode.TYPE targetFailedTransition = NetworkNode.TYPE.ADMINPC;
-    private static final AdversaryAction failedAction = AdversaryAction.VALID_ACCOUNTS_CRED;
-
-    private static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
-    private static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
-
+    public static final boolean FAILED_STATE_ENABLED = false;
+    private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
     public static void main(String[] args) {
         if (LOGGER.isLoggable(Level.INFO))
@@ -76,77 +38,107 @@ public class QLearnerNetwork {
         //use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
-        Simulation.setupWorld(true);
+        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
+
 
         if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Generating states...");
-        Map<State, StateReward<State, NodeAction>> states = null;
-        try {
-            states = generateStates();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Generating Actions...");
-        ActionsFunction<State, NodeAction> actions = generateActions(states);
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Generating Transitions...");
-        QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Generating final states...");
-        Set<State> finalStates = getFinalStates(states, actions);
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Creating Q Learning agent...");
-        MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
-
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
-
-//        if (LOGGER.isLoggable(Level.INFO))
-//            LOGGER.info("Loading learning values...");
-//        learner.loadQ("q.ser");
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Learning...");
-        List<Pair<Integer, Double>> rewards = learner.runIterations(500000, 100000);
-        /*
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Saving learning values...");
-        learner.saveQ("q.ser");
-
-
-         */
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Saving rewards...");
-        try {
-            new Gson().toJson(rewards, new FileWriter("rewards.json"));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Printing best path from initial state...");
-        try {
-            List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
-            NetworkNode.TYPE previousActor = null;
-            for (Pair<State, NodeAction> pair : path) {
-                NodeAction nodeAction = pair.getB();
-                if (nodeAction == null){
-                    break;
-                }
-                if (!nodeAction.getCurrentActor().equals(previousActor)){
-                    previousActor = nodeAction.getCurrentActor();
-                    LOGGER.info("\tActive Host: "+previousActor+" \tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
-                }else {
-                    LOGGER.info("\t\t\tTarget: "+nodeAction.getTarget()+" \tAction: "+nodeAction.getAction());
-                }
-            }
+            LOGGER.info("Loading MDP...");
+        MDP<State, NodeAction> mdp = null;
+        try (FileInputStream streamIn = new FileInputStream("mdp.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+            mdp = (MDP<State, NodeAction>) objectinputstream.readObject();
         } catch (Exception e) {
             e.printStackTrace();
         }
+
+
+        //##############################################################################################
+        //                                      RUN LEARNING
+        //##############################################################################################
+
+        List<Parameter> params = Arrays.asList(
+                // Runs with static learning rate of 0.1, decreasing epsilon from 0.3 to 0.0 (linear decreasing)
+                // and discount factor 1.0
+                // Note that the learningRateMaxCount has to be at least 1. The value does not make a difference though
+                // if the learningRateStartValue and EndValue are the same.
+                new Parameter(1, 0.1, 0.1, 1.0,
+                        0.3, 0.0, 1.0,
+                        1.0, 0, ERROR, NE,
+                        R_PLUS, 100000, 100000,
+                        "",
+                        true)
+
+                // Runs with deceasing learning rate (from 0.1 to 0.01) as the states are explored.
+                // 0.01 is reached when a state is explored 20 times and it will be 0.1 when it is explored
+                // 0 times. The decrease is linear.
+                // If you want a different decrease, change the 1.0 in the learningRateSlope.
+                // a value smaller 1 will result in little loss at the start and heavier loss at the end
+                //      (looks a little like a root function mirrored on the y-axis)
+                // a value greater 1 will result in heavy loss early on and little loss later (looks a little like 1/x)
+                // The same principle applies to epsilon.
+                // If you do not want a decrease or raise of the values, set the Start and End values to the same number.
+//                new Parameter(20, 0.1, 0.01, 1.0,
+//                        0.3, 0.0, 1.0,
+//                        1.0, 0, ERROR, NE,
+//                        R_PLUS, ITERATIONS, INITIAL_STATE_ITERATIONS,
+//                        String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
+//                        true)
+        );
+        runWithParameters(mdp, params, "runData", 10000, null);
+    }
+
+    /**
+     * Runs the learner once for each given parameter setting.
+     * NOTE: The seed is reset after each run, so you should change it for each run.
+     *
+     * @param mdp The markov decision process
+     * @param params The parameters. Each param is run in order and the results will be saved
+     * @param filename The filename for the saved data
+     * @param loggingCount Each loggingCount'th iteration will be logged to the console to show that the code is still running
+     * @param loadFilename The filename of the Q to load from. Loading will be skipped, if set to null
+     */
+    private static void runWithParameters(MDP<State, NodeAction> mdp, List<Parameter> params, String filename,
+                                          int loggingCount, String loadFilename) {
+        // create learner. The parameters are changed at each run in the for loop.
+        Parameter dummyParam = new Parameter(1, 0.1, 0.1, 1.0,
+                0.1, 0.1, 1.0, 1.0, 0, ERROR, 1, 0.0,
+                0, 0, "", false);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, dummyParam, loggingCount);
+
+        if (loadFilename != null)
+            learner.loadData(loadFilename);
+
+        for (Parameter par : params) {
+            learner.setParameter(par);
+
+            if (LOGGER.isLoggable(Level.INFO))
+                LOGGER.info("Learning...");
+            learner.runIterations();
+
+            if (LOGGER.isLoggable(Level.INFO))
+                LOGGER.info("Printing best path from initial state...");
+            try {
+                List<Pair<State, NodeAction>> path = learner.getPreferredPath(0);
+                NetworkNode.TYPE previousActor = null;
+                for (Pair<State, NodeAction> pair : path) {
+                    NodeAction nodeAction = pair.getB();
+                    if (nodeAction == null) {
+                        break;
+                    }
+                    if (!nodeAction.getCurrentActor().equals(previousActor)) {
+                        previousActor = nodeAction.getCurrentActor();
+                        LOGGER.info("\tActive Host: " + previousActor + " \tTarget: " + nodeAction.getTarget() + " \tAction: " + nodeAction.getAction());
+                    } else {
+                        LOGGER.info("\t\t\tTarget: " + nodeAction.getTarget() + " \tAction: " + nodeAction.getAction());
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Saving learning values...");
+        learner.saveData(filename);
     }
 
     /**
@@ -160,28 +152,26 @@ public class QLearnerNetwork {
     private Map<State, Double> RMSE(int runs, int iterationsPerRun, int initialIterationsPerRun,
                                     Map<State, Double> expectedUtil) {
         // This is a thing to show how to calculate the RMS Error.
-
-        // First set up the environment as usual
-        Simulation.setupWorld(false);
-        Map<State, StateReward<State, NodeAction>> states = null;
-        try {
-            states = generateStates();
-        } catch (IOException e) {
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Loading MDP...");
+        MDP<State, NodeAction> mdp = null;
+        try (FileInputStream streamIn = new FileInputStream("mdp.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+            mdp = (MDP<State, NodeAction>) objectinputstream.readObject();
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        ActionsFunction<State, NodeAction> actions = generateActions(states);
-        QStateTransition<State, NodeAction> transitions = generateTransitions(states, actions);
-        Set<State> finalStates = getFinalStates(states, actions);
-        MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 10000);
+        Parameter param = new Parameter(1, 0.1, 0.1, 1.0,
+                0.0, 0.0, 1.0, 1.0, 0,
+                ERROR, NE, R_PLUS, 0, 10000, "", false);
+        QLearner<State, NodeAction> learner = new QLearner<>(mdp, param, 10000);
 
         // now calculate the rms error
 
         // run the learner and get the utilities
         List<Map<State, Double>> utilities = new ArrayList<>();
         for (int i = 0; i < runs; i++) {
-            learner.runIterations(iterationsPerRun, initialIterationsPerRun);
+            learner.runIterations();
             utilities.add(learner.getUtility());
             learner.reset();
         }

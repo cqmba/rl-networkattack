@@ -2,15 +2,17 @@ package q_learning.mdp;
 
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
+import q_learning.interfaces.QActionsFunctionInterface;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
  * A simple implementation of ActionsFunction.
  * Actions can be added after initialization.
  */
-public class QActionsFunction<S, A extends Action> implements ActionsFunction<S, A> {
-    private final Map<S, Set<A>> actions;
+public class QActionsFunction<S extends Serializable, A extends Action & Serializable> implements QActionsFunctionInterface<S, A>, Serializable {
+    private final HashMap<S, HashSet<A>> actions;
 
     /**
      * This constructor needs all states of the MDP. Afterwards the actions for each state can be added.

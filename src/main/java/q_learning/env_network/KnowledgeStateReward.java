@@ -1,10 +1,11 @@
-package q_learning;
+package q_learning.env_network;
 
 import core.AdversaryAction;
 import core.NodeAction;
 import core.State;
 import environment.NetworkNode;
 import knowledge.NodeKnowledge;
+import q_learning.QLearnerNetwork;
 import q_learning.interfaces.StateReward;
 import run.Simulation;
 
@@ -40,7 +41,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         if (targetState == null || action == null){
             if (state.isFinalState()) {
                 stateValue += finalStateBonus;
-            } else if (QLearnerNetwork.failedStateEnabled && actionsIntoFailedState.contains(action)) {
+            } else if (QLearnerNetwork.FAILED_STATE_ENABLED && actionsIntoFailedState.contains(action)) {
                 stateValue -= failedStatePenality;
             }
             return stateValue;

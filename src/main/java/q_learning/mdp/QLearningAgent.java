@@ -6,7 +6,8 @@ import java.util.*;
 import aima.core.agent.Action;
 import aima.core.probability.mdp.ActionsFunction;
 import aima.core.util.FrequencyCounter;
-import q_learning.Pair;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 import q_learning.abstracts.QReinforcementAgent;
 
 /**
@@ -78,85 +79,39 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
     private Double r = null;
     //
     private final ActionsFunction<S, A> actionsFunction;
-    private double alpha;
-    private double gamma;
-    private double epsilon;
-    private int Ne;
-    private final double Rplus;
-
-    private final Random random;
-    private final double errorEpsilon;
+    private Parameter parameter;
+    private Random random;
 
     /**
      * Constructor.
      *
      * @param actionsFunction
      *            a function that lists the legal actions from a state.
-     * @param alpha
-     *            a fixed learning rate.
-     * @param gamma
-     *            discount to be used.
-     * @param Ne
-     *            is fixed parameter for use in the method f(u, n).
-     * @param Rplus
-     *            R+ is an optimistic estimate of the best possible reward
-     *            obtainable in any state, which is used in the method f(u, n).
+     * @param parameter
+     *            the parameters for the learning
      */
-    public QLearningAgent(ActionsFunction<S, A> actionsFunction, double alpha, double gamma, double epsilon, int Ne,
-                          double Rplus, int seed, double errorEpsilon) {
+    public QLearningAgent(ActionsFunction<S, A> actionsFunction, Parameter parameter) {
+        if (parameter == null)
+            throw new IllegalArgumentException("Parameters are null");
         this.actionsFunction = actionsFunction;
-        this.alpha = alpha;
-        this.gamma = gamma;
-        this.epsilon = epsilon;
-        this.Ne = Ne;
-        this.Rplus = Rplus;
-        this.random = new Random(seed);
-        this.errorEpsilon = errorEpsilon;
+        this.parameter = parameter;
+        this.random = new Random(parameter.getSeed());
     }
 
     //##########################################################################
     //              SETTERS
     //##########################################################################
 
-    // Setters not included and the reasons are:
-    //  ActionsFunctions: The actions should not change during learning
-    //  Rplus: The rewards should not change during learning
-    //  errorEpsilon: Why should two values be not equal suddenly, when they where before?
-    //  seed: There isn't a reason why the random generator should change. It should always return random values anyways
-
-    public void setAlpha(double alpha) {
-        this.alpha = alpha;
-    }
-
-    public void setGamma(double gamma) {
-        this.gamma = gamma;
-    }
-
-    public void setEpsilon(double epsilon) {
-        this.epsilon = epsilon;
-    }
-
-    public void setNe(int ne) {
-        this.Ne = ne;
+    public void setParameter(Parameter parameter) {
+        this.parameter = parameter;
+        this.random = new Random(parameter.getSeed());
     }
 
     //##########################################################################
-    //              RENAMED SETTERS FOR BETTER UNDERSTANDING
+    //              GETTERS
     //##########################################################################
 
-    // The setters here are renamed versions of the setters declared above for easier understanding
-
-    public void setLearningRate(double alpha) {
-        setAlpha(alpha);
-    }
-
-    public void setDiscountFactor(double gamma) {
-        setGamma(gamma);
-    }
-
-    public void setRandomness(double epsilon) {
-        setEpsilon(epsilon);
-    }
+    public Parameter getParameters() { return parameter; }
 
     //##########################################################################
     //              FUNCTIONALITY
@@ -176,7 +131,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
      * @return an action
      */
     @Override
-    public A execute(S state, MDP<S, A> mdp) {
+    public A execute(S state, MDP<S, A> mdp, int curIteration) {
         S sPrime = state;
 
         // if TERMAINAL?(s') then Q[s',None] <- r'
@@ -196,7 +151,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
                 Q_sa = 0.0;
             }
             Q.put(sa, Q_sa + alpha(Nsa, s, a)
-                    * (r + gamma * maxAPrime(sPrime, mdp) - Q_sa));
+                    * (r + parameter.getDiscountFactor() * maxAPrime(sPrime, mdp) - Q_sa));
         }
         // if s'.TERMINAL? then s,a,r <- null else
         // s,a,r <- s',argmax<sub>a'</sub>f(Q[s',a'],N<sub>sa</sub>[s',a']),r'
@@ -206,7 +161,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
             r = null;
         } else {
             s = sPrime;
-            a = argmaxAPrime(sPrime);
+            a = argmaxAPrime(sPrime, curIteration);
             r = mdp.reward(s, a, mdp.stateTransition(s, a));
         }
 
@@ -256,6 +211,40 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
     //##########################################################################
 
     /**
+     * This function is a concession function. It is usually used in negotiations and expresses the concession of
+     * an agent.
+     * It is used here, as it is a very customizable function, where the slope can be adjusted.
+     *
+     * This function creates a curve from pMax to pMin. The variable of the graph is t, which expresses the time.
+     * When t = 0, the method returns pMax. When t = 1, it returns pMin. For values between 0 and 1, the method
+     * returns values in form of a curve, which is defined by e (also called concession factor).
+     * For 0 < e < 1, the curve will be high first and fall down at the end (assuming pMax > pMin),
+     * for e = 1 it will behave linear and for e>1 it will fall down fast and near pMin slowly at the end.
+     * k describes a percentile on the first value (pMax). Increasing k will lower the first value of the function.
+     * k = 0 will create a slope from pMax to pMin as described above.
+     *
+     * @param pMin The value of the function when t = 1
+     * @param pMax The value of the function when t = 0
+     * @param k 0 <= k <= 1: a higher value decreases the initial value of the function. For a slope from pMax to pMin,
+     *          use k = 0
+     * @param e 0 < e: the concession factor; describes the slope of the function. For 0 < e < 1 it will
+     *          stay near pMax first and go fast against pMin at the end, for e = 1 it will be linear,
+     *          for e > 1 it will go near pMin fast at the start and be flat at the end
+     * @param t 0 <= t <= 1: The variable of the function. It describes the time, where 0 is the start and
+     *          1 is the last value
+     * @return A value between pMax and pMin
+     */
+    public static double conc(double pMin, double pMax, double k, double e, double t) {
+        if (k < 0 || k > 1)
+            throw new IllegalArgumentException("k must be in [0, 1]");
+        if (e <= 0)
+            throw new IllegalArgumentException("e must be greater 0");
+        if (t < 0 || t > 1)
+            throw new IllegalArgumentException("t must be in [0, 1]");
+        return pMin + ((pMax - pMin) * (1 - (k + ((1 - k) * Math.pow(t, 1.0 / e)))));
+    }
+
+    /**
      * AIMA3e pg. 836 'if we change &alpha; from a fixed parameter to a function
      * that decreases as the number of times a state action has been observed
      * increases, then U<sup>&pi;</sup>(s) itself will converge to the correct
@@ -272,9 +261,14 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
      *         passed in.
      */
     protected double alpha(FrequencyCounter<Pair<S, A>> Nsa, S s, A a) {
-        // Default implementation is just to return a fixed parameter value
-        // irrespective of the # of times a state action has been encountered
-        return alpha;
+        int count = Nsa.getCount(new Pair<>(s, a));
+        double t = Math.min((double)count / (double)parameter.getLearningRateMaxCount(), 1.0);
+        return conc(parameter.getLearningRateEndValue(), parameter.getLearningRateStartValue(), 0.0, parameter.getLearningRateSlope(), t);
+    }
+
+    protected double epsilon(int curIteration) {
+        double t = Math.min((double)curIteration / ((double)(parameter.getIterations() + parameter.getInitialStateIterations())), 1.0);
+        return conc(parameter.getEpsilonEndValue(), parameter.getEpsilonStartValue(), 0.0, parameter.getEpsilonSlope(), t);
     }
 
     /**
@@ -295,8 +289,8 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
      */
     protected double f(Double u, int n) {
         // A Simple definition of f(u, n):
-        if (null == u || n < Ne) {
-            return Rplus;
+        if (null == u || n < parameter.getNe()) {
+            return parameter.getrPlus();
         }
         return u;
     }
@@ -328,9 +322,9 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
      * Also in case multiple actions share the same utility, a random action from the actions with maximum utility
      * is selected.
      */
-    private A argmaxAPrime(S sPrime) {
+    private A argmaxAPrime(S sPrime, int curIteration) {
         A a = null;
-        if (random.nextDouble() < epsilon) {
+        if (random.nextDouble() < epsilon(curIteration)) {
             // choose random action
             int item = random.nextInt(actionsFunction.actions(sPrime).size());
             int i = 0;
@@ -354,7 +348,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
             double max = actionReward.get(0).getB();
             List<A> maxActions = new ArrayList<>();
             for (Pair<A, Double> aReward : actionReward) {
-                if (aReward.getB() < max - errorEpsilon)
+                if (aReward.getB() < max - parameter.getError())
                     break;
                 maxActions.add(aReward.getA());
             }

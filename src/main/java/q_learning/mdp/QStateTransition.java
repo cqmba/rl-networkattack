@@ -1,7 +1,7 @@
 package q_learning.mdp;
 
 import aima.core.agent.Action;
-import q_learning.Pair;
+import q_learning.utils.Pair;
 
 import java.io.Serializable;
 import java.util.HashMap;
@@ -12,7 +12,7 @@ import java.util.HashMap;
  * @param <S> The state class
  * @param <A> The action class
  */
-public class QStateTransition<S extends Serializable, A extends Action & Serializable> {
+public class QStateTransition<S extends Serializable, A extends Action & Serializable> implements Serializable {
     // Map from State and Action to target state
     private final HashMap<Pair<S, A>, S> transitions;
 

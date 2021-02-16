@@ -2,10 +2,12 @@ package q_learning.mdp;
 
 import aima.core.probability.mdp.ActionsFunction;
 import org.junit.Test;
-import q_learning.Pair;
+import q_learning.utils.Pair;
+import q_learning.utils.Parameter;
 import q_learning.env_cells.CellAction;
 import q_learning.env_cells.CellState;
 import q_learning.env_cells.CellStateReward;
+import q_learning.interfaces.QActionsFunctionInterface;
 import q_learning.interfaces.StateReward;
 
 import java.util.HashMap;
@@ -111,24 +113,20 @@ public class QLearnerTest {
         LOGGER.setLevel(LEVEL);
 
         // generate states, actions and MDP
-        Map<CellState, StateReward<CellState, CellAction>> states = generateStates();
-        ActionsFunction<CellState, CellAction> actions = generateActions(states);
+        HashMap<CellState, StateReward<CellState, CellAction>> states = generateStates();
+        QActionsFunctionInterface<CellState, CellAction> actions = generateActions(states);
         QStateTransition<CellState, CellAction> transitions = generateTransitions(states, actions);
         HashSet<CellState> finalStates = new HashSet<>();
         finalStates.add(new CellState(5, 2));
         finalStates.add(new CellState(1, 4));
         MDP<CellState, CellAction> mdp = new MDP<>(states, new CellState(0, 0), actions, transitions, finalStates);
 
-        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, LEARNING_RATE, DISCOUNT_FACTOR, EPSILON, ERROR, NE, R_PLUS, SEED, 100);
+        Parameter param = new Parameter(1, LEARNING_RATE, LEARNING_RATE, 1.0,
+                EPSILON, EPSILON, 1.0, DISCOUNT_FACTOR, SEED, ERROR, NE, R_PLUS,
+                20000, 1000, "", false);
+        QLearner<CellState, CellAction> learner = new QLearner<>(mdp, param, 100);
 
-        List<Pair<Integer, Double>> rewards = learner.runIterations(20000, 20);
-
-        if (LOGGER.isLoggable(Level.FINER)) {
-            LOGGER.finer("Accumulated rewards per run");
-            for (Pair<Integer, Double> r : rewards) {
-                LOGGER.finer(String.format("Reward for iteration %d: %f", r.getA(), r.getB()));
-            }
-        }
+        learner.runIterations();
 
         // print the learned results.
         // Prints each states calculated utility
@@ -167,8 +165,8 @@ public class QLearnerTest {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static Map<CellState, StateReward<CellState, CellAction>> generateStates() {
-        Map<CellState, StateReward<CellState, CellAction>> states = new HashMap<>();
+    private static HashMap<CellState, StateReward<CellState, CellAction>> generateStates() {
+        HashMap<CellState, StateReward<CellState, CellAction>> states = new HashMap<>();
         for (int x = 0; x <= 5; x++) {
             for (int y = 0; y <= 4; y++) {
                 if (!(x == 3 && y == 0) && !(x == 0 && y == 1) && !(x == 1 && y ==1) && !(x == 3 && y == 1) &&
@@ -191,7 +189,7 @@ public class QLearnerTest {
      * @param states The states possible
      * @return An ActionFunction, which returns all possible actions per state
      */
-    private static ActionsFunction<CellState, CellAction> generateActions(
+    private static QActionsFunctionInterface<CellState, CellAction> generateActions(
             Map<CellState, StateReward<CellState, CellAction>> states) {
         QActionsFunction<CellState, CellAction> actions = new QActionsFunction(states);
         CellAction up = new CellAction(0);

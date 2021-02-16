@@ -1,4 +1,4 @@
-package q_learning;
+package q_learning.utils;
 
 import java.io.Serializable;
 import java.util.Objects;
