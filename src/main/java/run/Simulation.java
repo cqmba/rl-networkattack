@@ -53,7 +53,7 @@ public class Simulation {
         System.out.println("Starting simulation");
         setupWorld();
         //computeStates();
-        chooseRandomStatesUntilEnd(10000);
+        chooseRandomStatesUntilEnd(100000);
         //choseStatesManually();
     }
 
@@ -66,7 +66,9 @@ public class Simulation {
         Set<NodeAction> zerodayTransitions = MDPSerializer.getZerodayTransitions();
         int[] act_count = new int[iterations];
         int zeroday = 0;
+        int zdOncePerRunAggr = 0;
         int failedState = 0;
+        int failedOncePerRunAggr = 0;
 
         for (int i=0; i<iterations;i++){
             if (i%100 == 0){
@@ -74,6 +76,8 @@ public class Simulation {
             }
             singleRun.clear();
             state = State.getStartState();
+            int zdOncePerRun = 0;
+            int failedOncePerRun = 0;
             while (!state.isFinalState()){
                 for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
                     Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
@@ -90,13 +94,17 @@ public class Simulation {
                 state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
                 if (failedNodeActions.contains(nodeAction)){
                     failedState++;
+                    failedOncePerRun = 1;
                 } else if (zerodayTransitions.contains(nodeAction)){
                     zeroday++;
+                    zdOncePerRun = 1;
                 }
                 transitionList.clear();
                 //System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
             }
             act_count[i] = singleRun.size();
+            zdOncePerRunAggr += zdOncePerRun;
+            failedOncePerRunAggr += failedOncePerRun;
         }
         StatisticsHelper actionStats = new StatisticsHelper(act_count);
         LOGGER.info("Minimum transitions: "+actionStats.getMin());
@@ -105,9 +113,13 @@ public class Simulation {
         LOGGER.info("Median transitions: "+actionStats.getMedian());
         LOGGER.info("Mode transitions: "+actionStats.mode());
         double zerodayPerc = (double) zeroday / iterations * 100;
-        LOGGER.info("Zerodays hit: "+zeroday + " Percentage: " + zerodayPerc);
+        double zdPerRunPerc = (double) zdOncePerRunAggr / iterations * 100;
+        LOGGER.info("Zerodays hit: "+zeroday + " Percentage: " + String.format("%.2f", zerodayPerc));
+        LOGGER.info("Once Per Run Zerodays hit: "+zdOncePerRunAggr + " Percentage: " + String.format("%.2f", zdPerRunPerc));
         double failedStatePerc = (double) failedState / iterations * 100;
-        LOGGER.info("Honeydays hit: "+failedState + " Percentage: " +failedStatePerc);
+        double failedPerRunPerc = (double) failedOncePerRunAggr / iterations * 100;
+        LOGGER.info("Honeypots hit: "+failedState + " Percentage: " + String.format("%.2f", failedStatePerc));
+        LOGGER.info("Once Per Run Honeypots hit: "+failedOncePerRunAggr + " Percentage: " + String.format("%.2f", failedPerRunPerc));
     }
 
     private static void choseStatesManually(){
