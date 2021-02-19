@@ -1,5 +1,7 @@
 package environment;
 
+import com.google.gson.Gson;
+
 import java.io.Serializable;
 import java.util.Objects;
 
@@ -101,5 +103,10 @@ public class Data implements Serializable {
     public int hashCode() {
 
         return Objects.hash(ID, containsCredentials, gain, origin, access, credentials);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

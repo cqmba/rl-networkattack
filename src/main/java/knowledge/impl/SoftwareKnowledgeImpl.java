@@ -1,5 +1,6 @@
 package knowledge.impl;
 
+import com.google.gson.Gson;
 import environment.Vulnerability;
 import knowledge.SoftwareKnowledge;
 
@@ -79,5 +80,10 @@ public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
     public int hashCode() {
 
         return Objects.hash(name, version, vulnerabilities, remote);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

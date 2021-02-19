@@ -123,7 +123,20 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         }
 
         Parameter usedParams = agent.getParameters();
-        runData.add(new FullRun(usedParams, accumulatedRewards, q));
+        List<Pair<S, A>> path = null;
+        double reward = 0.0;
+        try {
+            path = getPreferredPath(0);
+            for (Pair<S, A> pair : path) {
+                if (pair.getB() != null)
+                    reward += mdp.reward(pair.getA(), pair.getB(), mdp.stateTransition(pair.getA(), pair.getB()));
+                else
+                    reward += mdp.reward(pair.getA(), null, null);
+            }
+        } catch (Exception e) {
+            LOGGER.warning("could not get preferred path..");
+        }
+        runData.add(new FullRun<>(usedParams, accumulatedRewards, path, reward, q));
     }
 
     private List<Double> runSingleIteration(S initialState, int iteration) {

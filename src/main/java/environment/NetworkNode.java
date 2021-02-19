@@ -1,5 +1,7 @@
 package environment;
 
+import com.google.gson.Gson;
+
 import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
@@ -94,4 +96,8 @@ public class NetworkNode{
         this.remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(type);
     }
 
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
+    }
 }

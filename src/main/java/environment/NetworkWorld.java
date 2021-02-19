@@ -1,5 +1,7 @@
 package environment;
 
+import com.google.gson.Gson;
+
 import java.util.HashMap;
 import java.util.LinkedHashSet;
 import java.util.Map;
@@ -38,5 +40,10 @@ public class NetworkWorld {
 
     public Set<NetworkNode> getNodes() {
         return nodes;
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

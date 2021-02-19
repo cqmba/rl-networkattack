@@ -40,6 +40,8 @@ public class Parameter {
             throw new IllegalArgumentException("Error must be greater 0");
         if (ne <= 0)
             throw new IllegalArgumentException("Ne must be greater 0");
+        if (iterations < 0 || initialStateIterations < 0)
+            throw new IllegalArgumentException("Iterations must be a natural number");
 
         this.learningRateMaxCount = learningRateMaxCount;
         this.learningRateStartValue = learningRateStartValue;

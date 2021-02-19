@@ -1,5 +1,7 @@
 package environment;
 
+import com.google.gson.Gson;
+
 import java.util.LinkedHashSet;
 import java.util.Objects;
 import java.util.Set;
@@ -44,5 +46,10 @@ public class Software {
     public int hashCode() {
 
         return Objects.hash(name, version, vulnerabilities);
+    }
+
+    @Override
+    public String toString() {
+        return new Gson().toJson(this);
     }
 }

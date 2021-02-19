@@ -93,8 +93,7 @@ public class MDPSerializer {
         HashMap<State, StateReward<State, NodeAction>> states = new HashMap<>();
 
         for(State s : stateSet){
-            double reward = 0.0;
-            states.put(s, new KnowledgeStateReward(s, reward, getFailedNodeActions(), getZerodayTransitions()));
+            states.put(s, new KnowledgeStateReward(s, getFailedNodeActions(), getZerodayTransitions()));
         }
 
         return states;
@@ -130,14 +129,6 @@ public class MDPSerializer {
         Set<NodeAction> failedNodeActions = getFailedNodeActions();
         for (State state : states.keySet()) {
             for (NodeAction action : actions.actions(state)) {
-                /*
-                if (action.getAction().equals(failedAction) && action.getTarget().equals(targetFailedTransition)
-                        && actorsFailedTransition.contains(action.getCurrentActor())){
-                    //next State should be marked as failed
-                    failedStates.add(NodeAction.performNodeAction(action, state));
-                }
-
-                 */
                 if (failedNodeActions.contains(action)){
                     failedStates.add(NodeAction.performNodeAction(action, state));
                 }
@@ -165,7 +156,7 @@ public class MDPSerializer {
     private static HashSet<State> getFinalStates(Map<State, StateReward<State, NodeAction>> states, ActionsFunction<State, NodeAction> actions){
         HashSet<State> finalStates = new HashSet<>();
         for (State state : states.keySet()) {
-            if(state.isFinalState()){//||state.isFailedState()
+            if(state.isFinalState()){
                 finalStates.add(state);
             }
         }
