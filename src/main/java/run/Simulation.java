@@ -48,13 +48,13 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    private static final boolean SELF_TRANSITION_DISABLED = false;
+    private static final boolean SELF_TRANSITION_DISABLED = true;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
-        //computeStates();
-        chooseRandomStatesUntilEnd(1000);
+        computeStates();
+        //chooseRandomStatesUntilEnd(1000);
         //choseStatesManually();
     }
 
@@ -72,7 +72,7 @@ public class Simulation {
         int failedOncePerRunAggr = 0;
 
         try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
-            for ( int i=0; i<iterations;i++) {
+            for (int i=0; i<iterations;i++) {
                 singleRun.clear();
                 state = State.getStartState();
                 int zdOncePerRun = 0;
@@ -113,6 +113,7 @@ public class Simulation {
         LOGGER.info("Mean transitions: "+ String.format("%.2f", actionStats.getMean()));
         LOGGER.info("Median transitions: "+actionStats.getMedian());
         LOGGER.info("Mode transitions: "+actionStats.mode());
+        LOGGER.info("Standard deviation transitions: "+ String.format("%.2f", actionStats.getSD()));
         double zerodayPerc = (double) zeroday / iterations * 100;
         double zdPerRunPerc = (double) zdOncePerRunAggr / iterations * 100;
         LOGGER.info("Zerodays hit: "+zeroday + " Percentage: " + String.format("%.2f", zerodayPerc));

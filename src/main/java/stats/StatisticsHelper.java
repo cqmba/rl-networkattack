@@ -59,6 +59,15 @@ public class StatisticsHelper {
         return maxValue;
     }
 
+    public double getSD(){
+        double sd = 0.0;
+        double mean = getMean();
+        for (int j : array) {
+            sd = sd + Math.pow((j - mean), 2);
+        }
+        return Math.sqrt(sd / array.length);
+    }
+
     public int getMax(){
         return Arrays.stream(array).max().getAsInt();
     }

@@ -39,10 +39,6 @@ public class MDPSerializer {
     public static void main(String[] args) throws IOException {
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Setting up environment...");
-        //use this boolean to toggle precondition filtering;
-        // true = allow only actions as possible actions, which result in state change
-        // false = allow transitions, that dont change the state
-        //TODO change filter context
         Simulation.setupWorld();
 
         if (LOGGER.isLoggable(Level.INFO))
