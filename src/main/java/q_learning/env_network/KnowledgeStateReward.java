@@ -31,7 +31,7 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
     public double reward(NodeAction action, State targetState) {
         double actionCost = 0.0;
         double finalStateBonus = 5.0;
-        double zeroDayPenality = 0.0;
+        double zeroDayPenality = 3.0;
         double failedStatePenality = 5.0;
         double stateValue = 0.0;
         double lowCost = 0.1;

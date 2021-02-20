@@ -60,12 +60,12 @@ public class QLearnerNetwork {
                 // and discount factor 1.0
                 // Note that the learningRateMaxCount has to be at least 1. The value does not make a difference though
                 // if the learningRateStartValue and EndValue are the same.
-                new Parameter(1, 0.1, 0.1, 1.0,
-                        0.3, 0.0, 1.0,
-                        1.0, 0, ERROR, NE,
-                        R_PLUS, 100000, 100000,
+                new Parameter(10, 0.4, 0.05, 1.0,
+                        0.25, 0.0, 4.0,
+                        1.0, 50, ERROR, NE,
+                        R_PLUS, 0, 500000,
                         "",
-                        true)
+                        false)
 
                 // Runs with deceasing learning rate (from 0.1 to 0.01) as the states are explored.
                 // 0.01 is reached when a state is explored 20 times and it will be 0.1 when it is explored
