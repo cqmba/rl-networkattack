@@ -29,15 +29,7 @@ public class LearnRandomGreedy {
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Setting up environment...");
         Simulation.setupWorld();
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Loading MDP...");
-        MDP<State, NodeAction> mdp = null;
-        try (FileInputStream streamIn = new FileInputStream("mdp.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
-            mdp = (MDP<State, NodeAction>) objectinputstream.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+        MDP<State, NodeAction> mdp = getMDP();
 
         Parameter parameter = new Parameter(1, 0.1, 0.1, 1.0,
                 0.3, 0.0, 1.0,
@@ -48,6 +40,17 @@ public class LearnRandomGreedy {
         //runWithParameters(mdp, params, "runData", 10000, null);
         List<Double> rewards = getListOfRewardsForMaxGreed(mdp, new Random(parameter.getSeed()));
         LOGGER.info("Accumulated rewards" + String.format("%.2f", rewards.stream().mapToDouble(f -> f).sum()));
+    }
+
+    public static MDP<State, NodeAction> getMDP(){
+        if (LOGGER.isLoggable(Level.INFO))
+            LOGGER.info("Loading MDP...");
+        try (FileInputStream streamIn = new FileInputStream("mdp.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
+            return (MDP<State, NodeAction>) objectinputstream.readObject();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
     }
 
     private static List<Double> getListOfRewardsForMaxGreed(MDP<State, NodeAction> mdp, Random random){
@@ -95,6 +98,21 @@ public class LearnRandomGreedy {
         }
         int item = random.nextInt(maxActions.size());
         return maxActions.get(item);
+    }
+
+    public static List<Double> getRewardsForNodeActionList(List<NodeAction> actions, MDP<State, NodeAction> mdp){
+        List<Double> rewards = new ArrayList<>();
+        try {
+            State curState = mdp.getInitialState();
+            for (NodeAction action: actions){
+                State nextState = mdp.stateTransition(curState, action);
+                rewards.add(mdp.reward(curState, action, nextState));
+                curState = nextState;
+            }
+        } catch (Exception e){
+            LOGGER.info("Wrong action sequence was given");
+        }
+        return rewards;
     }
 
     private static NodeAction randomAction(MDP<State, NodeAction> mdp, State sPrime, Random random){

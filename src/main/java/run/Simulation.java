@@ -5,8 +5,11 @@ import core.NodeAction;
 import core.State;
 import environment.*;
 import me.tongfei.progressbar.ProgressBar;
+import q_learning.LearnRandomGreedy;
 import q_learning.MDPSerializer;
 import q_learning.QLearnerNetwork;
+import q_learning.mdp.MDP;
+import q_learning.utils.Pair;
 import stats.StatisticsHelper;
 import visualize.SimpleActionsPrint;
 import visualize.SimpleNetworkPrint;
@@ -48,13 +51,13 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    private static final boolean SELF_TRANSITION_DISABLED = true;
+    private static final boolean SELF_TRANSITION_DISABLED = false;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
-        computeStates();
-        //chooseRandomStatesUntilEnd(1000);
+        //computeStates();
+        chooseRandomStatesUntilEnd(1000);
         //choseStatesManually();
     }
 
@@ -62,7 +65,7 @@ public class Simulation {
         LOGGER.info("Starting  "+iterations);
         LOGGER.info("Self transitions enabled: "+ !SELF_TRANSITION_DISABLED);
         List<NodeAction> transitionList = new ArrayList<>();
-        List<NodeAction> singleRun = new ArrayList<>();
+        List<NodeAction> shortestPolicy = new ArrayList<>();
         Set<NodeAction> failedNodeActions = MDPSerializer.getFailedNodeActions();
         Set<NodeAction> zerodayTransitions = MDPSerializer.getZerodayTransitions();
         int[] act_count = new int[iterations];
@@ -73,11 +76,11 @@ public class Simulation {
 
         try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
             for (int i=0; i<iterations;i++) {
-                singleRun.clear();
                 state = State.getStartState();
                 int zdOncePerRun = 0;
                 int failedOncePerRun = 0;
                 while (!state.isFinalState()){
+                    transitionList.clear();
                     for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
                         Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
                         for (AdversaryAction action: actions.keySet()){
@@ -87,9 +90,7 @@ public class Simulation {
                         }
                     }
                     Collections.shuffle(transitionList);
-                    //execute random Action
                     NodeAction nodeAction = transitionList.get(0);
-                    singleRun.add(nodeAction);
                     state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
                     if (failedNodeActions.contains(nodeAction)){
                         failedState++;
@@ -98,15 +99,27 @@ public class Simulation {
                         zeroday++;
                         zdOncePerRun = 1;
                     }
-                    transitionList.clear();
-                    //System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
                 }
-                act_count[i] = singleRun.size();
+                act_count[i] = transitionList.size();
                 zdOncePerRunAggr += zdOncePerRun;
                 failedOncePerRunAggr += failedOncePerRun;
+                if (transitionList.size()<shortestPolicy.size() || shortestPolicy.isEmpty()){
+                    shortestPolicy = new ArrayList<>(transitionList);
+                }
                 pb.step(); // step by 1
             }
         }
+        /*
+        if (transitionList.size()<=minpolicy){
+                        double curReward = LearnRandomGreedy.getRewardsForNodeActionList(transitionList, mdp).stream().mapToDouble(f -> f).sum();
+                        if (transitionList.size()<minpolicy || (transitionList.size()==minpolicy && minpolicyreward < curReward)) {
+                            //found new best policy
+                            shortestPolicy = transitionList;
+                            minpolicyreward = curReward;
+                            minpolicy = transitionList.size();
+                        }
+                    }
+         */
         StatisticsHelper actionStats = new StatisticsHelper(act_count);
         LOGGER.info("Minimum transitions: "+actionStats.getMin());
         LOGGER.info("Maximum transitions: "+actionStats.getMax());
@@ -122,6 +135,19 @@ public class Simulation {
         double failedPerRunPerc = (double) failedOncePerRunAggr / iterations * 100;
         LOGGER.info("Honeypots hit: "+failedState + " Percentage: " + String.format("%.2f", failedStatePerc));
         LOGGER.info("Once Per Run Honeypots hit: "+failedOncePerRunAggr + " Percentage: " + String.format("%.2f", failedPerRunPerc));
+        printPolicy(shortestPolicy);
+    }
+
+    private static void printPolicy(List<NodeAction> actions){
+        NetworkNode.TYPE previousActor = null;
+        for (NodeAction action : actions) {
+            if (!action.getCurrentActor().equals(previousActor)) {
+                previousActor = action.getCurrentActor();
+                LOGGER.info("\tActive Host: " + previousActor + " \tTarget: " + action.getTarget() + " \tAction: " + action.getAction());
+            } else {
+                LOGGER.info("\t\t\tTarget: " + action.getTarget() + " \tAction: " + action.getAction());
+            }
+        }
     }
 
     private static void choseStatesManually(){
