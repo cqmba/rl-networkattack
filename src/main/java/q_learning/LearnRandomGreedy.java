@@ -38,7 +38,9 @@ public class LearnRandomGreedy {
                 "",
                 true);
         //runWithParameters(mdp, params, "runData", 10000, null);
-        List<Double> rewards = getListOfRewardsForMaxGreed(mdp, new Random(parameter.getSeed()));
+        //List<Double> rewards = getListOfRewardsForMaxGreed(mdp, new Random(parameter.getSeed()));
+        //LOGGER.info("Accumulated rewards" + String.format("%.2f", rewards.stream().mapToDouble(f -> f).sum()));
+        List<Double> rewards = getListOfRewardsForRandom(mdp, new Random(parameter.getSeed()));
         LOGGER.info("Accumulated rewards" + String.format("%.2f", rewards.stream().mapToDouble(f -> f).sum()));
     }
 
@@ -51,6 +53,30 @@ public class LearnRandomGreedy {
             e.printStackTrace();
             return null;
         }
+    }
+
+    private static List<Double> getListOfRewardsForRandom(MDP<State, NodeAction> mdp, Random random){
+        State curState = mdp.getInitialState();
+        NodeAction curAction;
+        List<Double> rewards = new ArrayList<>();
+        int action_count = 0;
+        do {
+            if (!mdp.isFinalState(curState)) {
+                curAction = getRandomAction(mdp, curState, random);
+                State nextState = null;
+                if (curAction != null){
+                    nextState = mdp.stateTransition(curState, curAction);
+                    action_count++;
+                    rewards.add(mdp.reward(curState, curAction, nextState));
+                    curState = nextState;
+                }else {
+                    break;
+                }
+            }
+        } while (!mdp.isFinalState(curState));
+        rewards.add(mdp.reward(curState, null,null));
+        LOGGER.info("Action count: "+action_count);
+        return rewards;
     }
 
     private static List<Double> getListOfRewardsForMaxGreed(MDP<State, NodeAction> mdp, Random random){
@@ -98,6 +124,19 @@ public class LearnRandomGreedy {
         }
         int item = random.nextInt(maxActions.size());
         return maxActions.get(item);
+    }
+
+    private static NodeAction getRandomAction(MDP<State, NodeAction> mdp, State sPrime,Random random){
+        Set<NodeAction> actions = mdp.getActionsFunction().actions(sPrime);
+        int item = random.nextInt(actions.size());
+        int i = 0;
+        for (NodeAction action : actions) {
+            if (i == item) {
+                return action;
+            }
+            i++;
+        }
+        return null;
     }
 
     public static List<Double> getRewardsForNodeActionList(List<NodeAction> actions, MDP<State, NodeAction> mdp){
