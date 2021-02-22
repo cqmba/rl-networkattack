@@ -57,7 +57,7 @@ public class Simulation {
         System.out.println("Starting simulation");
         setupWorld();
         //computeStates();
-        chooseRandomStatesUntilEnd(1000);
+        chooseRandomStatesUntilEnd(5000);
         //choseStatesManually();
     }
 
@@ -66,6 +66,7 @@ public class Simulation {
         LOGGER.info("Self transitions enabled: "+ !SELF_TRANSITION_DISABLED);
         List<NodeAction> transitionList = new ArrayList<>();
         List<NodeAction> shortestPolicy = new ArrayList<>();
+        List<NodeAction> singleRun = new ArrayList<>();
         Set<NodeAction> failedNodeActions = MDPSerializer.getFailedNodeActions();
         Set<NodeAction> zerodayTransitions = MDPSerializer.getZerodayTransitions();
         int[] act_count = new int[iterations];
@@ -77,20 +78,15 @@ public class Simulation {
         try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
             for (int i=0; i<iterations;i++) {
                 state = State.getStartState();
+                singleRun.clear();
                 int zdOncePerRun = 0;
                 int failedOncePerRun = 0;
                 while (!state.isFinalState()){
                     transitionList.clear();
-                    for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
-                        Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
-                        for (AdversaryAction action: actions.keySet()){
-                            for (NetworkNode.TYPE target: actions.get(action)){
-                                transitionList.add(new NodeAction(target, actor, action));
-                            }
-                        }
-                    }
+                    transitionList = new ArrayList<>(NodeAction.getAllActionPossible(state));
                     Collections.shuffle(transitionList);
                     NodeAction nodeAction = transitionList.get(0);
+                    singleRun.add(nodeAction);
                     state = State.performGivenAction(Simulation.state, nodeAction.getAction(), nodeAction.getTarget(), nodeAction.getCurrentActor());
                     if (failedNodeActions.contains(nodeAction)){
                         failedState++;
@@ -100,11 +96,11 @@ public class Simulation {
                         zdOncePerRun = 1;
                     }
                 }
-                act_count[i] = transitionList.size();
+                act_count[i] = singleRun.size();
                 zdOncePerRunAggr += zdOncePerRun;
                 failedOncePerRunAggr += failedOncePerRun;
-                if (transitionList.size()<shortestPolicy.size() || shortestPolicy.isEmpty()){
-                    shortestPolicy = new ArrayList<>(transitionList);
+                if (singleRun.size()<shortestPolicy.size() || shortestPolicy.isEmpty()){
+                    shortestPolicy = new ArrayList<>(singleRun);
                 }
                 pb.step(); // step by 1
             }

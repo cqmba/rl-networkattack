@@ -33,7 +33,7 @@ public class NodeAction implements Action, Serializable {
         return false;
     }
 
-    static Set<NodeAction> getAllActionPossible(State currentState){
+    public static Set<NodeAction> getAllActionPossible(State currentState){
         Set<NodeAction> allPossibleActions = new HashSet<>();
         Set<AdversaryAction> actions = AdversaryAction.allActions();
         for(AdversaryAction action : actions){
