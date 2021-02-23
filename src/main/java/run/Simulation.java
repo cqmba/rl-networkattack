@@ -51,13 +51,13 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    private static final boolean SELF_TRANSITION_DISABLED = false;
+    private static final boolean SELF_TRANSITION_DISABLED = true;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
         //computeStates();
-        chooseRandomStatesUntilEnd(5000);
+        chooseRandomStatesUntilEnd(500000);
         //choseStatesManually();
     }
 
@@ -74,6 +74,7 @@ public class Simulation {
         int zdOncePerRunAggr = 0;
         int failedState = 0;
         int failedOncePerRunAggr = 0;
+        int minpolicyhit = 0;
 
         try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
             for (int i=0; i<iterations;i++) {
@@ -101,21 +102,12 @@ public class Simulation {
                 failedOncePerRunAggr += failedOncePerRun;
                 if (singleRun.size()<shortestPolicy.size() || shortestPolicy.isEmpty()){
                     shortestPolicy = new ArrayList<>(singleRun);
+                } else if (singleRun.size() == shortestPolicy.size()){
+                    minpolicyhit++;
                 }
                 pb.step(); // step by 1
             }
         }
-        /*
-        if (transitionList.size()<=minpolicy){
-                        double curReward = LearnRandomGreedy.getRewardsForNodeActionList(transitionList, mdp).stream().mapToDouble(f -> f).sum();
-                        if (transitionList.size()<minpolicy || (transitionList.size()==minpolicy && minpolicyreward < curReward)) {
-                            //found new best policy
-                            shortestPolicy = transitionList;
-                            minpolicyreward = curReward;
-                            minpolicy = transitionList.size();
-                        }
-                    }
-         */
         StatisticsHelper actionStats = new StatisticsHelper(act_count);
         LOGGER.info("Minimum transitions: "+actionStats.getMin());
         LOGGER.info("Maximum transitions: "+actionStats.getMax());
@@ -132,9 +124,11 @@ public class Simulation {
         LOGGER.info("Honeypots hit: "+failedState + " Percentage: " + String.format("%.2f", failedStatePerc));
         LOGGER.info("Once Per Run Honeypots hit: "+failedOncePerRunAggr + " Percentage: " + String.format("%.2f", failedPerRunPerc));
         printPolicy(shortestPolicy);
+        LOGGER.info("Shortest Policy was found "+minpolicyhit+ " times");
+        LOGGER.info("Accumulated Minpolicy Reward"+ LearnRandomGreedy.getRewardsForNodeActionList(shortestPolicy, LearnRandomGreedy.getMDP()));
     }
 
-    private static void printPolicy(List<NodeAction> actions){
+    public static void printPolicy(List<NodeAction> actions){
         NetworkNode.TYPE previousActor = null;
         for (NodeAction action : actions) {
             if (!action.getCurrentActor().equals(previousActor)) {

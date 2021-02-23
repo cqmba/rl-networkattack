@@ -1,9 +1,6 @@
 package stats;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.PriorityQueue;
-import java.util.Queue;
+import java.util.*;
 
 public class StatisticsHelper {
 
@@ -66,6 +63,14 @@ public class StatisticsHelper {
             sd = sd + Math.pow((j - mean), 2);
         }
         return Math.sqrt(sd / array.length);
+    }
+
+    public static double getSD(double mean, List<Double> values){
+        double sd = 0.0;
+        for (Double v : values) {
+            sd = sd + Math.pow((v - mean), 2);
+        }
+        return Math.sqrt(sd / values.size());
     }
 
     public int getMax(){

@@ -10,6 +10,7 @@ import q_learning.mdp.QLearner;
 import q_learning.utils.Pair;
 import q_learning.utils.Parameter;
 import run.Simulation;
+import stats.StatisticsHelper;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -38,10 +39,67 @@ public class LearnRandomGreedy {
                 "",
                 true);
         //runWithParameters(mdp, params, "runData", 10000, null);
-        //List<Double> rewards = getListOfRewardsForMaxGreed(mdp, new Random(parameter.getSeed()));
-        //LOGGER.info("Accumulated rewards" + String.format("%.2f", rewards.stream().mapToDouble(f -> f).sum()));
-        List<Double> rewards = getListOfRewardsForRandom(mdp, new Random(parameter.getSeed()));
+        List<Double> rewards = new ArrayList<>();
+        List<Double> runRewards = new ArrayList<>();
+        List<NodeAction> curPolicy = new ArrayList<>();
+        List<NodeAction> shortestPolicy = new ArrayList<>();
+        List<NodeAction> bestRewardPolicy = new ArrayList<>();
+        double bestReward = 0.0;
+        int[] actcount = new int[iterations];
+        Random random = new Random(parameter.getSeed());
+        try (ProgressBar pb = new ProgressBar("Random It.", iterations)) {
+            for (int i=0; i<iterations;i++) {
+                State curState = mdp.getInitialState();
+                curPolicy.clear();
+                runRewards.clear();
+                NodeAction curAction;
+                do {
+                    if (!mdp.isFinalState(curState)) {
+                        curAction = getRandomAction(mdp, curState, random);
+                        curPolicy.add(curAction);
+                        State nextState = null;
+                        if (curAction != null){
+                            nextState = mdp.stateTransition(curState, curAction);
+                            runRewards.add(mdp.reward(curState, curAction, nextState));
+                            curState = nextState;
+                        }else {
+                            break;
+                        }
+                    }
+                } while (!mdp.isFinalState(curState));
+                runRewards.add(mdp.reward(curState, null,null));
+                actcount[i] = runRewards.size();
+                double runReward = runRewards.stream().mapToDouble(f -> f).sum();
+                rewards.add(runReward);
+                if (bestReward<runReward){
+                    bestReward = runReward;
+                    bestRewardPolicy = new ArrayList<>(curPolicy);
+                }
+                if (curPolicy.size()<shortestPolicy.size() || shortestPolicy.isEmpty()){
+                    shortestPolicy = new ArrayList<>(curPolicy);
+                }
+                pb.step();
+            }
+        }
+        StatisticsHelper actionStats = new StatisticsHelper(actcount);
+        LOGGER.info("Minimum transitions: "+actionStats.getMin());
+        LOGGER.info("Maximum transitions: "+actionStats.getMax());
+        LOGGER.info("Mean transitions: "+ String.format("%.2f", actionStats.getMean()));
+        LOGGER.info("Median transitions: "+actionStats.getMedian());
+        LOGGER.info("Mode transitions: "+actionStats.mode());
+        LOGGER.info("Standard deviation transitions: "+ String.format("%.2f", actionStats.getSD()));
+        double mean_reward = rewards.stream().mapToDouble(Double::doubleValue).average().getAsDouble();
+        LOGGER.info("Minimum reward: "+String.format("%.2f", rewards.stream().mapToDouble(Double::doubleValue).min().getAsDouble()));
+        LOGGER.info("Maximum reward: "+String.format("%.2f", rewards.stream().mapToDouble(Double::doubleValue).max().getAsDouble()));
+        LOGGER.info("Mean reward: "+String.format("%.2f", mean_reward));
+        LOGGER.info("SD reward: "+String.format("%.2f", StatisticsHelper.getSD(mean_reward, rewards)));
         LOGGER.info("Accumulated rewards" + String.format("%.2f", rewards.stream().mapToDouble(f -> f).sum()));
+        LOGGER.info("Most Reward Policy Size "+bestRewardPolicy.size() + ": Reward "+ String.format("%.2f", bestReward));
+        Simulation.printPolicy(bestRewardPolicy);
+        if (!bestRewardPolicy.equals(shortestPolicy)){
+            LOGGER.info("Shortest Policy Size "+shortestPolicy.size()+ ": Reward "+String.format("%.2f", getRewardsForNodeActionList(shortestPolicy, mdp).stream().mapToDouble(f -> f).sum()));
+            Simulation.printPolicy(shortestPolicy);
+        }
     }
 
     public static MDP<State, NodeAction> getMDP(){
