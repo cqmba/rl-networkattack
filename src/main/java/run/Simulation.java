@@ -1,12 +1,7 @@
 package run;
 
-import core.AdversaryAction;
 import core.State;
 import environment.*;
-import visualize.SimpleActionsPrint;
-import visualize.SimpleNetworkPrint;
-import visualize.SimpleStatePrint;
-
 
 import java.io.*;
 import java.util.*;
@@ -37,78 +32,21 @@ public class Simulation {
     public static final String SERVICE_PHP = "PHP";
     public static final String SERVICE_NGINX = "nginx";
 
-    private static NetworkWorld simWorld = new NetworkWorld();
-    private static State state = State.getStartState();
+    private static final NetworkWorld simWorld = new NetworkWorld();
+    private static final State state = State.getStartState();
 
     private static boolean preconditionFilterEnabled;
 
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
         System.out.println("Starting simulation");
         setupWorld(false);
         computeStates();
-        //chooseRandomStatesUntilEnd();
-        //choseStatesManually();
     }
 
-    private static void chooseRandomStatesUntilEnd(){
-        List<Transition> transitionList = new ArrayList<>();
-        while (!state.isFinalState()){
-            for (NetworkNode.TYPE actor: state.getNodesWithAnyNodeAccess()){
-                Map<AdversaryAction, Set<NetworkNode.TYPE>> actions = State.computePossibleActions(state, actor);
-                for (AdversaryAction action: actions.keySet()){
-                    for (NetworkNode.TYPE target: actions.get(action)){
-                        transitionList.add(new Transition(target, actor, action));
-                    }
-                }
-            }
-            Collections.shuffle(transitionList);
-            //execute random Action
-            Transition randomTransition = transitionList.get(0);
-            state = State.performGivenAction(Simulation.state, randomTransition.action, randomTransition.target, randomTransition.actor);
-            transitionList.clear();
-            System.out.println("........Actor: "+ randomTransition.actor+" Performing ACTION "+ randomTransition.action+" on "+ randomTransition.target+"..........");
-        }
-        System.out.println("Is final state "+state.isFinalState());
-    }
-
-    static class Transition {
-        public NetworkNode.TYPE target;
-        public NetworkNode.TYPE actor;
-        public AdversaryAction action;
-
-        public Transition(NetworkNode.TYPE target, NetworkNode.TYPE actor, AdversaryAction action){
-            this.target = target;
-            this.actor = actor;
-            this.action = action;
-        }
-    }
-
-    private static void choseStatesManually(){
-        SimpleNetworkPrint.print(simWorld);
-        SimpleStatePrint.print(state);
-        Transition debugTransistion = new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.VALID_ACCOUNTS_CRED);
-        List<Transition> transitions = new ArrayList<>();
-        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.ACTIVE_SCAN_VULNERABILITY));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADVERSARY, AdversaryAction.VALID_ACCOUNTS_VULN));
-        transitions.add(new Transition(NetworkNode.TYPE.DATABASE, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ROUTER, NetworkNode.TYPE.ADMINPC, AdversaryAction.ACTIVE_SCAN_IP_PORT));
-        transitions.add(new Transition(NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.ADMINPC, AdversaryAction.DATA_FROM_LOCAL_SYSTEM));
-        transitions.add(debugTransistion);
-        for (Transition transition: transitions){
-            printPossibleActions(transition.actor);
-            printPerformAction(transition.action, transition.target);
-            if (transition.equals(debugTransistion)){
-                System.out.println("Debug here");
-            }
-            state = State.performGivenAction(state, transition.action, transition.target, transition.actor);
-            SimpleStatePrint.print(state);
-        }
-        printPossibleActions(transitions.get(transitions.size()-1).actor);
-    }
-
-    private static void computeStates() throws IOException {
+    /**
+     * This method computes all possible simulation states and saves the serialized result in a file
+     */
+    private static void computeStates(){
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
@@ -134,22 +72,17 @@ public class Simulation {
                 +"\nRead DB: "+readDB);
 
 
-        FileOutputStream fout = null;
-        ObjectOutputStream oos = null;
-        try {
-            fout = new FileOutputStream("states.ser");
-            oos = new ObjectOutputStream(fout);
+        try (FileOutputStream fout = new FileOutputStream("states.ser"); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
             oos.writeObject(states);
         } catch (IOException e) {
             e.printStackTrace();
-        } finally {
-            if (fout != null)
-                fout.close();
-            if (oos != null)
-                oos.close();
         }
     }
 
+    /**
+     * This method initialized the simulated network environment and populates it with nodes (hosts), specifying the configuration, software and data for each node.
+     * @param filterEnabled - true if the simulation shall only allow transitions (actions) which result in a state change (new knowledge)
+     */
     public static void setupWorld(boolean filterEnabled){
         preconditionFilterEnabled = filterEnabled;
         //add Router, currently no Software
@@ -177,9 +110,6 @@ public class Simulation {
         Software https = new Software(SERVICE_HTTPS, "1.3");
         //vulnerable
         Software ssh = new Software(SERVICE_SSH, "7.3");
-        //https.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
-        //http.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
-        //ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
         remoteSW.add(http);
         remoteSW.add(https);
@@ -211,13 +141,10 @@ public class Simulation {
         Set<Software> remoteSW = new HashSet<>();
         Software telnetd = new Software(SERVICE_TELNET, "0.17");
         telnetd.addVulnerability(new Vulnerability("CVE-2020-10188", Vulnerability.TYPE.REMOTE_CODE_EXECUTION, false));
-        //add zeroday because why not
-        //telnetd.addVulnerability(new Vulnerability("", Vulnerability.TYPE.REMOTE_CODE_EXECUTION, true));
         remoteSW.add(telnetd);
         Software ssh = new Software(SERVICE_SSH, "7.3");
         ssh.addVulnerability(new Vulnerability("CVE-2016-10012", Vulnerability.TYPE.PRIVILEGE_ESCALATION, false));
         ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.BYPASS_AUTHORIZATION, true));
-        //ssh.addVulnerability(new Vulnerability("", Vulnerability.TYPE.CREDENTIAL_LEAK, false));
         remoteSW.add(ssh);
         return remoteSW;
     }
@@ -233,7 +160,6 @@ public class Simulation {
     }
 
     static Set<Software> setDBRemoteSW(){
-        //TODO need to define behaviour of authorization bypass, since currently its mapped to VALID_ACCOUNT exploit
         Set<Software> remoteSW = new HashSet<>();
         Software mySQL = new Software(SERVICE_MYSQL, "8.0.13");
         mySQL.addVulnerability(new Vulnerability("CVE-2019-2534", Vulnerability.TYPE.BYPASS_AUTHORIZATION, false));
@@ -252,21 +178,17 @@ public class Simulation {
         return simWorld;
     }
 
+    /**
+     * Retrieves a simulation node by a logic node type
+     * @param type - logic node type
+     * @return - simulation node
+     */
     public static NetworkNode getNodeByType(NetworkNode.TYPE type){
         Predicate<NetworkNode> isRealNode = node -> node.getType().equals(type);
         Optional<NetworkNode> first = simWorld.getNodes().stream().filter(isRealNode).findFirst();
         if (first.isPresent()) {
             return first.get();
         }else throw new RuntimeException("Node doesnt exist in Simulation");
-    }
-
-    private static void printPerformAction(AdversaryAction action, NetworkNode.TYPE target){
-        System.out.println("........Performing ACTION "+action+" on "+target+"..........");
-    }
-
-    private static void printPossibleActions(NetworkNode.TYPE currentActor){
-        Map<AdversaryAction, Set<NetworkNode.TYPE>> adversaryActionSetMap = State.computePossibleActions(state,currentActor);
-        SimpleActionsPrint.print(adversaryActionSetMap, currentActor);
     }
 
     private static Map<Integer, Data> getNetworkData(){
