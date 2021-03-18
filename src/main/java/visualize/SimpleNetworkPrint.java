@@ -22,7 +22,7 @@ public class SimpleNetworkPrint {
             System.out.println("\tOS Version: "+node.getOsVersion());
             printNodeDetail(node);
             printVisibility(node);
-            System.out.println("");
+            System.out.println();
             i++;
         }
         printAdversaryVisibility();
@@ -90,7 +90,7 @@ public class SimpleNetworkPrint {
     }
 
     private static void printAdversaryVisibility(){
-        System.out.println("");
+        System.out.println();
         System.out.println("Adversary Node:");
         System.out.println("\tRemote service visibility in network: ");
         Map<NetworkNode.TYPE, Set<Software>> swMap = NetworkTopology.getRemoteSWMapByScanningNode(NetworkNode.TYPE.ADVERSARY);
