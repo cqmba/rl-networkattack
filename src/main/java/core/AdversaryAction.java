@@ -79,7 +79,7 @@ public enum AdversaryAction implements Serializable {
                 return;
             }
             for (Software sw: remotelyVisibleSWInNetwork.get(target)){
-                if (!newState.getSoftwareKnowledgeMap().containsKey(target) || !newState.softwareContainedInSet(sw.getName(), newState.getSoftwareKnowledgeMap().get(target))){
+                if (!newState.getSoftwareKnowledgeMap().containsKey(target) || !newState.isSoftwareContainedInSet(sw.getName(), newState.getSoftwareKnowledgeMap().get(target))){
                     newState.addNodeRemoteSoftwareName(target, sw.getName(), true);
                 }
             }
@@ -567,7 +567,7 @@ public enum AdversaryAction implements Serializable {
 
     public Set<NodeAction> getActionsWhichFulfillPrecondition(State currentState) {
         Set<NodeAction> nodeActions = new HashSet<>();
-        Set<NetworkNode.TYPE> nodesWithAccess = currentState.getSetOfSystemWithAcess();
+        Set<NetworkNode.TYPE> nodesWithAccess = currentState.getNodesWithAnyNodeAccess();
         for(NetworkNode.TYPE node: nodesWithAccess) {
             Set<NetworkNode.TYPE> targets = getTargetsWhichFulfillPrecondition(currentState, node);
             for(NetworkNode.TYPE target: targets){
