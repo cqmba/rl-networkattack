@@ -7,6 +7,10 @@ import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 
+/**
+ * This class sets up our simulation by specifying and initializing the network and its hosts,
+ * including their configuration, software, vulnerabilites and data
+ */
 public class Simulation {
     private static final String PUB_IP = "79.1.1.100";
     private static final String ROUTER_PRIV_IP = "10.1.1.1";
