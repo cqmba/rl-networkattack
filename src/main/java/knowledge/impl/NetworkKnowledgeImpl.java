@@ -8,17 +8,17 @@ import knowledge.NetworkKnowledge;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * This class implements all knowledge of the adversary about the network,
+ * which includes which nodes are included and what data is in the network.
+ */
 public class NetworkKnowledgeImpl implements NetworkKnowledge, Serializable {
-    private Map<Integer, Data> sniffedData;
-    private Set<NetworkNode.TYPE> nodes;
+    private final Map<Integer, Data> sniffedData;
+    private final Set<NetworkNode.TYPE> nodes;
 
     public NetworkKnowledgeImpl(){
         this.nodes = new HashSet<>();
         this.sniffedData = new HashMap<>();
-    }
-
-    public NetworkKnowledgeImpl(Set<NetworkNode.TYPE> nodes){
-        this.nodes = nodes;
     }
 
     @Override

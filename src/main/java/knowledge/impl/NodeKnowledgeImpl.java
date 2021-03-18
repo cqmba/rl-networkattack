@@ -9,6 +9,9 @@ import knowledge.NodeKnowledge;
 import java.io.Serializable;
 import java.util.*;
 
+/**
+ * This class implements the knowledge of the adversary regarding a particular host.
+ */
 public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
 
     private String pub_ip;
@@ -16,14 +19,13 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private String hostname;
     private String operatingSystem;
     private String osVersion;
-    private Set<Software> remoteSoftware;
-    private Set<Software> localSoftware;
-    private Map<Integer, Data> dataSet;
+    private final Set<Software> remoteSoftware;
+    private final Set<Software> localSoftware;
+    private final Map<Integer, Data> dataSet;
     private NetworkNode.ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
-    private Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
-    //could be hidden
-    private NetworkNode.TYPE type;
+    private final Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
+    private final NetworkNode.TYPE type;
 
     public NodeKnowledgeImpl(NetworkNode.TYPE type) {
         this.pub_ip = "";
@@ -36,7 +38,6 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         this.dataSet = new HashMap<>();
         this.sysAccess = NetworkNode.ACCESS_LEVEL.NONE;
         this.remotelyVisibleSWInNetwork = new EnumMap<>(NetworkNode.TYPE.class);
-        //could also add new unknown type
         this.type = type;
     }
 

@@ -8,7 +8,11 @@ import java.util.Map;
 
 public interface NodeKnowledge {
 
-    //use this if the Adversary found a new yet unknown node
+    /**
+     * This method creates a new NodeKnowledge instance for a particular logical node
+     * @param node - logical node type which was found
+     * @return - a new instance
+     */
     static NodeKnowledge addNode(NetworkNode.TYPE node) {
         return new NodeKnowledgeImpl(node);
     }

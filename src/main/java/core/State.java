@@ -7,7 +7,6 @@ import environment.NetworkNode;
 import knowledge.NetworkKnowledge;
 import knowledge.NodeKnowledge;
 import knowledge.SoftwareKnowledge;
-import knowledge.impl.SoftwareKnowledgeImpl;
 import run.Simulation;
 
 import java.io.*;
@@ -26,7 +25,7 @@ public class State implements Serializable {
 
     public State(boolean startState) {
         this.nodeKnowledgeMap = new LinkedHashMap<>();
-        this.networkKnowledge = NetworkKnowledge.addNew();
+        this.networkKnowledge = NetworkKnowledge.create();
         this.startState = startState;
     }
 

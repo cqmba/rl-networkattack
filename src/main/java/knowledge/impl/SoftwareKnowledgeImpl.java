@@ -9,12 +9,14 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
-
+/**
+ * This class implements the knowledge of an adversary about a single software product.
+ */
 public class SoftwareKnowledgeImpl implements SoftwareKnowledge, Serializable {
-    private String name;
+    private final String name;
     private String version;
-    private Set<Vulnerability> vulnerabilities;
-    private boolean remote;
+    private final Set<Vulnerability> vulnerabilities;
+    private final boolean remote;
 
     public SoftwareKnowledgeImpl(String name, boolean remote) {
         this.name = name;
