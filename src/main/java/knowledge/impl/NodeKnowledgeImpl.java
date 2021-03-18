@@ -19,12 +19,9 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     private String hostname;
     private String operatingSystem;
     private String osVersion;
-    private final Set<Software> remoteSoftware;
-    private final Set<Software> localSoftware;
     private final Map<Integer, Data> dataSet;
     private NetworkNode.ACCESS_LEVEL sysAccess;
     //this maps the remote visible software of other nodes, that can be accessed by this node
-    private final Map<NetworkNode.TYPE, List<Software>> remotelyVisibleSWInNetwork;
     private final NetworkNode.TYPE type;
 
     public NodeKnowledgeImpl(NetworkNode.TYPE type) {
@@ -33,11 +30,8 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
         this.hostname = "";
         this.operatingSystem = "";
         this.osVersion = "";
-        this.remoteSoftware = new HashSet<>();
-        this.localSoftware = new HashSet<>();
         this.dataSet = new HashMap<>();
         this.sysAccess = NetworkNode.ACCESS_LEVEL.NONE;
-        this.remotelyVisibleSWInNetwork = new EnumMap<>(NetworkNode.TYPE.class);
         this.type = type;
     }
 
@@ -119,7 +113,7 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
     @Override
     public int hashCode() {
 
-        return Objects.hash(pub_ip, priv_ip, hostname, operatingSystem, osVersion, remoteSoftware, localSoftware, dataSet, sysAccess, remotelyVisibleSWInNetwork, type);
+        return Objects.hash(pub_ip, priv_ip, hostname, operatingSystem, osVersion, dataSet, sysAccess, type);
     }
 
     @Override
@@ -132,11 +126,8 @@ public class NodeKnowledgeImpl implements NodeKnowledge, Serializable {
                 Objects.equals(hostname, that.hostname) &&
                 Objects.equals(operatingSystem, that.operatingSystem) &&
                 Objects.equals(osVersion, that.osVersion) &&
-                Objects.equals(remoteSoftware, that.remoteSoftware) &&
-                Objects.equals(localSoftware, that.localSoftware) &&
                 Objects.equals(dataSet, that.dataSet) &&
                 Objects.equals(sysAccess, that.sysAccess) &&
-                Objects.equals(remotelyVisibleSWInNetwork, that.remotelyVisibleSWInNetwork) &&
                 Objects.equals(type, that.type);
     }
 
