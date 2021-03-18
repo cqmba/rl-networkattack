@@ -18,15 +18,14 @@ The following steps have to be executed sequentially:
  * run the class `q_learning.QLearnerNetwork` as a main class (This will expect the file `mdp.ser` and apply the Q-Learning. Most parameters can be changed for this step, yet the defaults can be applied.)  
  
  The third step results in logging output to terminal containing the optimal policy which was learned.
- Detailed run data is printed to two files, which can be used by our python scripts for evaluation:  
- `rewards.json`
- 
+ Detailed run data is printed to a file, which can be used by our python scripts for evaluation:  
+
  `runData.json` - contains 
  * all parameters used for the run including a description, the rewards, the policy rewards, the optimal policy and if enabled, Q
- * rewards - a list of Integer and Double pairs `List<Pair<Integer, Double>>`
+ * rewards - a list of Integer (current iteration) and Double (reward of this iteration) pairs `List<Pair<Integer, Double>>`
  * policy - a list of State & Action object pairs `List<Pair<S, A>>` 
  * policyReward - the cumulative reward
- * byte[] Q - not included by default and discouraged to do so (may produce errors when saving/loading the file)
+ * byte[] Q - not included by default and discouraged to use (may produce errors when saving/loading the file)
  
  ## Changing run parameters
  The following parameters for Q-Learning can be set in the class `q_learning.QLearnerNetwork` and are explained in the code in the class `q_learning.utils.Parameter`:  
