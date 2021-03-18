@@ -1,4 +1,4 @@
-package q_learning;
+package run;
 
 import aima.core.probability.mdp.ActionsFunction;
 import core.AdversaryAction;
@@ -11,7 +11,6 @@ import q_learning.interfaces.StateReward;
 import q_learning.mdp.MDP;
 import q_learning.mdp.QActionsFunction;
 import q_learning.mdp.QStateTransition;
-import run.Simulation;
 
 import java.io.*;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ public class MDPSerializer {
 
     private static final String FILENAME = "mdp.ser";
     public static final boolean FAILED_STATE_ENABLED = false;
-    private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
     //set these values to include a honeypot
     private static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
@@ -36,22 +34,10 @@ public class MDPSerializer {
     private static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
     private static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
 
-    public static void main(String[] args) throws IOException {
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Setting up environment...");
-        //use this boolean to toggle precondition filtering;
-        // true = allow only actions as possible actions, which result in state change
-        // false = allow transitions, that dont change the state
-        Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
-
+    public static void computeMDP(Set<State> stateSet){
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating states...");
-        HashMap<State, StateReward<State, NodeAction>> states = null;
-        try {
-            states = generateStates();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        HashMap<State, StateReward<State, NodeAction>> states = generateStates(stateSet);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating Actions...");
@@ -66,7 +52,7 @@ public class MDPSerializer {
         HashSet<State> finalStates = getFinalStates(states, actions);
 
         if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Creating Q Learning agent...");
+            LOGGER.info("Generating MDP...");
         MDP<State, NodeAction> mdp = new MDP<>(states, State.getStartState(), actions, transitions, finalStates);
 
         try (FileOutputStream fout = new FileOutputStream(FILENAME); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
@@ -81,14 +67,7 @@ public class MDPSerializer {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static HashMap<State, StateReward<State, NodeAction>> generateStates() throws IOException {
-        Set<State> stateSet = null;
-        try (FileInputStream streamIn = new FileInputStream("states.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)){
-            stateSet = (Set<State>) objectinputstream.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    private static HashMap<State, StateReward<State, NodeAction>> generateStates(Set<State> stateSet){
         HashMap<State, StateReward<State, NodeAction>> states = new HashMap<>();
 
         for(State s : stateSet){

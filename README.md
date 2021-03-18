@@ -3,7 +3,8 @@
 ## Prerequisites 
 JVM Version 9+  
 Probably atleast 4GB RAM available to the JVM, 8GB to be sure  
-During execution, the states, MDP and the results may be serialized to disk. This can use storage space up to 100 MB and depending on your storage medium (HDD or SSD) I/O operations may take several minutes (up to 30 minutes for a slow HDD, but expect somewhere between 5-20 minutes).
+During execution, the states, MDP and the results may be serialized to disk. 
+This can use storage space up to 100 MB and depending on your storage medium (HDD or SSD) I/O operations may take several minutes (up to 30 minutes for a slow HDD, but expect somewhere between 5-20 minutes).
 
 ## Dependencies and Installation
 ```
@@ -11,10 +12,16 @@ git clone -b master git@gitlab.tubit.tu-berlin.de:j.ackerschewski/ICA-2.git
 ```
 Currently, no further dependencies are necessary as long as all dependencies listed in the pom.xml can be fulfilled by maven.
 
-## Usage
+## Computation
 The following steps have to be executed sequentially:
- * run the class `run.Simulation` as main class (This will result in a file `states.ser` that contains all possible states of the simulation in a serialized form)
- * run the class `q_learning.MDPSerializer` as a main class (This will expect the file `states.ser` and compute the MDP, saving the result serialized in a file `mdp.ser`)
+ * run the class `run.Simulation` as main class (This will result in a file `mdp.ser` that contains the MDP of the simulation in a serialized form)
+ 
+    Estimated computation time: **45 minutes** 
+    * measured on i7-8550U CPU @ 1.80GHz × 8 with 16GB RAM, 8GB available to JVM, SSD
+    * 35 minutes to compute the states (33049)
+    * 5 minutes generate Actions
+    * 1:30 minute generate transitions
+    * 5 minutes generate MDP (this step includes writing to storage)
  * run the class `q_learning.QLearnerNetwork` as a main class (This will expect the file `mdp.ser` and apply the Q-Learning. Most parameters can be changed for this step, yet the defaults can be applied.)  
  
  The third step results in logging output to terminal containing the optimal policy which was learned.
@@ -49,11 +56,19 @@ The following steps have to be executed sequentially:
  The report also lists our settings for the different evaluations.
  
  ## Evaluation with Python
- scripts are located at `src/main/python`:
- `analyzeRunData.py` - 
- `Plotter.py` - to plot different runs into a single figure
- `readParams.py` - read out the parameters that were used for a particular run
- `readPolicy.py` - read out the policy that was used for a particular run
- ``
+ scripts are located at `src/main/python`:  
+ `analyzeRunData.py` -   
+ `Plotter.py` - to plot different runs into a single figure  
+ `readParams.py` - read out the parameters that were used for a particular run  
+ `readPolicy.py` - read out the policy that was used for a particular run  
+ 
  To execute a script e.g. `readPolicy` cd into the python directory and change the filename in the script to the correct relative filename. Afterwards execute: 
  `python readPolicy.py`
+ 
+ ## Recreating evaluation of random actions (mean, std, ...)
+ 
+Check out branch random-transition-eval:
+```
+git fetch
+git checkout -b random-transition-eval origin/random-transition-eval
+```

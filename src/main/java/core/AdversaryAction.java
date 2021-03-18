@@ -454,7 +454,7 @@ public enum AdversaryAction implements Serializable {
      * @param currentActor - current actor
      * @return - The new state
      */
-    abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
+    public abstract State executePostConditionOnTarget(NetworkNode.TYPE target, State currentState, NetworkNode.TYPE currentActor);
 
     /**
      * For a given target set and a current state and actor, calculate if the Action applied for a particular target

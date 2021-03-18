@@ -3,7 +3,6 @@ package run;
 import core.State;
 import environment.*;
 
-import java.io.*;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -44,22 +43,23 @@ public class Simulation {
     public static void main(String[] args) {
         System.out.println("Starting simulation");
         setupWorld(false);
-        computeStates();
+        Set<State> states = computeStates();
+        MDPSerializer.computeMDP(states);
     }
 
     /**
-     * This method computes all possible simulation states and saves the serialized result in a file
+     * This method computes all possible simulation states.
      */
-    private static void computeStates(){
+    private static Set<State> computeStates(){
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
-        int config_0 = 0;
+        int finalStates = 0;
         int rootNodes= 0;
         int knownNetw = 0;
         int readDB = 0;
         for (State state: states){
             if (state.isFinalState()){
-                config_0++;
+                finalStates++;
             }
             if (state.knowsNetwork()){
                 knownNetw++;
@@ -72,15 +72,10 @@ public class Simulation {
             }
         }
         System.out.println("State count: "+states_nr+"\nFinal States: "
-                +config_0+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
+                +finalStates+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
                 +"\nRead DB: "+readDB);
 
-
-        try (FileOutputStream fout = new FileOutputStream("states.ser"); ObjectOutputStream oos = new ObjectOutputStream(fout)) {
-            oos.writeObject(states);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return states;
     }
 
     /**
