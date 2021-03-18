@@ -13,6 +13,9 @@ import java.util.*;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
+/**
+ * This is the main class to run for QLearning
+ */
 public class QLearnerNetwork {
     private static final Logger LOGGER = Logger.getLogger(QLearnerNetwork.class.getName());
 
@@ -157,7 +160,7 @@ public class QLearnerNetwork {
 
         Parameter param = new Parameter(1, 0.1, 0.1, 1.0,
                 0.0, 0.0, 1.0, 1.0, 0,
-                ERROR, NE, R_PLUS, 0, 10000, "", false);
+                ERROR, NE, R_PLUS, iterationsPerRun, initialIterationsPerRun, "", false);
         QLearner<State, NodeAction> learner = new QLearner<>(mdp, param, 10000);
 
         // now calculate the rms error

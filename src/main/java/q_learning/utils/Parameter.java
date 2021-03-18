@@ -1,5 +1,8 @@
 package q_learning.utils;
 
+/**
+ * This class stores all parameters for the Q-Learning and checks the validity.
+ */
 public class Parameter {
     private final int learningRateMaxCount;
     private final double learningRateEndValue;

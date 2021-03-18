@@ -3,6 +3,11 @@ package q_learning.utils;
 import java.io.Serializable;
 import java.util.List;
 
+/**
+ * This class stores a complete run of Q-Learning with all parameters, rewards, the policy, its reward and the learned
+ * Q.
+ * NOTE: This class is saved as a JSON file and therefore does not require getters.
+ */
 public class FullRun<S extends Serializable, A extends Serializable> {
     private final Parameter parameter;
     private final List<Pair<Integer, Double>> rewards;

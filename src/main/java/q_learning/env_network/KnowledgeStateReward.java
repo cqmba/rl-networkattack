@@ -14,6 +14,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
+/**
+ * This class implements the reward function.
+ */
 public class KnowledgeStateReward implements StateReward<State, NodeAction> {
 
     private final State state;
@@ -27,6 +30,13 @@ public class KnowledgeStateReward implements StateReward<State, NodeAction> {
         this.actionsIntoZerodayUsed = actionsIntoZerodayUsed;
     }
 
+    /**
+     * The reward function.
+     *
+     * @param action An action on the state from this class
+     * @param targetState The target state reached by doing the action on the state
+     * @return The reward for the state with given action and target state
+     */
     @Override
     public double reward(NodeAction action, State targetState) {
         double actionCost = 0.0;

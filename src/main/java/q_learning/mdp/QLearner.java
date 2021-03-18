@@ -22,15 +22,20 @@ import java.util.logging.Logger;
 public class QLearner<S extends Serializable, A extends Action & Serializable> {
     private static final Logger LOGGER = Logger.getLogger(QLearner.class.getName());
 
+    // the markov decision process to use
     private final MDP<S, A> mdp;
 
+    // the Q-Learning agent
     private final QLearningAgent<S, A> agent;
 
+    // A random generator and the parameters to use
     private Random random;
     private Parameter parameter;
 
+    // The interval at which messages will be logged to the console
     private final int loggingCount;
 
+    // The data to print to file
     private final List<FullRun> runData = new ArrayList<>();
 
     /**
@@ -139,6 +144,14 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         runData.add(new FullRun<>(usedParams, accumulatedRewards, path, reward, q));
     }
 
+    /**
+     * This method runs a single iteration on the given state. The iteration denotes the current iteration. It is
+     * used for logging and is also passed to the Q-Learning-Agent for the calculation of epsilon.
+     *
+     * @param initialState The initial state of the sequence
+     * @param iteration The current iteration
+     * @return The rewards gained for each action in the sequence
+     */
     private List<Double> runSingleIteration(S initialState, int iteration) {
         S curState = initialState;
         // run the simulation from curState until we reach a final state
@@ -224,6 +237,14 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         agent.reset();
     }
 
+    /**
+     * Saves the run data to a json file with the given file name. In case Q should be saved, it is saved to a
+     * second file with the same filename + QData + number. In the original save file, the Q will be exchanged with
+     * the number added at the end of the QData file, so it is clear which QData belongs to which run.
+     * If the given filename already exists, a number will be added, so that old data is not overridden.
+     *
+     * @param filename The filename/path where to save the file to (.json is added automatically)
+     */
     public void saveData(String filename) {
         try {
             String json = ".json";
@@ -258,6 +279,14 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
         }
     }
 
+    /**
+     * Loads data from the given filename (must include the .json).
+     *
+     * WARNING: This method needs a lot of memory as it is not written well. Expect to need more than 8 GB of ram to
+     * run this.
+     *
+     * @param filename The filename (including .json)
+     */
     public void loadData(String filename) {
         byte[] qFileData = null;
         try {

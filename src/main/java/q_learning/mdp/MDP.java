@@ -70,21 +70,37 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
         return transitions.stateTransition(state, action);
     }
 
+    /**
+     * Returns all states.
+     */
     @Override
     public Set<S> states() {
         return states.keySet();
     }
 
+    /**
+     * Returns the initial state
+     */
     @Override
     public S getInitialState() {
         return initialState;
     }
 
+    /**
+     * Returns all actions for a given state
+     */
     @Override
     public Set<A> actions(S state) {
         return actions.actions(state);
     }
 
+    /**
+     * Returns a laplacian probability for the given state.
+     * @param sDelta The target state
+     * @param state The starting state
+     * @param action The action leading from starting state to target state
+     * @return The probability of the transition
+     */
     @Override
     public double transitionProbability(S sDelta, S state, A action) {
         return 1.0 / (double) actions.actions(state).size();
@@ -116,6 +132,11 @@ public class MDP<S extends Serializable, A extends Action & Serializable> implem
         return states.get(state).reward(action, targetState);
     }
 
+    /**
+     * Checks whether the given state is a final state
+     * @param state The state to be checked
+     * @return true if the state is a final state
+     */
     @Override
     public boolean isFinalState(S state) {
         return finalStates.contains(state);

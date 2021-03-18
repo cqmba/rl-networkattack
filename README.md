@@ -64,14 +64,15 @@ The following steps have to be executed sequentially:
  The report also lists our settings for the different evaluations.
  
  ## Evaluation with Python
- scripts are located at `src/main/python`:  
- `analyzeRunData.py` -   
- `Plotter.py` - to plot different runs into a single figure  
- `readParams.py` - read out the parameters that were used for a particular run  
- `readPolicy.py` - read out the policy that was used for a particular run  
- 
- To execute a script e.g. `readPolicy` cd into the python directory and change the filename in the script to the correct relative filename. Afterwards execute: 
- `python readPolicy.py`
+scripts are located at `src/main/python`:  
+`analyzeRunData.py` - Uses the Plotter.py to plot with matplotlib  
+`Plotter.py` - to plot different runs into a single figure (see analyzeRunData)  
+`readParams.py` - read out the parameters that were used for a particular run  
+`readPolicy.py` - read out the policy that was used for a particular run
+
+The Scrips require matplotlib and json libraries to work.
+To execute a script e.g. `readPolicy` cd into the python directory and change the filename in the script to the correct relative filename. Afterwards execute:
+`python readPolicy.py`
  
  ## Evaluation of random action statistics (mean, std, ...)
  

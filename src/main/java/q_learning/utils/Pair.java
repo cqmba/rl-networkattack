@@ -5,7 +5,7 @@ import java.util.Objects;
 
 /**
  * A Pair class, since the one from AIMA was poorly implemented and not allowing for null values (even though they
- * set null values in their own code)
+ * set null values in their own code). So this version has full support for null values.
  * @param <A> The first Value
  * @param <B> The second Value
  */

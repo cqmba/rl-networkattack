@@ -77,7 +77,7 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
     private S s = null;
     private A a = null;
     private Double r = null;
-    //
+    // The actions per state, the parameters and a random generator
     private final ActionsFunction<S, A> actionsFunction;
     private Parameter parameter;
     private Random random;
@@ -98,18 +98,10 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         this.random = new Random(parameter.getSeed());
     }
 
-    //##########################################################################
-    //              SETTERS
-    //##########################################################################
-
     public void setParameter(Parameter parameter) {
         this.parameter = parameter;
         this.random = new Random(parameter.getSeed());
     }
-
-    //##########################################################################
-    //              GETTERS
-    //##########################################################################
 
     public Parameter getParameters() { return parameter; }
 
@@ -169,6 +161,9 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         return a;
     }
 
+    /**
+     * resets the Q-Learning
+     */
     @Override
     public void reset() {
         Q.clear();
@@ -178,6 +173,9 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         r = null;
     }
 
+    /**
+     * Returns the estimated utility
+     */
     @Override
     public Map<S, Double> getUtility() {
         // Q-values are directly related to utility values as follows
@@ -195,10 +193,16 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         return U;
     }
 
+    /**
+     * returns Q itself
+     */
     public Map<Pair<S, A>, Double> getQ() {
         return Q;
     }
 
+    /**
+     * Loads a new Q
+     */
     public void setQ(Map<Pair<S, A>, Double> Q) {
         this.Q.clear();
         for (Map.Entry<Pair<S, A>, Double> entry : Q.entrySet()) {
@@ -266,6 +270,12 @@ public class QLearningAgent<S extends Serializable, A extends Action & Serializa
         return conc(parameter.getLearningRateEndValue(), parameter.getLearningRateStartValue(), 0.0, parameter.getLearningRateSlope(), t);
     }
 
+    /**
+     * Calculates a probability at which a random action is chosen using the current iteration.
+     *
+     * @param curIteration The current iteration of the run
+     * @return The probability at which a random action should be chosen
+     */
     protected double epsilon(int curIteration) {
         double t = Math.min((double)curIteration / ((double)(parameter.getIterations() + parameter.getInitialStateIterations())), 1.0);
         return conc(parameter.getEpsilonEndValue(), parameter.getEpsilonStartValue(), 0.0, parameter.getEpsilonSlope(), t);
