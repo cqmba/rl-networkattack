@@ -38,7 +38,7 @@ public class QLearnerNetwork {
     public static void main(String[] args) {
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Setting up environment...");
-        //use this boolean to toggle precondition filtering;
+        // use this boolean to toggle precondition filtering;
         // true = allow only actions as possible actions, which result in state change
         // false = allow transitions, that dont change the state
         Simulation.setupWorld(DISALLOW_SELF_TRANSITIONS);
@@ -90,7 +90,7 @@ public class QLearnerNetwork {
      * @param mdp The markov decision process
      * @param params The parameters. Each param is run in order and the results will be saved
      * @param filename The filename for the saved data
-     * @param loggingCount Each loggingCount'th iteration will be logged to the console to show that the code is still running
+     * @param loggingCount Each loggingCount iteration will be logged to the console to show that the code is still running
      * @param loadFilename The filename of the Q to load from. Loading will be skipped, if set to null
      */
     private static void runWithParameters(MDP<State, NodeAction> mdp, List<Parameter> params, String filename,
@@ -136,56 +136,5 @@ public class QLearnerNetwork {
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Saving learning values...");
         learner.saveData(filename);
-    }
-
-    /**
-     * Calculates the Root Mean Squared Error for each state and returns it.
-     * @param runs Number of runs of the whole Q Learning to do
-     * @param iterationsPerRun Number of iterations to run per run
-     * @param initialIterationsPerRun Number of iterations on the initial state to run per run
-     * @param expectedUtil A Map, which maps each state with an expected utility
-     * @return The RMSE, the average error for each state
-     */
-    private Map<State, Double> RMSE(int runs, int iterationsPerRun, int initialIterationsPerRun,
-                                    Map<State, Double> expectedUtil) {
-        // This is a thing to show how to calculate the RMS Error.
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Loading MDP...");
-        MDP<State, NodeAction> mdp = null;
-        try (FileInputStream streamIn = new FileInputStream("mdp.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)) {
-            mdp = (MDP<State, NodeAction>) objectinputstream.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        Parameter param = new Parameter(1, 0.1, 0.1, 1.0,
-                0.0, 0.0, 1.0, 1.0, 0,
-                ERROR, NE, R_PLUS, iterationsPerRun, initialIterationsPerRun, "", false);
-        QLearner<State, NodeAction> learner = new QLearner<>(mdp, param, 10000);
-
-        // now calculate the rms error
-
-        // run the learner and get the utilities
-        List<Map<State, Double>> utilities = new ArrayList<>();
-        for (int i = 0; i < runs; i++) {
-            learner.runIterations();
-            utilities.add(learner.getUtility());
-            learner.reset();
-        }
-
-        // now calculate the rmse over all states and runs
-        Map<State, Double> rmse = new HashMap<>();
-        for (State curState : mdp.states()) {
-            double meanSquared = 0;
-            for (Map<State, Double> util : utilities) {
-                Double utilOfState = util.get(curState);
-                if (utilOfState == null)
-                    throw new RuntimeException("Utility for state not found..");
-
-                meanSquared += Math.pow(expectedUtil.get(curState) - utilOfState, 2);
-            }
-            rmse.put(curState, Math.sqrt(meanSquared / utilities.size()));
-        }
-        return rmse;
     }
 }

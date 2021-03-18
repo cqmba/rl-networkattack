@@ -1,7 +1,6 @@
 package q_learning.mdp;
 
 import aima.core.agent.Action;
-import aima.core.probability.mdp.ActionsFunction;
 import q_learning.interfaces.QActionsFunctionInterface;
 
 import java.io.Serializable;

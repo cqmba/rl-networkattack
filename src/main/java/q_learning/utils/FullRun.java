@@ -11,23 +11,23 @@ import java.util.List;
 public class FullRun<S extends Serializable, A extends Serializable> {
     private final Parameter parameter;
     private final List<Pair<Integer, Double>> rewards;
-    private List<Pair<S, A>> policy;
-    private double policyReward;
-    private byte[] Q;
+    private final List<Pair<S, A>> policy;
+    private final double policyReward;
+    private byte[] q;
 
     public FullRun(Parameter parameter, List<Pair<Integer, Double>> rewards, List<Pair<S, A>> policy, double policyReward,
-                   byte[] Q) {
+                   byte[] q) {
         this.parameter = parameter;
         this.rewards = rewards;
         this.policy = policy;
         this.policyReward = policyReward;
-        this.Q = Q;
+        this.q = q;
     }
 
-    public byte[] getQ() { return Q; }
+    public byte[] getQ() { return q; }
 
     public void removeQ(int counter) {
-        Q = new byte[1];
-        Q[0] = (byte)(counter % 256);
+        q = new byte[1];
+        q[0] = (byte)(counter % 256);
     }
 }

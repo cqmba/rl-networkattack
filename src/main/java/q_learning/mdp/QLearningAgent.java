@@ -11,6 +11,11 @@ import q_learning.utils.Parameter;
 import q_learning.abstracts.QReinforcementAgent;
 
 /**
+ * This class is based off the original AIMA libraries QLearningAgent, but was modified. Please ignore the horrible
+ * naming conventions, as they mostly come from their original code.
+ */
+
+/**
  * Artificial Intelligence A Modern Approach (3rd Edition): page 844.<br>
  * <br>
  *

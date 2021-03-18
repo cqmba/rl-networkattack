@@ -36,7 +36,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     private final int loggingCount;
 
     // The data to print to file
-    private final List<FullRun> runData = new ArrayList<>();
+    private final List<FullRun<S,A>> runData = new ArrayList<>();
 
     /**
      * This constructor initializes a QLearningAgent given the MDP it should base on and a number of parameters
@@ -47,7 +47,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
      * @param parameter
      *      The parameter used for learning
      * @param loggingCount
-     *      Every loggingCount'th iteration the logger will print the current iteration to the console.
+     *      Every loggingCount iteration the logger will print the current iteration to the console.
      */
     public QLearner(MDP<S, A> mdp, Parameter parameter, int loggingCount) {
         if (parameter == null)
@@ -228,16 +228,6 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
     }
 
     /**
-     * Resets the QLearningAgent to starting values.
-     * The random generator is not reset!!!
-     * This is due to this method being called for the RMS-Error. It would be meaningless to run the q learner
-     * with the same values again, as it would result in the same output. So the random generator is not reset.
-     */
-    public void reset() {
-        agent.reset();
-    }
-
-    /**
      * Saves the run data to a json file with the given file name. In case Q should be saved, it is saved to a
      * second file with the same filename + QData + number. In the original save file, the Q will be exchanged with
      * the number added at the end of the QData file, so it is clear which QData belongs to which run.
@@ -258,7 +248,7 @@ public class QLearner<S extends Serializable, A extends Action & Serializable> {
 
             Gson gson = new Gson();
             counter = 0;
-            for (FullRun run : runData) {
+            for (FullRun<S,A> run : runData) {
                 byte[] q = run.getQ();
                 if (q != null) {
                     Writer writer = new FileWriter(newFilename + "QData" + counter + json);
