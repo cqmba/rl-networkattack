@@ -9,6 +9,10 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
+/**
+ * This class wraps the AdversaryAction as an object that is used for the learning (extended by target and
+ * acting node), so that it can be seen as a transition from one state to another.
+ */
 public class NodeAction implements Action, Serializable {
     NetworkNode.TYPE target;
     NetworkNode.TYPE currentActor;
@@ -33,6 +37,11 @@ public class NodeAction implements Action, Serializable {
         return false;
     }
 
+    /**
+     * This calculates all possible actions given a particular state
+     * @param currentState - current state
+     * @return - set of possible actions
+     */
     static Set<NodeAction> getAllActionPossible(State currentState){
         Set<NodeAction> allPossibleActions = new HashSet<>();
         Set<AdversaryAction> actions = AdversaryAction.allActions();
@@ -42,6 +51,11 @@ public class NodeAction implements Action, Serializable {
         return allPossibleActions;
     }
 
+    /**
+     * This calculates all possible actions with a state change, given a particular state.
+     * @param currentState - current state
+     * @return - set of actions
+     */
     public static Set<NodeAction> getAllActionPossibleWithChangeState(State currentState){
         Set<NodeAction> allPossibleActionsWithChangeState = new HashSet<>();
         Set<NodeAction> allPossibleActions = getAllActionPossible(currentState);

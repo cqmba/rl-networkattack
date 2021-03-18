@@ -76,12 +76,6 @@ public class QLearnerNetwork {
                 // a value greater 1 will result in heavy loss early on and little loss later (looks a little like 1/x)
                 // The same principle applies to epsilon.
                 // If you do not want a decrease or raise of the values, set the Start and End values to the same number.
-//                new Parameter(20, 0.1, 0.01, 1.0,
-//                        0.3, 0.0, 1.0,
-//                        1.0, 0, ERROR, NE,
-//                        R_PLUS, ITERATIONS, INITIAL_STATE_ITERATIONS,
-//                        String.format("failedStateEnabled:%b,disallowSelfTransition:%b,states:36k,finalState:rootOnAll;accountOnAdminDatabase;DataRead;KnowNetwork", FAILED_STATE_ENABLED, DISALLOW_SELF_TRANSITIONS),
-//                        true)
         );
         runWithParameters(mdp, params, "runData", 10000, null);
     }
