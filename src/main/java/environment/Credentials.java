@@ -5,12 +5,15 @@ import com.google.gson.Gson;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * This class defines all metadata attributed to a credential object, which can be used to gain access to a particular host
+ */
 public class Credentials implements Serializable {
-    private TYPE type;
-    private ACCESS_GRANT_LEVEL accessGrantLevel;
-    private String useForPrivIP;
-    private String useInSW;
-    private NetworkNode.TYPE node;
+    private final TYPE type;
+    private final ACCESS_GRANT_LEVEL accessGrantLevel;
+    private final String useForPrivIP;
+    private final String useInSW;
+    private final NetworkNode.TYPE node;
 
     public enum TYPE{
         KEY,
@@ -43,10 +46,6 @@ public class Credentials implements Serializable {
 
     public ACCESS_GRANT_LEVEL getAccessGrantLevel() {
         return accessGrantLevel;
-    }
-
-    public void setAccessGrantLevel(ACCESS_GRANT_LEVEL accessGrantLevel) {
-        this.accessGrantLevel = accessGrantLevel;
     }
 
     @Override

@@ -3,23 +3,25 @@ package environment;
 import com.google.gson.Gson;
 
 import java.util.EnumMap;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class implements a single hosts configuration
+ */
 public class NetworkNode{
-    private String pub_ip = "";
-    private String priv_ip = "";
-    private String hostname = "";
-    private String operatingSystem = "";
-    private String osVersion = "";
-    private Set<Software> remoteSoftware;
+    private final String pub_ip;
+    private final String priv_ip;
+    private final String hostname;
+    private final String operatingSystem;
+    private final String osVersion;
+    private final Set<Software> remoteSoftware;
     private Set<Software> localSoftware;
-    private Map<Integer, Data> dataSet;
+    private final Map<Integer, Data> dataSet;
     //this maps the remote visible software of other nodes, that can be accessed by this node
     private Map<NetworkNode.TYPE, Set<Software>> remotelyVisibleSWInNetwork = new EnumMap<>(TYPE.class);
     //could be hidden
-    private TYPE type;
+    private final TYPE type;
 
     public enum TYPE {
         ROUTER,
@@ -91,7 +93,6 @@ public class NetworkNode{
         return remotelyVisibleSWInNetwork;
     }
 
-    //cant put in constructor since it needs overview of all nodes in network
     public void computeRemoteSWMap(){
         this.remotelyVisibleSWInNetwork = NetworkTopology.getRemoteSWMapByScanningNode(type);
     }

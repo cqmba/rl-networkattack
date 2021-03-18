@@ -7,7 +7,15 @@ import java.util.*;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * This class implements the network topology that was presented in our project report.
+ */
 public class NetworkTopology{
+    /**
+     * This method returns all connected hosts of a given host
+     * @param source - given host
+     * @return - all connected hosts
+     */
     public static Set<NetworkNode.TYPE> getConnectedHosts(NetworkNode.TYPE source){
         Set<NetworkNode.TYPE> connectedHosts = new HashSet<>();
         if(source.equals(NetworkNode.TYPE.ADVERSARY)){
@@ -40,7 +48,13 @@ public class NetworkTopology{
         }
     }
 
-    //this implements inner & outer firewall behaviour
+    /**
+     * This method returns a map of available nodes with their remote software, from the position of a scanning node.
+     * Thus this effectively implements the firewall and the router port forwarding.
+     * @param scanning - scanning or source node
+     * @return - map containing all scannable hosts with exactly the remote software, that is visible from the
+     * perspective of the scanning node
+     */
     public static Map<NetworkNode.TYPE, Set<Software>> getRemoteSWMapByScanningNode(NetworkNode.TYPE scanning){
         Map<NetworkNode.TYPE, Set<Software>> visibleSoftware = new EnumMap<>(NetworkNode.TYPE.class);
         //from all possible nodes, only check those who are actually connected
@@ -64,7 +78,6 @@ public class NetworkTopology{
             }
         }else if (scanning.equals(NetworkNode.TYPE.WEBSERVER)){
             for (NetworkNode node: viewableNodes){
-                //TODO implement inner firewall
                 if (node.getType().equals(NetworkNode.TYPE.ADMINPC)){
                     visibleSoftware.put(NetworkNode.TYPE.ADMINPC, new HashSet<>(node.getRemoteSoftware()));
                 }else if (node.getType().equals(NetworkNode.TYPE.DATABASE)){

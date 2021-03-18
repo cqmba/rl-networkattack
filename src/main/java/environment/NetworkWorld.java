@@ -7,9 +7,13 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * This class contains the logical structure of the Simulation network, thus containing all its nodes,
+ * setting its network topology and network data.
+ */
 public class NetworkWorld {
 
-    private Set<NetworkNode> nodes = new LinkedHashSet<>();
+    private final Set<NetworkNode> nodes = new LinkedHashSet<>();
     private Map<Integer, Data> sniffableData = new HashMap<>();
     private final Set<NetworkNode.TYPE> internal = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADMINPC, NetworkNode.TYPE.DATABASE);
 

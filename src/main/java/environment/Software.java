@@ -7,9 +7,9 @@ import java.util.Objects;
 import java.util.Set;
 
 public class Software {
-    private String name = "";
-    private String version = "";
-    private Set<Vulnerability> vulnerabilities = new LinkedHashSet<>();
+    private final String name;
+    private final String version;
+    private final Set<Vulnerability> vulnerabilities = new LinkedHashSet<>();
 
     public Software(String name, String version) {
         this.name = name;

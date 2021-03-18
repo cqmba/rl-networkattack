@@ -5,23 +5,23 @@ import com.google.gson.Gson;
 import java.io.Serializable;
 import java.util.Objects;
 
+/**
+ * This class implements all metadata attributed to a data object
+ */
 public class Data implements Serializable {
-    //private NetworkNode source;
-    private boolean containsCredentials;
+    private final boolean containsCredentials;
     private GAINED_KNOWLEDGE gain;
-    private ORIGIN origin;
-    private ACCESS_REQUIRED access;
+    private final ORIGIN origin;
+    private final ACCESS_REQUIRED access;
     private Credentials credentials = null;
-    private int ID;
+    private final int ID;
     public enum GAINED_KNOWLEDGE{
-        NONE,
         LOW,
         HIGH
     }
     public enum ORIGIN {
         LOCAL,
-        SNIFFED,
-        CREATED
+        SNIFFED
     }
     public enum ACCESS_REQUIRED {
         USER,
@@ -62,28 +62,12 @@ public class Data implements Serializable {
         this.gain = gain;
     }
 
-    public ORIGIN getOrigin() {
-        return origin;
-    }
-
-    public void setOrigin(ORIGIN origin) {
-        this.origin = origin;
-    }
-
     public ACCESS_REQUIRED getAccess() {
         return access;
     }
 
-    public void setAccess(ACCESS_REQUIRED access) {
-        this.access = access;
-    }
-
     public Credentials getCredentials() {
         return credentials;
-    }
-
-    public void setCredentials(Credentials credentials) {
-        this.credentials = credentials;
     }
 
     @Override
