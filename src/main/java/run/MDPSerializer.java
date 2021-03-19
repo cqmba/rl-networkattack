@@ -1,4 +1,4 @@
-package q_learning;
+package run;
 
 import aima.core.probability.mdp.ActionsFunction;
 import core.AdversaryAction;
@@ -11,7 +11,6 @@ import q_learning.interfaces.StateReward;
 import q_learning.mdp.MDP;
 import q_learning.mdp.QActionsFunction;
 import q_learning.mdp.QStateTransition;
-import run.Simulation;
 
 import java.io.*;
 import java.util.HashMap;
@@ -26,7 +25,6 @@ public class MDPSerializer {
 
     private static final String FILENAME = "mdp.ser";
     public static final boolean FAILED_STATE_ENABLED = false;
-    private static final boolean DISALLOW_SELF_TRANSITIONS = true;
 
     //set these values to include a honeypot
     public static final Set<NetworkNode.TYPE> actorsFailedTransition = Set.of(NetworkNode.TYPE.WEBSERVER, NetworkNode.TYPE.ADVERSARY, NetworkNode.TYPE.DATABASE);
@@ -36,19 +34,8 @@ public class MDPSerializer {
     public static final NetworkNode.TYPE zerodayTarget = NetworkNode.TYPE.ADMINPC;
     public static final AdversaryAction zerodayAction = AdversaryAction.VALID_ACCOUNTS_VULN;
 
-    public static void main(String[] args) throws IOException {
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Setting up environment...");
-        Simulation.setupWorld();
-
-        if (LOGGER.isLoggable(Level.INFO))
-            LOGGER.info("Generating states...");
-        HashMap<State, StateReward<State, NodeAction>> states = null;
-        try {
-            states = generateStates();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public static void computeMDP(Set<State> statesSet) {
+        HashMap<State, StateReward<State, NodeAction>> states = generateStates(statesSet);
 
         if (LOGGER.isLoggable(Level.INFO))
             LOGGER.info("Generating Actions...");
@@ -78,14 +65,7 @@ public class MDPSerializer {
      * Initializes the states
      * @return The states of the MDP
      */
-    private static HashMap<State, StateReward<State, NodeAction>> generateStates() throws IOException {
-        Set<State> stateSet = null;
-        try (FileInputStream streamIn = new FileInputStream("states.ser"); ObjectInputStream objectinputstream = new ObjectInputStream(streamIn)){
-            stateSet = (Set<State>) objectinputstream.readObject();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
+    private static HashMap<State, StateReward<State, NodeAction>> generateStates(Set<State> stateSet){
         HashMap<State, StateReward<State, NodeAction>> states = new HashMap<>();
 
         for(State s : stateSet){

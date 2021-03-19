@@ -6,10 +6,6 @@ import core.State;
 import environment.*;
 import me.tongfei.progressbar.ProgressBar;
 import q_learning.LearnRandomGreedy;
-import q_learning.MDPSerializer;
-import q_learning.QLearnerNetwork;
-import q_learning.mdp.MDP;
-import q_learning.utils.Pair;
 import stats.StatisticsHelper;
 import visualize.SimpleActionsPrint;
 import visualize.SimpleNetworkPrint;
@@ -56,7 +52,8 @@ public class Simulation {
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
-        //computeStates();
+        //Set<State> states = computeStates();
+        //MDPSerializer.computeMDP(states);
         chooseRandomStatesUntilEnd(500000);
     }
 
@@ -164,7 +161,7 @@ public class Simulation {
         printPossibleActions(transitions.get(transitions.size()-1).getCurrentActor());
     }
 
-    private static void computeStates() throws IOException {
+    private static Set<State> computeStates() throws IOException {
         Set<State> states = State.computeListOfPossibleStates(state);
         int states_nr = states.size();
         int config_0 = 0;
@@ -189,21 +186,7 @@ public class Simulation {
                 +config_0+"\nKnown Netw: "+knownNetw+"\nRoot Nodes: "+rootNodes
                 +"\nRead DB: "+readDB);
 
-
-        FileOutputStream fout = null;
-        ObjectOutputStream oos = null;
-        try {
-            fout = new FileOutputStream("states.ser");
-            oos = new ObjectOutputStream(fout);
-            oos.writeObject(states);
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            if (fout != null)
-                fout.close();
-            if (oos != null)
-                oos.close();
-        }
+        return states;
     }
 
     public static void setupWorld(){
