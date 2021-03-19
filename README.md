@@ -1,18 +1,22 @@
 # ICA Project Winterterm 20/21
 
-## Prerequisites 
+## Prerequisites  
+
 * **Java 9+**  
 * **8GB RAM** available to the JVM should be sufficient, but atleast 4GB    
 * During execution, the MDP and the learning results will be stored to disk (**~ 800 MB**) 
     * depending on your storage medium (HDD or SSD) I/O operations may take several minutes.
 * on a medium powerful laptop expect around 70 minutes of total computation time with 2 seperate steps
+
 ## Dependencies and Installation
+
 ```
 git clone -b master git@gitlab.tubit.tu-berlin.de:j.ackerschewski/ICA-2.git
 ```
 Currently, no further dependencies are necessary as long as all dependencies listed in the pom.xml can be fulfilled by maven.
 
-## Computation
+## Computation  
+
 The following steps have to be executed sequentially:
  * run the class `run.Simulation` as main class (This will result in a file `mdp.ser` that contains the MDP of the simulation in a serialized form)
  
@@ -42,7 +46,8 @@ The following steps have to be executed sequentially:
  * policyReward - the cumulative reward
  * byte[] Q - not included by default and discouraged to use (may produce errors when saving/loading the file)
  
- ## Changing run parameters
+ ## Changing run parameters  
+ 
  The following parameters for Q-Learning can be set in the class `q_learning.QLearnerNetwork` and are explained in the code in the class `q_learning.utils.Parameter`:  
  `learningRateMaxCount`
  `learningRateStartValue`
@@ -63,7 +68,9 @@ The following steps have to be executed sequentially:
  
  The report also lists our settings for the different evaluations.
  
- ## Evaluation with Python
+ 
+ ## Evaluation with Python  
+ 
 scripts are located at `src/main/python`:  
 `analyzeRunData.py` - Uses the Plotter.py to plot with matplotlib  
 `Plotter.py` - to plot different runs into a single figure (see analyzeRunData)  
@@ -74,7 +81,8 @@ The Scrips require matplotlib and json libraries to work.
 To execute a script e.g. `readPolicy` cd into the python directory and change the filename in the script to the correct relative filename. Afterwards execute:
 `python readPolicy.py`
  
- ## Evaluation of random action statistics (mean, std, ...)
+ 
+ ## Evaluation of random action statistics (mean, std, ...)  
  
 Please consider that due to the nature of randomness our results might not be reproducible.
 Since we included a seed in our code, you should however still be able to reproduce them.
