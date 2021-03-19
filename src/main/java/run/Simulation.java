@@ -51,14 +51,13 @@ public class Simulation {
     private static NetworkWorld simWorld = new NetworkWorld();
     private static State state = State.getStartState();
 
-    private static final boolean SELF_TRANSITION_DISABLED = true;
+    private static final boolean SELF_TRANSITION_DISABLED = false;
 
     public static void main(String[] args) throws IOException {
         System.out.println("Starting simulation");
         setupWorld();
         //computeStates();
         chooseRandomStatesUntilEnd(500000);
-        //choseStatesManually();
     }
 
     private static void chooseRandomStatesUntilEnd(int iterations){
