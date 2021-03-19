@@ -46,7 +46,7 @@ The following steps have to be executed sequentially:
  * policyReward - the cumulative reward
  * byte[] Q - not included by default and discouraged to use (may produce errors when saving/loading the file)
  
- ## Changing run parameters  
+## Changing run parameters  
  
  The following parameters for Q-Learning can be set in the class `q_learning.QLearnerNetwork` and are explained in the code in the class `q_learning.utils.Parameter`:  
  `learningRateMaxCount`
@@ -69,7 +69,7 @@ The following steps have to be executed sequentially:
  The report also lists our settings for the different evaluations.
  
  
- ## Evaluation with Python  
+## Evaluation with Python  
  
 scripts are located at `src/main/python`:  
 `analyzeRunData.py` - Uses the Plotter.py to plot with matplotlib  
@@ -82,7 +82,7 @@ To execute a script e.g. `readPolicy` cd into the python directory and change th
 `python readPolicy.py`
  
  
- ## Evaluation of random action statistics (mean, std, ...)  
+## Evaluation of random action statistics (mean, std, ...)  
  
 Please consider that due to the nature of randomness our results might not be reproducible.
 Since we included a seed in our code, you should however still be able to reproduce them.
