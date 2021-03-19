@@ -48,7 +48,7 @@ The following steps have to be executed sequentially:
  
 ## Changing run parameters  
  
- The following parameters for Q-Learning can be set in the class `q_learning.QLearnerNetwork` and are explained in the code in the class `q_learning.utils.Parameter`:  
+ The following parameters for Q-Learning can be set in the class `q_learning.QLearnerNetwork` and their ranges are explained in the code in the class `q_learning.utils.Parameter`:  
  `learningRateMaxCount`
  `learningRateStartValue`
  `learningRateEndValue`
@@ -66,7 +66,7 @@ The following steps have to be executed sequentially:
  `additionalInformation`
  `saveQ` 
  
- The report also lists our settings for the different evaluations.
+ The report explains what these parameters stand for and also lists our settings for the different evaluations.
  
  
 ## Evaluation with Python  
