@@ -76,8 +76,32 @@ To execute a script e.g. `readPolicy` cd into the python directory and change th
  
  ## Evaluation of random action statistics (mean, std, ...)
  
+Please consider that due to the nature of randomness our results might not be reproducible.
+Since we included a seed in our code, you should however still be able to reproduce them.
+ 
 Check out branch random-transition-eval:
 ```
 git fetch
 git checkout -b random-transition-eval origin/random-transition-eval
 ```
+The dependencies are different in this branch so they may need to be resolved again with maven.
+
+To run the evaluation with self transitions enabled, run `run.Simulation` as a main class without modifications. 
+This may take a while (several hours possibly) since it was developed without optimization in mind as it only needed to be executed once. A progressbar will show the current progress.
+
+To run the evaluation without self transitions you need to compute the MDP first. 
+Since this was done before refactoring on the main branch, it might be necessary to recompute the MDP:
+Change the lines 50 to 58 of `run.Simulation` to the following:
+```
+private static final boolean SELF_TRANSITION_DISABLED = true;
+
+    public static void main(String[] args) throws IOException {
+        System.out.println("Starting simulation");
+        setupWorld();
+        Set<State> states = computeStates();
+        MDPSerializer.computeMDP(states);
+        //chooseRandomStatesUntilEnd(500000);
+    }
+```
+Now run `run.Simulation` as a main class. This will serialize the MDP as `mdp.ser`.
+Next run `q_learning.LearnRandomGreedy` as a main class, again a progressbar is included but this process should be faster.
